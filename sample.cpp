@@ -6,7 +6,7 @@
 /**
  * 获取 adapter
  */
-WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
+WGPUAdapter requestAdapter(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
     // A simple structure holding the local information shared with the
     // onAdapterRequestEnded callback.
     struct UserData {
@@ -25,22 +25,58 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
         userData.requestEnded = true;
     };
 
-    WGPURequestAdapterCallbackInfo callbackInfo = {};
-    callbackInfo.nextInChain = NULL;
-    // WGPUCallbackMode_AllowSpontaneous 立即异步触发，不依赖额外时间循环
-    callbackInfo.mode = WGPUCallbackMode_AllowSpontaneous;
-    callbackInfo.callback = onAdapterRequestEnded;
-    callbackInfo.userdata1 = (void*)&userData;
-    callbackInfo.userdata2 = NULL;
-    
-    wgpuInstanceRequestAdapter(instance, options, callbackInfo);
+    wgpuInstanceRequestAdapter(
+        instance,
+        options,
+        {
+            .nextInChain = NULL,
+            .mode = WGPUCallbackMode_AllowSpontaneous,   // WGPUCallbackMode_AllowSpontaneous 立即异步触发，不依赖额外时间循环
+            .callback = onAdapterRequestEnded,
+            .userdata1 = (void*)&userData,
+            .userdata2 = NULL,
+        }
+    );
 
     return userData.adapter;
 }
 
+/**
+ * 获取 device
+ */
+WGPUDevice requestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const* desc)
+{
+    struct UserData {
+        WGPUDevice device = nullptr;
+        bool requestEnded = false;
+    };
+    UserData userData;
+
+    wgpuAdapterRequestDevice(
+        adapter,
+        desc,
+        {
+            .nextInChain = NULL,
+            .mode = WGPUCallbackMode_AllowSpontaneous,
+            .callback = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userData1, void* userData2) {
+                UserData& userData = *reinterpret_cast<UserData*>(userData1);
+                if (status == WGPURequestDeviceStatus_Success) {
+                    userData.device = device;
+                } else {
+                    std::cout << "Could not get WebGPU device: " << message.data << std::endl;
+                }
+                userData.requestEnded = true;
+            },
+            .userdata1 = (void*)&userData,
+            .userdata2 = NULL,
+        }
+    );
+
+    return userData.device;
+}
+
 int main(int argc, char** argv)
 {
-    // Create WebGPU instance
+    // 创建 WebGPU 示例
     WGPUInstanceDescriptor desc = {};
     desc.nextInChain = nullptr;
     WGPUInstance instance = wgpuCreateInstance(&desc);
@@ -56,7 +92,7 @@ int main(int argc, char** argv)
     adapterOpts.nextInChain = nullptr;
     adapterOpts.powerPreference = WGPUPowerPreference_HighPerformance;
 
-    WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
+    WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
     std::cout << "Got Adapter : " << adapter << std::endl;
 
     // 获取 adapter 限制能力
@@ -78,6 +114,7 @@ int main(int argc, char** argv)
     //    std::cout << " - " << features.features[i] << std::endl;
     // }
 
+    // 打印 adapter 信息
     WGPUAdapterInfo info = {};
     wgpuAdapterGetInfo(adapter, &info);
     std::cout << "Adapter Info : " << std::endl;
@@ -88,12 +125,38 @@ int main(int argc, char** argv)
     std::cout << " - backendType:" << info.backendType << std::endl;
     std::cout << " - adapterType:" << info.adapterType << std::endl;
 
+    // 获取 device
+    WGPUDeviceDescriptor deviceDesc = {
+        .nextInChain = nullptr,
+        .label = "Device",
+        .requiredFeatureCount = 0,
+        .requiredLimits = nullptr,
+        .defaultQueue = {
+            .nextInChain = nullptr,
+            .label = "Default Queue",
+        },
+        .deviceLostCallbackInfo = {
+            .nextInChain = nullptr,
+            .mode = WGPUCallbackMode_AllowSpontaneous,
+            .callback = [](WGPUDevice const* device, WGPUDeviceLostReason reason, WGPUStringView message, void* userdata1, void* userdata2) {
+                std::cout << "WebGPU Device Lost: " << message.data << std::endl;
+            },
+            .userdata1 = nullptr,
+            .userdata2 = nullptr,
+        }
+    };
+    WGPUDevice device = requestDevice(adapter, &deviceDesc);
+    // 获取 device 之后，建议立即释放 adapter
+    wgpuAdapterRelease(adapter);
+    std::cout << "Got Device : " << device << std::endl;
+
     while (true) {
         _sleep(1000);
     }
 
-    // Destroy WebGPU instance
-    wgpuAdapterRelease(adapter);
+    // 销毁 WebGPU 资源
+    wgpuDeviceRelease(device);
+    
     wgpuInstanceRelease(instance);
     return 0;
 }
