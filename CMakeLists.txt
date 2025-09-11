@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
 find_package(Dawn REQUIRED)
-add_executable(hello_webgpu hello_webgpu.cpp)
+add_executable(setup setup.cpp)
 
 # Declare dependency on the dawn::webgpu_dawn library
-target_link_libraries(hello_webgpu dawn::webgpu_dawn)
+target_link_libraries(setup dawn::webgpu_dawn)
