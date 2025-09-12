@@ -6,9 +6,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_subdirectory(deps/glfw)
+
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
 find_package(Dawn REQUIRED)
-add_executable(sample sample.cpp)
 
-# Declare dependency on the dawn::webgpu_dawn library
-target_link_libraries(sample dawn::webgpu_dawn)
+include_directories(deps/dawn/include)
+add_subdirectory(deps/glfw3webgpu)
+
+add_executable(sample sample.cpp application.cpp)
+
+target_link_libraries(
+    sample 
+    dawn::webgpu_dawn
+    glfw
+    glfw3webgpu
+)
