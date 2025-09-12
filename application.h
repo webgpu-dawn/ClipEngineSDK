@@ -11,9 +11,12 @@ public:
     void run();
 
 private:
+    WGPUTextureView get_next_surface_textureview();
+
+private:
     GLFWwindow* window_;
 
-    WGPUInstance instance_;
     WGPUDevice   device_;
     WGPUQueue    queue_;
+    WGPUSurface  surface_;
 };
