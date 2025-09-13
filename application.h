@@ -13,6 +13,7 @@ public:
 
 private:
     wgpu::TextureView get_next_surface_view();
+    bool initialize_pipeline();
 
 private:
     GLFWwindow* window_ = nullptr;
@@ -21,4 +22,7 @@ private:
     wgpu::Device   device_   = nullptr;
     wgpu::Queue    queue_    = nullptr;
     wgpu::Surface  surface_  = nullptr;
+
+    wgpu::RenderPipeline pipeline_ = nullptr;
+    wgpu::TextureFormat  surface_format_ = wgpu::TextureFormat::Undefined;
 };

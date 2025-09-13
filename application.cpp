@@ -10,6 +10,63 @@
 using namespace wgpu;
 using namespace std;
 
+const char* shader_source = R"(
+@vertex
+fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+	if (in_vertex_index == 0u) {
+		return vec4f(-0.45, 0.5, 0.0, 1.0);
+	} else if (in_vertex_index == 1u) {
+		return vec4f(0.45, 0.5, 0.0, 1.0);
+	} else {
+		return vec4f(0.0, -0.5, 0.0, 1.0);
+	}
+}
+// Add this in the same shaderSource literal than the vertex entry point
+@fragment
+fn fs_main() -> @location(0) vec4f {
+	return vec4f(0.0, 0.4, 0.7, 1.0);
+}
+)";
+
+bool Application::initialize_pipeline()
+{
+    // ShaderModule
+    ShaderSourceWGSL wgsl_desc = Default;
+    wgsl_desc.code = StringView(shader_source);
+    ShaderModuleDescriptor shader_desc = Default;
+    shader_desc.nextInChain = &wgsl_desc.chain;
+    shader_desc.label = StringView("Shader source");
+    ShaderModule shader_module = device_.createShaderModule(shader_desc);
+
+    // VertexState
+    VertexState vertex_state = Default;
+    vertex_state.module = shader_module;
+    vertex_state.entryPoint = StringView("vs_main");
+
+    // FragmentState
+    // ColorTargetState
+    // BlendState
+    BlendState blend_state = Default;
+    ColorTargetState color_target = Default;
+    color_target.format = surface_format_;
+    color_target.blend = &blend_state;
+
+    FragmentState fragment_state = Default;
+    fragment_state.module = shader_module;
+    fragment_state.entryPoint = StringView("fs_main");
+    fragment_state.targetCount = 1;
+    fragment_state.targets = &color_target;
+
+
+    RenderPipelineDescriptor pipeline_desc = Default;
+    pipeline_desc.vertex = vertex_state;
+    pipeline_desc.fragment = &fragment_state;
+    pipeline_ = device_.createRenderPipeline(pipeline_desc);
+
+    shader_module.release();
+    return true;
+}
+
 bool Application::initialize()
 {
     glfwInit();
@@ -29,7 +86,7 @@ bool Application::initialize()
     adapter_opts.compatibleSurface = surface_;
     Adapter adapter = requestAdapterSync(instance_, &adapter_opts);
     std::cout << "Got adapter: " << adapter << std::endl;
-    
+
     // 3、获取 device
     std::cout << "Request device ..." << std::endl;
     std::vector<FeatureName> features;
@@ -41,30 +98,30 @@ bool Application::initialize()
     device_desc.requiredLimits = &required_limits;
     device_desc.defaultQueue.label = StringView("queue");
     device_desc.deviceLostCallbackInfo.callback = [](
-        WGPUDevice const * device,
-		WGPUDeviceLostReason reason,
-		struct WGPUStringView message,
-		void* /* userdata1 */,
-		void* /* userdata2 */
-    ){
-        std::cout
-	    	<< "Device " << device << " was lost: reason " << reason
-	    	<< " (" << StringView(message) << ")" // NEW
-	    	<< std::endl;
-    };
+        WGPUDevice const* device,
+        WGPUDeviceLostReason reason,
+        struct WGPUStringView message,
+        void* /* userdata1 */,
+        void* /* userdata2 */
+        ) {
+            std::cout
+                << "Device " << device << " was lost: reason " << reason
+                << " (" << StringView(message) << ")" // NEW
+                << std::endl;
+        };
     device_desc.deviceLostCallbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
     device_desc.uncapturedErrorCallbackInfo.callback = []( // TODO: setter
-		WGPUDevice const * device,
-		WGPUErrorType type,
-		struct WGPUStringView message,
-		void* /* userdata1 */,
-		void* /* userdata2 */
-	) {
-	    std::cout
-	    	<< "Uncaptured error in device " << device << ": type " << type
-	    	<< " (" << StringView(message) << ")" // NEW
-	    	<< std::endl;
-	};
+        WGPUDevice const* device,
+        WGPUErrorType type,
+        struct WGPUStringView message,
+        void* /* userdata1 */,
+        void* /* userdata2 */
+        ) {
+            std::cout
+                << "Uncaptured error in device " << device << ": type " << type
+                << " (" << StringView(message) << ")" // NEW
+                << std::endl;
+        };
     device_ = requestDeviceSync(instance_, adapter, &device_desc);
     std::cout << "Got device: " << device_ << std::endl;
 
@@ -74,19 +131,22 @@ bool Application::initialize()
     // 5、配置 surface
     SurfaceCapabilities capabilities = Default;
     Status status = surface_.getCapabilities(adapter, &capabilities);
-    if(status != Status::Success) return false;
+    if (status != Status::Success) return false;
 
     SurfaceConfiguration config = Default;
     config.width = 640;
-    config.height= 480;
+    config.height = 480;
     config.device = device_;
     config.format = capabilities.formats[0];
     config.presentMode = PresentMode::Fifo;
-    config.alphaMode   = CompositeAlphaMode::Auto;
+    config.alphaMode = CompositeAlphaMode::Auto;
     surface_.configure(config);
+    surface_format_ = config.format;
 
     capabilities.freeMembers();
     adapter.release();
+
+    if (!initialize_pipeline()) return false;
 
     return true;
 }
@@ -107,10 +167,10 @@ wgpu::TextureView Application::get_next_surface_view()
 {
     SurfaceTexture surface_texture = Default;
     surface_.getCurrentTexture(&surface_texture);
-    if(
+    if (
         surface_texture.status != SurfaceGetCurrentTextureStatus::SuccessOptimal &&
         surface_texture.status != SurfaceGetCurrentTextureStatus::SuccessSuboptimal
-    ) {
+        ) {
         return nullptr;
     }
 
@@ -125,14 +185,13 @@ wgpu::TextureView Application::get_next_surface_view()
 
 void Application::run()
 {
-    std::cout << "Starting render loop..." << std::endl;
-    while(!glfwWindowShouldClose(window_)) {
+    while (!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
         instance_.processEvents();
 
         // 1、获取当前要绘制的纹理
         TextureView target_view = get_next_surface_view();
-        if(!target_view) return;
+        if (!target_view) return;
 
         // 2、生成指令生成器，后面的绘制都需要通过这个来创建
         CommandEncoderDescriptor encoder_desc = Default;
@@ -144,11 +203,13 @@ void Application::run()
         color_attachment.view = target_view;
         color_attachment.loadOp = LoadOp::Clear;
         color_attachment.storeOp = StoreOp::Store;
-        color_attachment.clearValue = Color { 1.0, 1.0, 0.0, 1.0 };
+        color_attachment.clearValue = Color{ 1.0, 1.0, 0.0, 1.0 };
         renderpass_desc.colorAttachmentCount = 1;
         renderpass_desc.colorAttachments = &color_attachment;
 
         RenderPassEncoder renderpass = encoder.beginRenderPass(renderpass_desc);
+        renderpass.setPipeline(pipeline_);
+        renderpass.draw(3, 1, 0, 0);
         renderpass.end();
         renderpass.release();
 
