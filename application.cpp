@@ -1,78 +1,14 @@
 #include "application.h"
-#include "glfw3webgpu.h"
+#include "webgpu-utils.h"
+
+#include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <vector>
+#include <glfw3webgpu.h>
 
-/**
- * 获取 adapter
- */
-WGPUAdapter requestAdapter(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
-    // A simple structure holding the local information shared with the
-    // onAdapterRequestEnded callback.
-    struct UserData {
-        WGPUAdapter adapter = nullptr;
-        bool requestEnded = false;
-    };
-    UserData userData;
-
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, void* userData1, void* userData2) {
-        UserData& userData = *reinterpret_cast<UserData*>(userData1);
-        if (status == WGPURequestAdapterStatus_Success) {
-            userData.adapter = adapter;
-        } else {
-            std::cout << "Could not get WebGPU adapter: " << message.data << std::endl;
-        }
-        userData.requestEnded = true;
-    };
-
-    wgpuInstanceRequestAdapter(
-        instance,
-        options,
-        {
-            .nextInChain = NULL,
-            .mode = WGPUCallbackMode_AllowSpontaneous,   // WGPUCallbackMode_AllowSpontaneous 立即异步触发，不依赖额外时间循环
-            .callback = onAdapterRequestEnded,
-            .userdata1 = (void*)&userData,
-            .userdata2 = NULL,
-        }
-    );
-
-    return userData.adapter;
-}
-
-/**
- * 获取 device
- */
-WGPUDevice requestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const* desc)
-{
-    struct UserData {
-        WGPUDevice device = nullptr;
-        bool requestEnded = false;
-    };
-    UserData userData;
-
-    wgpuAdapterRequestDevice(
-        adapter,
-        desc,
-        {
-            .nextInChain = NULL,
-            .mode = WGPUCallbackMode_AllowSpontaneous,
-            .callback = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userData1, void* userData2) {
-                UserData& userData = *reinterpret_cast<UserData*>(userData1);
-                if (status == WGPURequestDeviceStatus_Success) {
-                    userData.device = device;
-                } else {
-                    std::cout << "Could not get WebGPU device: " << message.data << std::endl;
-                }
-                userData.requestEnded = true;
-            },
-            .userdata1 = (void*)&userData,
-            .userdata2 = NULL,
-        }
-    );
-
-    return userData.device;
-}
+using namespace wgpu;
+using namespace std;
 
 bool Application::initialize()
 {
@@ -81,200 +17,154 @@ bool Application::initialize()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window_ = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 
-    // 创建 WebGPU 示例
-    WGPUInstance instance = wgpuCreateInstance(nullptr);
+    // 1、创建 WebGPU 示例
+    instance_ = createInstance();
+
+    surface_ = glfwCreateWindowWGPUSurface(instance_, window_);
+
+    // 2、获取 adapter
     std::cout << "Request adapter ... " << std::endl;
-
-    surface_ = glfwGetWGPUSurface(instance, window_);
+    RequestAdapterOptions adapter_opts = Default;
+    adapter_opts.powerPreference = WGPUPowerPreference_HighPerformance;
+    adapter_opts.compatibleSurface = surface_;
+    Adapter adapter = requestAdapterSync(instance_, &adapter_opts);
+    std::cout << "Got adapter: " << adapter << std::endl;
     
-    // 获取 adapter
-    WGPURequestAdapterOptions adapterOpts = {
-        .nextInChain = nullptr,
-        .powerPreference = WGPUPowerPreference_HighPerformance,
-        .compatibleSurface = surface_
+    // 3、获取 device
+    std::cout << "Request device ..." << std::endl;
+    std::vector<FeatureName> features;
+    Limits required_limits = Default;
+    DeviceDescriptor device_desc = Default;
+    device_desc.label = StringView("device");
+    device_desc.requiredFeatureCount = features.size();
+    device_desc.requiredFeatures = (WGPUFeatureName*)features.data();
+    device_desc.requiredLimits = &required_limits;
+    device_desc.defaultQueue.label = StringView("queue");
+    device_desc.deviceLostCallbackInfo.callback = [](
+        WGPUDevice const * device,
+		WGPUDeviceLostReason reason,
+		struct WGPUStringView message,
+		void* /* userdata1 */,
+		void* /* userdata2 */
+    ){
+        std::cout
+	    	<< "Device " << device << " was lost: reason " << reason
+	    	<< " (" << StringView(message) << ")" // NEW
+	    	<< std::endl;
     };
-    WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
-    std::cout << "Got adapter : " << adapter << std::endl;
-    wgpuInstanceRelease(instance);
+    device_desc.deviceLostCallbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+    device_desc.uncapturedErrorCallbackInfo.callback = []( // TODO: setter
+		WGPUDevice const * device,
+		WGPUErrorType type,
+		struct WGPUStringView message,
+		void* /* userdata1 */,
+		void* /* userdata2 */
+	) {
+	    std::cout
+	    	<< "Uncaptured error in device " << device << ": type " << type
+	    	<< " (" << StringView(message) << ")" // NEW
+	    	<< std::endl;
+	};
+    device_ = requestDeviceSync(instance_, adapter, &device_desc);
+    std::cout << "Got device: " << device_ << std::endl;
 
-    // 获取 adapter 限制能力
-    WGPULimits limits = {};
-    limits.nextInChain = nullptr;
-    if(WGPUStatus_Success == wgpuAdapterGetLimits(adapter, &limits)) {
-        std::cout << "Adapter Limits : " << std::endl;
-        std::cout << " - maxTextureDimension1D: " << limits.maxTextureDimension1D << std::endl;
-        std::cout << " - maxTextureDimension2D: " << limits.maxTextureDimension2D << std::endl;
-        std::cout << " - maxTextureDimension3D: " << limits.maxTextureDimension3D << std::endl;
-        std::cout << " - maxTextureArrayLayers: " << limits.maxTextureArrayLayers << std::endl;
-    }
+    // 4、获取 queue
+    queue_ = device_.getQueue();
 
-    // 枚举 WebGPU 实现支持的特性
-    WGPUSupportedFeatures features = {};
-    wgpuAdapterGetFeatures(adapter, &features);
-    // std::cout << "Adapter Supported Features : " << std::endl;
-    // for(uint32_t i = 0; i < features.featureCount; ++i) {
-    //    std::cout << " - " << features.features[i] << std::endl;
-    // }
+    // 5、配置 surface
+    SurfaceCapabilities capabilities = Default;
+    Status status = surface_.getCapabilities(adapter, &capabilities);
+    if(status != Status::Success) return false;
 
-    // 打印 adapter 信息
-    WGPUAdapterInfo info = {};
-    wgpuAdapterGetInfo(adapter, &info);
-    std::cout << "Adapter Info : " << std::endl;
-    std::cout << " - vendor: " << info.vendor.data << std::endl;
-    std::cout << " - architecture: " << info.architecture.data << std::endl;
-    std::cout << " - device: " << info.device.data << std::endl;
-    std::cout << " - description: " << info.description.data << std::endl;
-    std::cout << " - backendType:" << info.backendType << std::endl;
-    std::cout << " - adapterType:" << info.adapterType << std::endl;
+    SurfaceConfiguration config = Default;
+    config.width = 640;
+    config.height= 480;
+    config.device = device_;
+    config.format = capabilities.formats[0];
+    config.presentMode = PresentMode::Fifo;
+    config.alphaMode   = CompositeAlphaMode::Auto;
+    surface_.configure(config);
 
-    std::cout << "Request device ... " << std::endl;
-    // 获取 device
-    WGPUDeviceDescriptor deviceDesc = {
-        .nextInChain = nullptr,
-        .label = "Device",
-        .requiredFeatureCount = 0,
-        .requiredLimits = nullptr,
-        .defaultQueue = {
-            .nextInChain = nullptr,
-            .label = "Default Queue",
-        },
-        .deviceLostCallbackInfo = {
-            .nextInChain = nullptr,
-            .mode = WGPUCallbackMode_AllowSpontaneous,
-            .callback = [](WGPUDevice const* device, WGPUDeviceLostReason reason, WGPUStringView message, void* userdata1, void* userdata2) {
-                std::cout << "WebGPU Device lost: " << message.data << std::endl;
-            },
-            .userdata1 = nullptr,
-            .userdata2 = nullptr,
-        }
-    };
-    device_ = requestDevice(adapter, &deviceDesc);
-    std::cout << "Got device : " << device_ << std::endl;
+    capabilities.freeMembers();
+    adapter.release();
 
-    // 获取 queue
-    queue_ = wgpuDeviceGetQueue(device_);
-
-    WGPUSurfaceCapabilities cap = {};
-    WGPUStatus status = wgpuSurfaceGetCapabilities(surface_, adapter, &cap);
-    std::cout << "Supported formats = " << cap.formatCount << std::endl;
-
-    WGPUTextureFormat format = cap.formats[0];
-    // 配置 surface
-    WGPUSurfaceConfiguration config = {
-        .nextInChain = nullptr,
-        .device = device_,
-        .format = cap.formats[0],
-        .usage = WGPUTextureUsage_RenderAttachment,
-        .width = 640,
-        .height = 480,
-        .viewFormatCount = 0,
-        .viewFormats = nullptr,
-        .alphaMode = WGPUCompositeAlphaMode_Auto,
-        .presentMode = WGPUPresentMode_Fifo
-    };
-    
-    wgpuSurfaceConfigure(surface_, &config);
-    //  Release the adapter only after it has been fully utilized
-    wgpuAdapterRelease(adapter);
     return true;
 }
 
 void Application::terminate()
 {
     // 销毁 WebGPU 资源
-    wgpuSurfaceUnconfigure(surface_);
-    wgpuQueueRelease(queue_);
-    wgpuSurfaceRelease(surface_);
-    wgpuDeviceRelease(device_);
+    surface_.unconfigure();
+    queue_.release();
+    surface_.release();
+    device_.release();
+
     glfwDestroyWindow(window_);
     glfwTerminate();
 }
 
-WGPUTextureView Application::get_next_surface_textureview()
+wgpu::TextureView Application::get_next_surface_view()
 {
-    WGPUSurfaceTexture surface_texture;
-    wgpuSurfaceGetCurrentTexture(surface_, &surface_texture);
-
-    if(surface_texture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal) {
-        std::cerr << "Could not get next surface texture: " << surface_texture.status << std::endl;
+    SurfaceTexture surface_texture = Default;
+    surface_.getCurrentTexture(&surface_texture);
+    if(
+        surface_texture.status != SurfaceGetCurrentTextureStatus::SuccessOptimal &&
+        surface_texture.status != SurfaceGetCurrentTextureStatus::SuccessSuboptimal
+    ) {
         return nullptr;
     }
 
-    // Create a view for this surface texuture
-    WGPUTextureViewDescriptor desc = {
-        .nextInChain = nullptr,
-        .label = "Surface Texture View",
-        .format = wgpuTextureGetFormat(surface_texture.texture),
-        .dimension = WGPUTextureViewDimension_2D,
-        .baseMipLevel = 0,
-        .mipLevelCount = 1,
-        .baseArrayLayer = 0,
-        .arrayLayerCount = 1,
-        .aspect = WGPUTextureAspect_All,
-    };
-    WGPUTextureView view = wgpuTextureCreateView(surface_texture.texture, &desc);
-
-    wgpuTextureRelease(surface_texture.texture);
+    TextureViewDescriptor desc = Default;
+    desc.label = StringView("Surface texture view");
+    desc.dimension = TextureViewDimension::_2D;
+    TextureView view = Texture(surface_texture.texture).createView(desc);
+    Texture(surface_texture.texture).release();
 
     return view;
 }
 
 void Application::run()
 {
+    std::cout << "Starting render loop..." << std::endl;
     while(!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
+        instance_.processEvents();
 
-        // Get the next target texture view
-        WGPUTextureView view = get_next_surface_textureview();
-        if(!view) return;
+        // 1、获取当前要绘制的纹理
+        TextureView target_view = get_next_surface_view();
+        if(!target_view) return;
 
-        // Create a command encoder for the draw call
-        WGPUCommandEncoderDescriptor encoder_desc = {
-            .nextInChain = nullptr,
-            .label = "command encoder"
-        };
-        WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device_, &encoder_desc);
+        // 2、生成指令生成器，后面的绘制都需要通过这个来创建
+        CommandEncoderDescriptor encoder_desc = Default;
+        encoder_desc.label = StringView("Command encoder");
+        CommandEncoder encoder = device_.createCommandEncoder(encoder_desc);
 
-        // Create the render pass that clears the screen with our color
-        WGPURenderPassColorAttachment render_pass_color_attachment = {
-            .view = view,
-            .resolveTarget = nullptr,
-            .loadOp = WGPULoadOp_Clear,
-            .storeOp = WGPUStoreOp_Store,
-            .clearValue = WGPUColor { 1.0, 0, 0, 1.0 },
-        #ifdef WEBGPU_BACKEND_WGPU
-            .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED
-        #endif
-        };
+        RenderPassDescriptor renderpass_desc = Default;
+        RenderPassColorAttachment color_attachment = Default;
+        color_attachment.view = target_view;
+        color_attachment.loadOp = LoadOp::Clear;
+        color_attachment.storeOp = StoreOp::Store;
+        color_attachment.clearValue = Color { 1.0, 1.0, 0.0, 1.0 };
+        renderpass_desc.colorAttachmentCount = 1;
+        renderpass_desc.colorAttachments = &color_attachment;
 
-        WGPURenderPassDescriptor render_pass_desc = {
-            .nextInChain = nullptr,
-            .colorAttachmentCount = 1,
-            .colorAttachments = &render_pass_color_attachment,
-            .depthStencilAttachment = nullptr,
-            .timestampWrites = nullptr
-        };
+        RenderPassEncoder renderpass = encoder.beginRenderPass(renderpass_desc);
+        renderpass.end();
+        renderpass.release();
 
-        WGPURenderPassEncoder render_pass = wgpuCommandEncoderBeginRenderPass(encoder, &render_pass_desc);
-        wgpuRenderPassEncoderEnd(render_pass);
-        wgpuRenderPassEncoderRelease(render_pass);
+        // 3、 生成指令
+        CommandBufferDescriptor cmd_buffer_desc = Default;
+        cmd_buffer_desc.label = StringView("Command Buffer");
+        CommandBuffer command = encoder.finish(cmd_buffer_desc);
+        encoder.release();
 
-        WGPUCommandBufferDescriptor cmd_buffer_desc = {
-            .nextInChain = nullptr,
-            .label = "Command buffer"
-        };
-        WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
-        wgpuCommandEncoderRelease(encoder);
+        // 4、提交指令
+        queue_.submit(command);
+        command.release();
 
-        std::cout << "Submitting command ..." << std::endl;
-        wgpuQueueSubmit(queue_, 1, &command);
-        wgpuCommandBufferRelease(command);
-        std::cout << "Command submitted ." << std::endl;
+        target_view.release();
 
-        wgpuSurfacePresent(surface_);
-        
-        wgpuDeviceTick(device_);
-
-        wgpuTextureViewRelease(view);
+        // 5、呈现
+        surface_.present();
     }
 }

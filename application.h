@@ -1,7 +1,8 @@
 #pragma once
 
-#include <webgpu/webgpu.h>
-#include <GLFW/glfw3.h>
+#include <webgpu/webgpu.hpp>
+
+struct GLFWwindow;
 
 class Application {
 
@@ -11,12 +12,13 @@ public:
     void run();
 
 private:
-    WGPUTextureView get_next_surface_textureview();
+    wgpu::TextureView get_next_surface_view();
 
 private:
-    GLFWwindow* window_;
+    GLFWwindow* window_ = nullptr;
 
-    WGPUDevice   device_;
-    WGPUQueue    queue_;
-    WGPUSurface  surface_;
+    wgpu::Instance instance_ = nullptr;
+    wgpu::Device   device_   = nullptr;
+    wgpu::Queue    queue_    = nullptr;
+    wgpu::Surface  surface_  = nullptr;
 };
