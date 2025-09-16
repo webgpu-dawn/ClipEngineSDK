@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(sample)
+project(clipengine)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,21 +13,28 @@ add_subdirectory(deps/glfw)
 
 include_directories(
     deps/dawn/include
-    ${CMAKE_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/src
 )
 add_subdirectory(deps/glfw3webgpu)
 
 add_executable(
-    sample 
-    sample.cpp
-    WGPUHelpers.cpp
-    ComboRenderPipelineDescriptor.cpp)
+    clipengine 
+    main.cpp
+    src/WGPUHelpers.cpp
+    src/ComboRenderPipelineDescriptor.cpp
+    
+    src/core/ClipContext.cpp
+
+    src/Application.cpp
+    src/ClipEngine.cpp
+    
+)
 
 target_link_libraries(
-    sample 
+    clipengine 
     dawn::webgpu_dawn
     glfw
     glfw3webgpu
 )
 
-set_directory_properties(PROPERTIES VS_STARTUP_PROJECT sample)
+set_directory_properties(PROPERTIES VS_STARTUP_PROJECT clipengine)
