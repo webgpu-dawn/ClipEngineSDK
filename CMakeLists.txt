@@ -20,10 +20,11 @@ add_subdirectory(deps/glfw3webgpu)
 add_executable(
     clipengine 
     main.cpp
-    src/WGPUHelpers.cpp
-    src/ComboRenderPipelineDescriptor.cpp
     
-    src/core/ClipContext.cpp
+    src/core/util/WGPUHelpers.cpp
+    src/core/util/ComboRenderPipelineDescriptor.cpp
+    src/core/util/ClipContext.cpp
+    src/core/renderer/TriangleRenderer.cpp
 
     src/Application.cpp
     src/ClipEngine.cpp

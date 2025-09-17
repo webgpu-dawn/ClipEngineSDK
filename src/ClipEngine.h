@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 /**
  * ClipEngine 指责
  * 1、对外提供接口，让用户可以方便地传入视频帧或图片等数据
@@ -7,7 +9,8 @@
  * 3、多轨道、多图层合成
  * 4、输出到窗口或文件
  */
-#include "core/ClipContext.h"
+#include "core/util/ClipContext.h"
+#include "core/renderer/TriangleRenderer.h"
 
 // 前置声明核心模块
 class ClipContext;  // GPU 设备管理类：管理 GPU 上下文、命令队列、资源分配、纹理/缓冲区操作等
@@ -32,5 +35,7 @@ public:
 private:
     ClipContext context_;
 
-    wgpu::Buffer vertex_buffer;
+    std::unique_ptr<TriangleRenderer> tri_renderer_;
+
+
 };
