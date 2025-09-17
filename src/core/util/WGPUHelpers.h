@@ -17,6 +17,11 @@ wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
                                   const void* data,
                                   uint64_t size,
                                   wgpu::BufferUsage usage);
+wgpu::TextureView CreateTextureFromPath(
+                                  const wgpu::Device& device,
+                                  const char* filePath
+);
+wgpu::Sampler CreateSamper(const wgpu::Device& device);
 
 struct ComboRenderPassDescriptor : public wgpu::RenderPassDescriptor {
 public:
@@ -71,4 +76,8 @@ wgpu::BindGroupLayout MakeBindGroupLayout(
     const wgpu::Device& device,
     std::initializer_list<BindingLayoutEntryInitializationHelper> entriesInitializer);
 
+wgpu::PipelineLayout MakeBasicPipelineLayout(
+    const wgpu::Device& device,
+    const wgpu::BindGroupLayout* bindGroupLayout,
+    uint32_t immediateDataByteSize = 0);
 }

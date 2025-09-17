@@ -12,7 +12,7 @@ void ClipEngine::initialize(GLFWwindow* window)
 
     tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
     tex_renderer_->init();
-    tex_renderer_->setTexture("D://blur-image.jpg");
+    tex_renderer_->setTexture("D://testTexture.png");
 
 }
 

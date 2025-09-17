@@ -1,4 +1,8 @@
 #include "WGPUHelpers.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+using namespace wgpu;
 
 namespace dawn::utils {
 
@@ -8,6 +12,17 @@ wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* so
     wgpu::ShaderModuleDescriptor desc;
     desc.nextInChain = &wgsl;
     return device.CreateShaderModule(&desc);
+}
+
+wgpu::Sampler CreateSamper(const wgpu::Device& device)
+{
+    wgpu::SamplerDescriptor desc;
+    desc.magFilter = wgpu::FilterMode::Linear;
+    desc.minFilter = wgpu::FilterMode::Linear;
+    desc.addressModeU = AddressMode::ClampToEdge;
+    desc.addressModeV = AddressMode::ClampToEdge;
+
+    return device.CreateSampler(&desc);
 }
 
 wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
@@ -21,6 +36,55 @@ wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
 
     device.GetQueue().WriteBuffer(buffer, 0, data, size);
     return buffer;
+}
+
+wgpu::TextureView CreateTextureFromPath(
+                                  const wgpu::Device& device,
+                                  const char* filePath
+) {
+    // 1. 加载图片
+    int texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, 4);
+    if (!pixels) {
+        // std::cerr << "Failed to load texture: " << path << std::endl;
+        return wgpu::TextureView{};
+    }
+
+    // 2. 创建 GPU Texture
+    TextureDescriptor texDesc{};
+    texDesc.usage = TextureUsage::TextureBinding | TextureUsage::CopyDst;
+    texDesc.dimension = TextureDimension::e2D;
+    texDesc.size.width = texWidth;
+    texDesc.size.height = texHeight;
+    texDesc.size.depthOrArrayLayers = 1;
+    texDesc.format = TextureFormat::RGBA8Unorm;
+    texDesc.mipLevelCount = 1;
+    texDesc.sampleCount = 1;
+
+    Texture texture = device.CreateTexture(&texDesc);
+    TextureView view = texture.CreateView();
+
+    // 3. 上传像素数据
+    TexelCopyTextureInfo copyTex{};
+    copyTex.texture = texture;
+    copyTex.mipLevel = 0;
+    copyTex.origin = { 0, 0, 0 };
+
+    TexelCopyBufferLayout dataLayout{};
+    dataLayout.offset = 0;
+    dataLayout.bytesPerRow = texWidth * 4; // RGBA8
+    dataLayout.rowsPerImage = texHeight;
+
+    Extent3D copySize{};
+    copySize.width = texWidth;
+    copySize.height = texHeight;
+    copySize.depthOrArrayLayers = 1;
+
+    device.GetQueue().WriteTexture(&copyTex, pixels, texWidth * texHeight * 4, &dataLayout, &copySize);
+
+    stbi_image_free(pixels);
+
+    return view;
 }
 
 ComboRenderPassDescriptor::ComboRenderPassDescriptor(
@@ -109,6 +173,25 @@ wgpu::BindGroupLayout MakeBindGroupLayout(
     descriptor.entryCount = entries.size();
     descriptor.entries = entries.data();
     return device.CreateBindGroupLayout(&descriptor);
+}
+
+wgpu::PipelineLayout MakeBasicPipelineLayout(const wgpu::Device& device,
+                                             const wgpu::BindGroupLayout* bindGroupLayout,
+                                             uint32_t immediateDataByteSize) {
+    wgpu::PipelineLayoutDescriptor descriptor;
+    if (bindGroupLayout != nullptr) {
+        descriptor.bindGroupLayoutCount = 1;
+        descriptor.bindGroupLayouts = bindGroupLayout;
+    } else {
+        descriptor.bindGroupLayoutCount = 0;
+        descriptor.bindGroupLayouts = nullptr;
+    }
+
+    if (immediateDataByteSize > 0) {
+        descriptor.immediateSize = immediateDataByteSize;
+    }
+
+    return device.CreatePipelineLayout(&descriptor);
 }
 
 BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
