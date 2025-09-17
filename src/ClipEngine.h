@@ -11,6 +11,7 @@
  */
 #include "core/util/ClipContext.h"
 #include "core/renderer/TriangleRenderer.h"
+#include "core/renderer/TextureRenderer.h"
 
 // 前置声明核心模块
 class ClipContext;  // GPU 设备管理类：管理 GPU 上下文、命令队列、资源分配、纹理/缓冲区操作等
@@ -36,6 +37,7 @@ private:
     ClipContext context_;
 
     std::unique_ptr<TriangleRenderer> tri_renderer_;
+    std::unique_ptr<TextureRenderer> tex_renderer_;
 
 
 };

@@ -33,4 +33,42 @@ public:
     wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
 };
 
+
+struct BindingLayoutEntryInitializationHelper : wgpu::BindGroupLayoutEntry {
+    BindingLayoutEntryInitializationHelper(uint32_t entryBinding,
+                                           wgpu::ShaderStage entryVisibility,
+                                           wgpu::BufferBindingType bufferType,
+                                           bool bufferHasDynamicOffset = false,
+                                           uint64_t bufferMinBindingSize = 0);
+    BindingLayoutEntryInitializationHelper(uint32_t entryBinding,
+                                           wgpu::ShaderStage entryVisibility,
+                                           wgpu::SamplerBindingType samplerType);
+    BindingLayoutEntryInitializationHelper(
+        uint32_t entryBinding,
+        wgpu::ShaderStage entryVisibility,
+        wgpu::TextureSampleType textureSampleType,
+        wgpu::TextureViewDimension viewDimension = wgpu::TextureViewDimension::e2D,
+        bool textureMultisampled = false);
+    BindingLayoutEntryInitializationHelper(
+        uint32_t entryBinding,
+        wgpu::ShaderStage entryVisibility,
+        wgpu::StorageTextureAccess storageTextureAccess,
+        wgpu::TextureFormat format,
+        wgpu::TextureViewDimension viewDimension = wgpu::TextureViewDimension::e2D);
+#ifndef __EMSCRIPTEN__
+    BindingLayoutEntryInitializationHelper(uint32_t entryBinding,
+                                           wgpu::ShaderStage entryVisibility,
+                                           wgpu::ExternalTextureBindingLayout* bindingLayout);
+    BindingLayoutEntryInitializationHelper(uint32_t entryBinding,
+                                           wgpu::ShaderStage entryVisibility,
+                                           wgpu::TexelBufferBindingLayout* bindingLayout);
+#endif  // __EMSCRIPTEN__
+    // NOLINTNEXTLINE(runtime/explicit)
+    BindingLayoutEntryInitializationHelper(const wgpu::BindGroupLayoutEntry& entry);
+};
+
+wgpu::BindGroupLayout MakeBindGroupLayout(
+    const wgpu::Device& device,
+    std::initializer_list<BindingLayoutEntryInitializationHelper> entriesInitializer);
+
 }

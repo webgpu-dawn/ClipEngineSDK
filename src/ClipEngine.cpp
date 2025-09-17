@@ -7,8 +7,13 @@ void ClipEngine::initialize(GLFWwindow* window)
 {
     context_.initialize(window);
 
-    tri_renderer_ = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
-    tri_renderer_->init();
+    // tri_renderer_ = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
+    // tri_renderer_->init();
+
+    tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
+    tex_renderer_->init();
+    tex_renderer_->setTexture("D://blur-image.jpg");
+
 }
 
 void ClipEngine::render()
@@ -20,7 +25,8 @@ void ClipEngine::render()
     wgpu::CommandEncoder encoder = context_.device_.CreateCommandEncoder();
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);
-        tri_renderer_->render(pass);
+        // tri_renderer_->render(pass);
+        tex_renderer_->render(pass);
     }
 
     wgpu::CommandBuffer commands = encoder.Finish();

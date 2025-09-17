@@ -97,5 +97,90 @@ void ComboRenderPassDescriptor::UnsetDepthStencilLoadStoreOpsForFormat(wgpu::Tex
     }
 }
 
+wgpu::BindGroupLayout MakeBindGroupLayout(
+    const wgpu::Device& device,
+    std::initializer_list<BindingLayoutEntryInitializationHelper> entriesInitializer) {
+    std::vector<wgpu::BindGroupLayoutEntry> entries;
+    for (const BindingLayoutEntryInitializationHelper& entry : entriesInitializer) {
+        entries.push_back(entry);
+    }
+
+    wgpu::BindGroupLayoutDescriptor descriptor;
+    descriptor.entryCount = entries.size();
+    descriptor.entries = entries.data();
+    return device.CreateBindGroupLayout(&descriptor);
+}
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::BufferBindingType bufferType,
+    bool bufferHasDynamicOffset,
+    uint64_t bufferMinBindingSize) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    buffer.type = bufferType;
+    buffer.hasDynamicOffset = bufferHasDynamicOffset;
+    buffer.minBindingSize = bufferMinBindingSize;
+}
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::SamplerBindingType samplerType) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    sampler.type = samplerType;
+}
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::TextureSampleType textureSampleType,
+    wgpu::TextureViewDimension textureViewDimension,
+    bool textureMultisampled) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    texture.sampleType = textureSampleType;
+    texture.viewDimension = textureViewDimension;
+    texture.multisampled = textureMultisampled;
+}
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::StorageTextureAccess storageTextureAccess,
+    wgpu::TextureFormat format,
+    wgpu::TextureViewDimension textureViewDimension) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    storageTexture.access = storageTextureAccess;
+    storageTexture.format = format;
+    storageTexture.viewDimension = textureViewDimension;
+}
+
+// ExternalTextureBindingLayout never contains data, so just make one that can be reused instead
+// of declaring a new one every time it's needed.
+wgpu::ExternalTextureBindingLayout kExternalTextureBindingLayout = {};
+wgpu::TexelBufferBindingLayout kTexelBufferBindingLayout = {};
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::ExternalTextureBindingLayout* bindingLayout) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    nextInChain = bindingLayout;
+}
+
+BindingLayoutEntryInitializationHelper::BindingLayoutEntryInitializationHelper(
+    uint32_t entryBinding,
+    wgpu::ShaderStage entryVisibility,
+    wgpu::TexelBufferBindingLayout* bindingLayout) {
+    binding = entryBinding;
+    visibility = entryVisibility;
+    nextInChain = bindingLayout;
+}
+
 
 }

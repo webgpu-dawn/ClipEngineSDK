@@ -19,4 +19,5 @@ protected:
     wgpu::Device device_;
     wgpu::TextureFormat surface_texture_fmt_ = wgpu::TextureFormat::BGRA8Unorm;
     wgpu::RenderPipeline pipeline_;
+    wgpu::ShaderModule module_;
 };
