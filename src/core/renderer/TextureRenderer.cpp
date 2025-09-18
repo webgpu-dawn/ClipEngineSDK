@@ -7,11 +7,7 @@ using namespace wgpu;
 
 void TextureRenderer::init()
 {
-    init_buffer();
-    init_sampler();
-    init_shader();
-    init_pipeline();
-    init_bindgroup();
+
 }
 
 void TextureRenderer::init_buffer()
@@ -169,6 +165,9 @@ void TextureRenderer::init_bindgroup()
     device_.GetQueue().WriteTexture(&info, (void*)v.data(), u_size, &layout, &copySize);
 
     // 渲染管线使用处理后的纹理
+    if (!sampler_) {
+        init_sampler();
+    }
     BindGroupEntry renderEntries[4]{};
     renderEntries[0].binding = 0;
     renderEntries[0].sampler = sampler_;
@@ -199,6 +198,10 @@ void TextureRenderer::init_pipeline()
         .attributeCount = 2,
         .attributes = attrs
     };
+
+    if (!module_) {
+        init_shader();
+    }
     
     FragmentState fragment_state{};
     {
@@ -237,6 +240,15 @@ void TextureRenderer::init_pipeline()
 
 void TextureRenderer::render(RenderPassEncoder& pass)
 {
+    if(!pipeline_) {
+        init_pipeline();
+    }
+    if (!vertex_buffer_) {
+        init_buffer();
+    }
+    if (!bind_group_) {
+        init_bindgroup();
+    }
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);
     pass.SetBindGroup(0, bind_group_);
