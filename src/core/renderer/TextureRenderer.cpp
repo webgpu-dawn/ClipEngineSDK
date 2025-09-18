@@ -2,6 +2,7 @@
 #include <iterator>
 #include <fstream>
 #include <vector>
+#include <iostream>
 
 using namespace wgpu;
 
@@ -123,6 +124,7 @@ void TextureRenderer::init_shader()
     const char* code = R"(
         @group(0) @binding(0) var mySampler: sampler;
         @group(0) @binding(1) var rgba_tex: texture_2d<f32>;
+        @group(0) @binding(2) var<uniform> exposure: f32;
 
         struct VertexOutput {
             @builtin(position) pos: vec4f,
@@ -139,7 +141,10 @@ void TextureRenderer::init_shader()
 
         @fragment
         fn fs(input: VertexOutput) -> @location(0) vec4f {
-            return textureSample(rgba_tex, mySampler, input.fragUV);
+            let color = textureSample(rgba_tex, mySampler, input.fragUV);
+            // 曝光调整
+            let adjusted = color * exposure;
+            return vec4f(clamp(adjusted.rgb, vec3f(0.0), vec3f(1.0)), color.a);
         }
     )";
 
@@ -156,16 +161,22 @@ void TextureRenderer::init_bindgroup()
     if (!sampler_) {
         init_sampler();
     }
-    BindGroupEntry entries[2]{};
+    wgpu::BufferDescriptor desc;
+    desc.size = sizeof(float);
+    desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
+    uniform_buffer_ = device_.CreateBuffer(&desc);
+
+    BindGroupEntry entries[3]{};
     entries[0].binding = 0;
     entries[0].sampler = sampler_;
     entries[1].binding = 1;
     entries[1].textureView = rgba_tex_;
-
+    entries[2].binding = 2;
+    entries[2].buffer = uniform_buffer_;
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
-        .entryCount = 2,
+        .entryCount = 3,
         .entries = entries
     };
     bind_group_ = device_.CreateBindGroup(&renderBGDesc);
@@ -297,7 +308,8 @@ void TextureRenderer::init_pipeline()
         device_,
         {
             { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },   // sampelr
-            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }
+            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D },
+            { 2, ShaderStage::Fragment, BufferBindingType::Uniform, false }
         }
     );
 
@@ -342,6 +354,10 @@ void TextureRenderer::render(RenderPassEncoder& pass)
         wgpu::CommandBuffer cmdBuffer = encoder.Finish();
         device_.GetQueue().Submit(1, &cmdBuffer);
     }
+
+    static float exposure = 0.0;
+    exposure += 0.01;
+    device_.GetQueue().WriteBuffer(uniform_buffer_, 0, &exposure, sizeof(float));
 
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);

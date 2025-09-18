@@ -26,6 +26,8 @@ private:
     wgpu::Buffer vertex_buffer_;
     wgpu::Sampler sampler_;
 
+    wgpu::Buffer uniform_buffer_;
+
     // 渲染相关
     wgpu::BindGroupLayout bind_group_layout_;
     wgpu::BindGroup bind_group_;
