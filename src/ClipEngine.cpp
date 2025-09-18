@@ -12,7 +12,7 @@ void ClipEngine::initialize(GLFWwindow* window)
 
     tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
     tex_renderer_->init();
-    tex_renderer_->setTexture("D://img_4608x3464_P420.raw");
+    tex_renderer_->setTexture("D://5888x3840.yuv");
 
 }
 
@@ -26,7 +26,7 @@ void ClipEngine::render()
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);  
         tex_renderer_->render(pass);
-        tri_renderer_->render(pass);   
+        // tri_renderer_->render(pass);   
         pass.End();
     }
 

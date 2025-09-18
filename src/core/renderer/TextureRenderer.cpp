@@ -33,7 +33,9 @@ void TextureRenderer::init()
     // -----------------------
     const char* code = R"(
         @group(0) @binding(0) var mySampler: sampler;
-        @group(0) @binding(1) var myTexture: texture_2d<f32>;
+        @group(0) @binding(1) var texture_y: texture_2d<f32>;
+        @group(0) @binding(2) var texture_u: texture_2d<f32>;
+        @group(0) @binding(3) var texture_v: texture_2d<f32>;
 
         struct VertexOutput {
             @builtin(position) pos: vec4f,
@@ -50,8 +52,21 @@ void TextureRenderer::init()
 
         @fragment
         fn fs(input: VertexOutput) -> @location(0) vec4f {
-            let y = textureSample(myTexture, mySampler, input.fragUV);
-            return vec4f(y.r, y.r, y.r, 1.0);
+            // 取 Y/U/V 分量
+            let y = textureSample(texture_y, mySampler, input.fragUV).r;
+            let u = textureSample(texture_u, mySampler, input.fragUV).r;
+            let v = textureSample(texture_v, mySampler, input.fragUV).r;
+
+            // 偏移到 [-0.5, +0.5]
+            let u_shifted = u - 0.5;
+            let v_shifted = v - 0.5;
+
+            // BT.601 YUV 转换到 RGB
+            let r = y + 1.402 * v_shifted;
+            let g = y - 0.344136 * u_shifted - 0.714136 * v_shifted;
+            let b = y + 1.772 * u_shifted;
+
+            return vec4f(r, g, b, 1.0);
         }
     )";
 
@@ -89,7 +104,9 @@ void TextureRenderer::init()
         device_,
         {
             { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },   // sampelr
-            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D } // texture
+            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }, // texture
+            { 2, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }, // texture
+            { 3, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D } // texture
         }
     );
 
@@ -142,8 +159,8 @@ void TextureRenderer::init()
 void TextureRenderer::setTexture(const char* path)
 {
     // 加载 yuv 数据
-    uint32_t width = 4608;
-    uint32_t height= 3464;
+    uint32_t width = 5888;
+    uint32_t height= 3840;
 
     int y_size = width * height;
     int u_size = width * height / 4;
@@ -195,59 +212,44 @@ void TextureRenderer::setTexture(const char* path)
 
     device_.GetQueue().WriteTexture(&info, (void*)y.data(), y_size, &layout, &copySize);
 
-
-    // 原始纹理
-    originalTexture_ = dawn::utils::CreateTextureFromPath(device_, path);
-
-    // 创建处理后的存储纹理
-    TextureDescriptor desc{};
-    desc.size.width = 512;
-    desc.size.height = 512;
-    desc.size.depthOrArrayLayers = 1;
-    desc.mipLevelCount = 1;
-    desc.dimension = TextureDimension::e2D;
-    desc.format = TextureFormat::RGBA8Unorm;
-    desc.usage = TextureUsage::TextureBinding | TextureUsage::StorageBinding;
-    processedTexture_ = device_.CreateTexture(&desc);
-    processedTextureView_ = processedTexture_.CreateView();
-
-    // Compute BindGroup
-    BindGroupEntry entries[2]{};
-    entries[0].binding = 0;
-    entries[0].textureView = originalTexture_;
-    entries[1].binding = 1;
-    entries[1].textureView = processedTextureView_;
-
-    BindGroupDescriptor bgDesc{
-        .layout = computePipeline_.GetBindGroupLayout(0),
-        .entryCount = 2,
-        .entries = entries
+    tex_desc.size = {
+        .width = width / 2,
+        .height= height / 2,
+        .depthOrArrayLayers = 1
     };
-    computeBindGroup_ = device_.CreateBindGroup(&bgDesc);
+    wgpu::Texture tex_u = device_.CreateTexture(&tex_desc);
+    info.texture = tex_u;
+    layout.offset = 0;
+    layout.bytesPerRow = width / 2;
+    layout.rowsPerImage = height / 2;
+    copySize.width = width / 2;
+    copySize.height= height / 2;
+    device_.GetQueue().WriteTexture(&info, (void*)u.data(), u_size, &layout, &copySize);
 
-    // Dispatch compute shader
-    CommandEncoder encoder = device_.CreateCommandEncoder();
-    ComputePassEncoder pass = encoder.BeginComputePass();
-    pass.SetPipeline(computePipeline_);
-    pass.SetBindGroup(0, computeBindGroup_);
-    uint32_t dispatchX = (512 + 15) / 16;
-    uint32_t dispatchY = (512 + 15) / 16;
-    pass.DispatchWorkgroups(dispatchX, dispatchY);
-    pass.End();
-
-    wgpu::CommandBuffer cmdBuffer = encoder.Finish();
-    device_.GetQueue().Submit(1, &cmdBuffer);
+    wgpu::Texture tex_v = device_.CreateTexture(&tex_desc);
+    info.texture = tex_v;
+    layout.offset = 0;
+    layout.bytesPerRow = width / 2;
+    layout.rowsPerImage = height / 2;
+    copySize.width = width / 2;
+    copySize.height= height / 2;
+    device_.GetQueue().WriteTexture(&info, (void*)v.data(), u_size, &layout, &copySize);
 
     // 渲染管线使用处理后的纹理
-    BindGroupEntry renderEntries[2]{};
+    BindGroupEntry renderEntries[4]{};
     renderEntries[0].binding = 0;
     renderEntries[0].sampler = sampler_;
     renderEntries[1].binding = 1;
     renderEntries[1].textureView = tex_y.CreateView();
+    renderEntries[2].binding = 2;
+    renderEntries[2].textureView = tex_u.CreateView();
+    renderEntries[3].binding = 3;
+    renderEntries[3].textureView = tex_v.CreateView();
+
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
-        .entryCount = 2,
+        .entryCount = 4,
         .entries = renderEntries
     };
     bind_group_ = device_.CreateBindGroup(&renderBGDesc);
