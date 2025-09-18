@@ -12,7 +12,6 @@ void ClipEngine::initialize(GLFWwindow* window)
 
     tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
     tex_renderer_->init();
-    tex_renderer_->setTexture("D://5888x3840.yuv");
 
 }
 

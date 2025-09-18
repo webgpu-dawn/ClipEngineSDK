@@ -11,7 +11,13 @@ public:
     void init();
     void render(wgpu::RenderPassEncoder& pass) override;
 
-    void setTexture(const char* path); // 绑定纹理并生成处理纹理
+private:
+    void init_buffer();
+    void init_sampler();
+    void init_texture();
+    void init_shader();
+    void init_bindgroup();
+    void init_pipeline();
 
 private:
     // 顶点缓冲 & 采样器
@@ -22,6 +28,7 @@ private:
     wgpu::BindGroupLayout bind_group_layout_;
     wgpu::BindGroup bind_group_;
     wgpu::RenderPipeline pipeline_;
+    wgpu::ShaderModule module_;
 
     // ----------------------------
     // Compute Shader 相关
