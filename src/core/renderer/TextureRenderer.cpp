@@ -1,5 +1,7 @@
 #include "TextureRenderer.h"
 #include <iterator>
+#include <fstream>
+#include <vector>
 
 using namespace wgpu;
 
@@ -48,7 +50,8 @@ void TextureRenderer::init()
 
         @fragment
         fn fs(input: VertexOutput) -> @location(0) vec4f {
-            return textureSample(myTexture, mySampler, input.fragUV);
+            let y = textureSample(myTexture, mySampler, input.fragUV);
+            return vec4f(y.r, y.r, y.r, 1.0);
         }
     )";
 
@@ -85,8 +88,8 @@ void TextureRenderer::init()
     bind_group_layout_ = dawn::utils::MakeBindGroupLayout(
         device_,
         {
-            { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },
-            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }
+            { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },   // sampelr
+            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D } // texture
         }
     );
 
@@ -138,6 +141,61 @@ void TextureRenderer::init()
 
 void TextureRenderer::setTexture(const char* path)
 {
+    // 加载 yuv 数据
+    uint32_t width = 4608;
+    uint32_t height= 3464;
+
+    int y_size = width * height;
+    int u_size = width * height / 4;
+    int v_size = u_size;
+
+    std::ifstream file(path, std::ios::binary);
+    if(!file) throw std::runtime_error("Cannot open yuv file");
+
+    std::vector<uint8_t> y;
+    std::vector<uint8_t> u;
+    std::vector<uint8_t> v;
+
+    y.resize(y_size);
+    u.resize(u_size);
+    v.resize(v_size);
+
+    file.read((char*)y.data(), y_size);
+    file.read((char*)u.data(), u_size);
+    file.read((char*)v.data(), v_size);
+
+    wgpu::TextureDescriptor tex_desc {
+        .usage = TextureUsage::TextureBinding | TextureUsage::CopyDst,
+        .dimension = TextureDimension::e2D,
+        .format = TextureFormat::R8Unorm,
+        .mipLevelCount = 1,
+        .sampleCount = 1,
+    };
+
+    tex_desc.size = {
+        .width = width,
+        .height= height,
+        .depthOrArrayLayers = 1
+    };
+    wgpu::Texture tex_y = device_.CreateTexture(&tex_desc);
+    TexelCopyTextureInfo info;
+    info.texture = tex_y;
+    info.mipLevel = 0;
+    info.origin = {0, 0, 0};
+
+    TexelCopyBufferLayout layout;
+    layout.offset = 0;
+    layout.bytesPerRow = width;
+    layout.rowsPerImage = height;
+
+    Extent3D copySize{};
+    copySize.width = width;
+    copySize.height = height;
+    copySize.depthOrArrayLayers = 1;
+
+    device_.GetQueue().WriteTexture(&info, (void*)y.data(), y_size, &layout, &copySize);
+
+
     // 原始纹理
     originalTexture_ = dawn::utils::CreateTextureFromPath(device_, path);
 
@@ -185,7 +243,7 @@ void TextureRenderer::setTexture(const char* path)
     renderEntries[0].binding = 0;
     renderEntries[0].sampler = sampler_;
     renderEntries[1].binding = 1;
-    renderEntries[1].textureView = processedTextureView_;
+    renderEntries[1].textureView = tex_y.CreateView();
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
@@ -201,5 +259,4 @@ void TextureRenderer::render(RenderPassEncoder& pass)
     pass.SetBindGroup(0, bind_group_);
     pass.SetVertexBuffer(0, vertex_buffer_);
     pass.Draw(6);
-    pass.End();
 }

@@ -7,12 +7,12 @@ void ClipEngine::initialize(GLFWwindow* window)
 {
     context_.initialize(window);
 
-    // tri_renderer_ = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
-    // tri_renderer_->init();
+    tri_renderer_ = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
+    tri_renderer_->init();
 
     tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
     tex_renderer_->init();
-    tex_renderer_->setTexture("D://testTexture.png");
+    tex_renderer_->setTexture("D://img_4608x3464_P420.raw");
 
 }
 
@@ -24,9 +24,10 @@ void ClipEngine::render()
 
     wgpu::CommandEncoder encoder = context_.device_.CreateCommandEncoder();
     {
-        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);
-        // tri_renderer_->render(pass);
+        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);  
         tex_renderer_->render(pass);
+        tri_renderer_->render(pass);   
+        pass.End();
     }
 
     wgpu::CommandBuffer commands = encoder.Finish();

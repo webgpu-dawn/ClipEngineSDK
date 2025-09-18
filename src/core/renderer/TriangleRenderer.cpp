@@ -37,5 +37,4 @@ void TriangleRenderer::render(wgpu::RenderPassEncoder& pass)
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);
     pass.Draw(3);
-    pass.End();
 }
