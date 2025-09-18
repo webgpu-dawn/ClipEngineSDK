@@ -1,5 +1,7 @@
 #include "ClipEngine.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace wgpu;
 
@@ -23,7 +25,8 @@ void ClipEngine::render()
 
     wgpu::CommandEncoder encoder = context_.device_.CreateCommandEncoder();
     {
-        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);  
+        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass); 
+        std::cout << "rendering ..." << std::endl;
         tex_renderer_->render(pass);
         // tri_renderer_->render(pass);   
         pass.End();

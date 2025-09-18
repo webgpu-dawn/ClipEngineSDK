@@ -19,6 +19,8 @@ private:
     void init_bindgroup();
     void init_pipeline();
 
+    void init_compute_pipeline_and_bind_group();
+
 private:
     // 顶点缓冲 & 采样器
     wgpu::Buffer vertex_buffer_;
@@ -30,10 +32,14 @@ private:
     wgpu::RenderPipeline pipeline_;
     wgpu::ShaderModule module_;
 
+    wgpu::TextureView y_tex_;
+    wgpu::TextureView u_tex_;
+    wgpu::TextureView v_tex_;
+
     // ----------------------------
     // Compute Shader 相关
     // ----------------------------
-    wgpu::ComputePipeline computePipeline_;
+    wgpu::ComputePipeline compute_pipeline_;
     wgpu::BindGroup computeBindGroup_;
 
     // 原始纹理
@@ -41,5 +47,5 @@ private:
 
     // 处理后的纹理
     wgpu::Texture processedTexture_;
-    wgpu::TextureView processedTextureView_;
+    wgpu::TextureView rgba_tex_;
 };

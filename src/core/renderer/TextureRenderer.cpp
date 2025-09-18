@@ -5,9 +5,12 @@
 
 using namespace wgpu;
 
+uint32_t width = 5888;
+uint32_t height= 3840;
+
 void TextureRenderer::init()
 {
-
+    init_texture();
 }
 
 void TextureRenderer::init_buffer()
@@ -33,63 +36,9 @@ void TextureRenderer::init_sampler()
 
 void TextureRenderer::init_texture()
 {
-    
-}
-
-void TextureRenderer::init_shader()
-{
-    const char* code = R"(
-        @group(0) @binding(0) var mySampler: sampler;
-        @group(0) @binding(1) var texture_y: texture_2d<f32>;
-        @group(0) @binding(2) var texture_u: texture_2d<f32>;
-        @group(0) @binding(3) var texture_v: texture_2d<f32>;
-
-        struct VertexOutput {
-            @builtin(position) pos: vec4f,
-            @location(0) fragUV: vec2f
-        };
-
-        @vertex
-        fn vs(@location(0) pos: vec2f, @location(1) uv: vec2f) -> VertexOutput {
-            var out: VertexOutput;
-            out.pos = vec4f(pos.x, pos.y, 0.0, 1.0);
-            out.fragUV = uv;
-            return out;
-        }
-
-        @fragment
-        fn fs(input: VertexOutput) -> @location(0) vec4f {
-            // 取 Y/U/V 分量
-            let y = textureSample(texture_y, mySampler, input.fragUV).r;
-            let u = textureSample(texture_u, mySampler, input.fragUV).r;
-            let v = textureSample(texture_v, mySampler, input.fragUV).r;
-
-            // 偏移到 [-0.5, +0.5]
-            let u_shifted = u - 0.5;
-            let v_shifted = v - 0.5;
-
-            // BT.601 YUV 转换到 RGB
-            let r = y + 1.402 * v_shifted;
-            let g = y - 0.344136 * u_shifted - 0.714136 * v_shifted;
-            let b = y + 1.772 * u_shifted;
-
-            return vec4f(r, g, b, 1.0);
-        }
-    )";
-
-    ShaderSourceWGSL wgsl{};
-    wgsl.code = code;
-    ShaderModuleDescriptor sm_desc{};
-    sm_desc.nextInChain = &wgsl;
-    module_ = device_.CreateShaderModule(&sm_desc);
-}
-
-void TextureRenderer::init_bindgroup()
-{
     const char* path = "D://5888x3840.yuv";
     // 加载 yuv 数据
-    uint32_t width = 5888;
-    uint32_t height= 3840;
+    
 
     int y_size = width * height;
     int u_size = width * height / 4;
@@ -164,27 +113,156 @@ void TextureRenderer::init_bindgroup()
     copySize.height= height / 2;
     device_.GetQueue().WriteTexture(&info, (void*)v.data(), u_size, &layout, &copySize);
 
+    y_tex_ = tex_y.CreateView();
+    u_tex_ = tex_u.CreateView();
+    v_tex_ = tex_v.CreateView();
+}
+
+void TextureRenderer::init_shader()
+{
+    const char* code = R"(
+        @group(0) @binding(0) var mySampler: sampler;
+        @group(0) @binding(1) var rgba_tex: texture_2d<f32>;
+
+        struct VertexOutput {
+            @builtin(position) pos: vec4f,
+            @location(0) fragUV: vec2f
+        };
+
+        @vertex
+        fn vs(@location(0) pos: vec2f, @location(1) uv: vec2f) -> VertexOutput {
+            var out: VertexOutput;
+            out.pos = vec4f(pos, 0.0, 1.0);
+            out.fragUV = uv;
+            return out;
+        }
+
+        @fragment
+        fn fs(input: VertexOutput) -> @location(0) vec4f {
+            return textureSample(rgba_tex, mySampler, input.fragUV);
+        }
+    )";
+
+    ShaderSourceWGSL wgsl{};
+    wgsl.code = code;
+    ShaderModuleDescriptor sm_desc{};
+    sm_desc.nextInChain = &wgsl;
+    module_ = device_.CreateShaderModule(&sm_desc);
+}
+
+void TextureRenderer::init_bindgroup()
+{
     // 渲染管线使用处理后的纹理
     if (!sampler_) {
         init_sampler();
     }
-    BindGroupEntry renderEntries[4]{};
-    renderEntries[0].binding = 0;
-    renderEntries[0].sampler = sampler_;
-    renderEntries[1].binding = 1;
-    renderEntries[1].textureView = tex_y.CreateView();
-    renderEntries[2].binding = 2;
-    renderEntries[2].textureView = tex_u.CreateView();
-    renderEntries[3].binding = 3;
-    renderEntries[3].textureView = tex_v.CreateView();
+    BindGroupEntry entries[2]{};
+    entries[0].binding = 0;
+    entries[0].sampler = sampler_;
+    entries[1].binding = 1;
+    entries[1].textureView = rgba_tex_;
 
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
-        .entryCount = 4,
-        .entries = renderEntries
+        .entryCount = 2,
+        .entries = entries
     };
     bind_group_ = device_.CreateBindGroup(&renderBGDesc);
+}
+
+void TextureRenderer::init_compute_pipeline_and_bind_group()
+{
+    const char* code = R"(
+        @group(0) @binding(0) var y_tex: texture_2d<f32>;
+        @group(0) @binding(1) var u_tex: texture_2d<f32>;
+        @group(0) @binding(2) var v_tex: texture_2d<f32>;
+        @group(0) @binding(3) var out_tex: texture_storage_2d<rgba8unorm, write>;
+
+        @compute @workgroup_size(16, 16)
+        fn main(@builtin(global_invocation_id) gid: vec3u) {
+            let dims = textureDimensions(y_tex);
+            if (gid.x >= dims.x || gid.y >= dims.y) { return; }
+
+            // --- 采样 Y 值 ---
+            let y = textureLoad(y_tex, vec2i(gid.xy), 0).r;
+
+            // --- 采样 UV 值（注意下采样 2x2）---
+            let uvCoord = vec2i(gid.xy) / 2;
+            let u = textureLoad(u_tex, uvCoord, 0).r;
+            let v = textureLoad(v_tex, uvCoord, 0).r;
+
+            // --- YUV -> RGB (BT.601 full range) ---
+            let Y = y * 255.0;
+            let U = u * 255.0 - 128.0;
+            let V = v * 255.0 - 128.0;
+
+            var R = Y + 1.402 * V;
+            var G = Y - 0.344136 * U - 0.714136 * V;
+            var B = Y + 1.772 * U;
+
+            // 归一化回 [0,1]
+            R = clamp(R / 255.0, 0.0, 1.0);
+            G = clamp(G / 255.0, 0.0, 1.0);
+            B = clamp(B / 255.0, 0.0, 1.0);
+
+            textureStore(out_tex, vec2i(gid.xy), vec4f(R, G, B, 1.0));
+            // textureStore(out_tex, vec2i(gid.xy), vec4f(1.0, 0.0, 0.0, 1.0));
+        }
+    )";
+    ShaderSourceWGSL wgsl;
+    wgsl.code = code;
+    ShaderModuleDescriptor shader_desc;
+    shader_desc.nextInChain = &wgsl;
+    shader_desc.label = "compute_shader";
+    ShaderModule module = device_.CreateShaderModule(&shader_desc);
+
+    auto bgl = dawn::utils::MakeBindGroupLayout(
+        device_,
+        {
+            { 0, ShaderStage::Compute, TextureSampleType::Float, TextureViewDimension::e2D },
+            { 1, ShaderStage::Compute, TextureSampleType::Float, TextureViewDimension::e2D },
+            { 2, ShaderStage::Compute, TextureSampleType::Float, TextureViewDimension::e2D },
+            { 3, ShaderStage::Compute, StorageTextureAccess::WriteOnly, TextureFormat::RGBA8Unorm }
+        }
+    );
+
+    ComputePipelineDescriptor desc {
+        .label = "Compute Pipeline",
+        .layout = dawn::utils::MakeBasicPipelineLayout(device_, &bgl),
+        .compute = {
+            .module = module,
+            .entryPoint = "main"
+        }
+    };
+    compute_pipeline_ = device_.CreateComputePipeline(&desc);
+
+    BindGroupDescriptor cbg_desc;
+    
+        TextureDescriptor tex_desc {
+            .usage = TextureUsage::TextureBinding | TextureUsage::StorageBinding,
+            .dimension = TextureDimension::e2D,
+            .size = {
+                .width = width,
+                .height = height,
+                .depthOrArrayLayers = 1
+            },
+            .format = TextureFormat::RGBA8Unorm,
+            .mipLevelCount = 1,
+        };
+        rgba_tex_ = device_.CreateTexture(&tex_desc).CreateView();
+        BindGroupEntry entries[4] {
+            { .binding = 0, .textureView = y_tex_ },
+            { .binding = 1, .textureView = u_tex_ },
+            { .binding = 2, .textureView = v_tex_ },
+            { .binding = 3, .textureView = rgba_tex_ }
+        };
+        cbg_desc.label = "compute_bind_group";
+        cbg_desc.layout = compute_pipeline_.GetBindGroupLayout(0);
+        cbg_desc.entryCount = 4;
+        cbg_desc.entries = entries;
+    
+    computeBindGroup_ = device_.CreateBindGroup(&cbg_desc);
 }
 
 void TextureRenderer::init_pipeline()
@@ -219,9 +297,7 @@ void TextureRenderer::init_pipeline()
         device_,
         {
             { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },   // sampelr
-            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }, // texture
-            { 2, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }, // texture
-            { 3, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D } // texture
+            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }
         }
     );
 
@@ -246,9 +322,27 @@ void TextureRenderer::render(RenderPassEncoder& pass)
     if (!vertex_buffer_) {
         init_buffer();
     }
+    if(!computeBindGroup_) {
+        init_compute_pipeline_and_bind_group();
+    }
     if (!bind_group_) {
         init_bindgroup();
     }
+
+    {
+        CommandEncoder encoder = device_.CreateCommandEncoder();
+        ComputePassEncoder pass = encoder.BeginComputePass();
+        pass.SetPipeline(compute_pipeline_);
+        pass.SetBindGroup(0, computeBindGroup_);
+        uint32_t dispatchX = (width + 15) / 16;
+        uint32_t dispatchY = (height + 15) / 16;
+        pass.DispatchWorkgroups(dispatchX, dispatchY);
+        pass.End();
+
+        wgpu::CommandBuffer cmdBuffer = encoder.Finish();
+        device_.GetQueue().Submit(1, &cmdBuffer);
+    }
+
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);
     pass.SetBindGroup(0, bind_group_);
