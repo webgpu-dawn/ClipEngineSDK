@@ -15,8 +15,9 @@ void ClipEngine::initialize(GLFWwindow* window)
     std::unique_ptr<TextureRenderer> tex_renderer = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
     tex_renderer->init();
 
+    renderers_.push_back(std::move(tri_renderer));
     renderers_.push_back(std::move(tex_renderer));
-    // renderers_.push_back(std::move(tri_renderer));
+    
 
 }
 
@@ -28,8 +29,9 @@ void ClipEngine::render()
 
     wgpu::CommandEncoder encoder = context_.device_.CreateCommandEncoder();
     {
-        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass); 
-        std::cout << "rendering ..." << std::endl;
+        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);
+        // pass.SetViewport(100, 100, 100, 100, 0, 1);
+        // std::cout << "rendering ..." << std::endl;
         for(int i = 0; i < renderers_.size(); i++) {
             renderers_[i]->render(pass);
         }   

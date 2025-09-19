@@ -9,9 +9,9 @@
  * 3、多轨道、多图层合成
  * 4、输出到窗口或文件
  */
-#include "core/util/ClipContext.h"
-#include "core/renderer/TriangleRenderer.h"
-#include "core/renderer/TextureRenderer.h"
+#include "util/ClipContext.h"
+#include "renderer/TriangleRenderer.h"
+#include "renderer/TextureRenderer.h"
 
 #include <vector>
 

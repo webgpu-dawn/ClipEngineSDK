@@ -291,7 +291,7 @@ void TextureRenderer::render(RenderPassEncoder& pass)
 
     static float exposure = 0.0;
     static float step = 0.01;
-    std::cout << "Exposure = " << exposure << " " << (exposure > 1.5) << std::endl;
+    // std::cout << "Exposure = " << exposure << " " << (exposure > 1.5) << std::endl;
     if(exposure > 1.5) {
         step = -0.01;
     }
