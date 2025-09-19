@@ -2,16 +2,38 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <fstream>
+#include <sstream>
+#include <filesystem>
+
 using namespace wgpu;
 
 namespace dawn::utils {
 
-wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* source) {
+wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* source, std::string label)
+{
     wgpu::ShaderSourceWGSL wgsl;
     wgsl.code = source;
     wgpu::ShaderModuleDescriptor desc;
     desc.nextInChain = &wgsl;
+    desc.label = label.data();
     return device.CreateShaderModule(&desc);
+}
+
+wgpu::ShaderModule CreateShaderModuleFromePath(const wgpu::Device& device, const char* path, std::string label)
+{
+    std::ifstream file(path);
+    if(!file.is_open()) throw std::runtime_error("Cannot open file");
+
+    std::stringstream ss;
+    ss << file.rdbuf();
+
+    std::filesystem::path p(path);
+    if(label.empty()) {
+        label = p.stem().string();
+    }
+    
+    return CreateShaderModule(device, ss.str().data(), label);
 }
 
 wgpu::Sampler CreateSamper(const wgpu::Device& device)

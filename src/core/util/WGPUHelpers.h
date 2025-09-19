@@ -11,7 +11,8 @@
 
 namespace dawn::utils {
 
-wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* source);
+wgpu::ShaderModule CreateShaderModule(const wgpu::Device& device, const char* source, std::string label = "");
+wgpu::ShaderModule CreateShaderModuleFromePath(const wgpu::Device& device, const char* path, std::string label = "");
 
 wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
                                   const void* data,
