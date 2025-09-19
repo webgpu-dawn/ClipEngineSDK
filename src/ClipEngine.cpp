@@ -9,11 +9,14 @@ void ClipEngine::initialize(GLFWwindow* window)
 {
     context_.initialize(window);
 
-    tri_renderer_ = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
-    tri_renderer_->init();
+    std::unique_ptr<TriangleRenderer> tri_renderer = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
+    tri_renderer->init();
 
-    tex_renderer_ = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
-    tex_renderer_->init();
+    std::unique_ptr<TextureRenderer> tex_renderer = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
+    tex_renderer->init();
+
+    renderers_.push_back(std::move(tex_renderer));
+    // renderers_.push_back(std::move(tri_renderer));
 
 }
 
@@ -27,8 +30,9 @@ void ClipEngine::render()
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass); 
         std::cout << "rendering ..." << std::endl;
-        tex_renderer_->render(pass);
-        // tri_renderer_->render(pass);   
+        for(int i = 0; i < renderers_.size(); i++) {
+            renderers_[i]->render(pass);
+        }   
         pass.End();
     }
 

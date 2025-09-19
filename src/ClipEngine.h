@@ -13,6 +13,8 @@
 #include "core/renderer/TriangleRenderer.h"
 #include "core/renderer/TextureRenderer.h"
 
+#include <vector>
+
 // 前置声明核心模块
 class ClipContext;  // GPU 设备管理类：管理 GPU 上下文、命令队列、资源分配、纹理/缓冲区操作等
 class Track;        // 媒体轨道类：表示一条媒体流，可以是视频轨、音频轨或图片序列
@@ -36,8 +38,7 @@ public:
 private:
     ClipContext context_;
 
-    std::unique_ptr<TriangleRenderer> tri_renderer_;
-    std::unique_ptr<TextureRenderer> tex_renderer_;
+    std::vector<std::unique_ptr<IRenderable>> renderers_;
 
 
 };

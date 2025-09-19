@@ -122,9 +122,14 @@ void TextureRenderer::init_texture()
 void TextureRenderer::init_shader()
 {
     const char* code = R"(
+        struct ColorParams {
+            exposure: f32,
+            contrast: f32
+        };
+    
         @group(0) @binding(0) var mySampler: sampler;
         @group(0) @binding(1) var rgba_tex: texture_2d<f32>;
-        @group(0) @binding(2) var<uniform> exposure: f32;
+        @group(0) @binding(2) var<uniform> params: ColorParams;
 
         struct VertexOutput {
             @builtin(position) pos: vec4f,
@@ -141,10 +146,17 @@ void TextureRenderer::init_shader()
 
         @fragment
         fn fs(input: VertexOutput) -> @location(0) vec4f {
-            let color = textureSample(rgba_tex, mySampler, input.fragUV);
-            // 曝光调整
-            let adjusted = color * exposure;
-            return vec4f(clamp(adjusted.rgb, vec3f(0.0), vec3f(1.0)), color.a);
+            var color = textureSample(rgba_tex, mySampler, input.fragUV);
+            
+            var rgb = color.rgb;
+            rgb *= params.exposure;
+            rgb = (rgb - 0.5) * params.contrast + 0.5;
+
+    // 限制范围
+    rgb = clamp(rgb, vec3f(0.0), vec3f(1.0));
+
+
+    return vec4f(rgb, color.a);
         }
     )";
 
@@ -154,15 +166,20 @@ void TextureRenderer::init_shader()
     sm_desc.nextInChain = &wgsl;
     module_ = device_.CreateShaderModule(&sm_desc);
 }
-
+struct ColorParams {
+    float exposure;
+    float contrast;
+};
 void TextureRenderer::init_bindgroup()
 {
     // 渲染管线使用处理后的纹理
     if (!sampler_) {
         init_sampler();
     }
+
+    
     wgpu::BufferDescriptor desc;
-    desc.size = sizeof(float);
+    desc.size = sizeof(ColorParams);
     desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
     uniform_buffer_ = device_.CreateBuffer(&desc);
 
@@ -173,6 +190,8 @@ void TextureRenderer::init_bindgroup()
     entries[1].textureView = rgba_tex_;
     entries[2].binding = 2;
     entries[2].buffer = uniform_buffer_;
+    entries[2].offset = 0;
+    entries[2].size = sizeof(ColorParams);
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
@@ -356,8 +375,22 @@ void TextureRenderer::render(RenderPassEncoder& pass)
     }
 
     static float exposure = 0.0;
-    exposure += 0.01;
-    device_.GetQueue().WriteBuffer(uniform_buffer_, 0, &exposure, sizeof(float));
+    static float step = 0.01;
+    std::cout << "Exposure = " << exposure << " " << (exposure > 1.5) << std::endl;
+    if(exposure > 1.5) {
+        step = -0.01;
+    }
+    if(exposure <= 0) {
+        step = 0.01;
+    }
+    exposure += step;
+    
+    ColorParams params = {
+        .exposure = exposure,
+        .contrast = exposure
+    };
+
+    device_.GetQueue().WriteBuffer(uniform_buffer_, 0, &params, sizeof(ColorParams));
 
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);

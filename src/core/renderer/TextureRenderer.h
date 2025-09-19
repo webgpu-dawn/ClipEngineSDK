@@ -38,16 +38,13 @@ private:
     wgpu::TextureView u_tex_;
     wgpu::TextureView v_tex_;
 
+    wgpu::TextureView rgba_tex_;
+
     // ----------------------------
     // Compute Shader 相关
     // ----------------------------
     wgpu::ComputePipeline compute_pipeline_;
     wgpu::BindGroup computeBindGroup_;
 
-    // 原始纹理
-    wgpu::TextureView originalTexture_;
-
-    // 处理后的纹理
-    wgpu::Texture processedTexture_;
-    wgpu::TextureView rgba_tex_;
+    
 };

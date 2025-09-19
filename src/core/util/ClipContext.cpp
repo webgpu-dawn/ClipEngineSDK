@@ -12,6 +12,9 @@ std::unique_ptr<wgpu::ChainedStruct> ClipContext::setup_window_and_get_surface_d
 {
     // 创建平台扩展结构体
     auto desc = std::make_unique<wgpu::SurfaceDescriptorFromWindowsHWND>();
+
+    // HWND hwnd = FindWindow(nullptr, "clipforge");
+    // desc->hwnd = hwnd;
     desc->hwnd = glfwGetWin32Window(window);
     desc->hinstance = GetModuleHandle(nullptr);
     return desc;
