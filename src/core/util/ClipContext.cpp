@@ -73,8 +73,12 @@ bool ClipContext::initialize(GLFWwindow* window)
     cout << "   subgroupSizes : { min : " << info.subgroupMinSize << " max : " << info.subgroupMaxSize << " }" << endl;
 
     // 3、创建 device
+    Limits limits;
+    limits.maxTextureDimension2D = 16384;
+    limits.maxBufferSize = 2147483648;
     DeviceDescriptor device_desc = {};
     device_desc.nextInChain = nullptr;
+    device_desc.requiredLimits = &limits;
     device_desc.SetDeviceLostCallback(
         CallbackMode::AllowSpontaneous,
         [](const Device&, DeviceLostReason reason, StringView message){

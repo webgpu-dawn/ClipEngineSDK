@@ -2,6 +2,9 @@
 #include "Config.h"
 
 #include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 void Application::init_config()
 {
@@ -15,14 +18,19 @@ void Application::init_config()
     std::cout << "Window Pos: (" << data.render_wnd_pos.x << "," << data.render_wnd_pos.y << ")\n";
     std::cout << "Theme: " << data.theme << "\n";
 
-    width_  = data.render_wnd_size.w;
-    height_ = data.render_wnd_size.h;
+    // width_  = data.render_wnd_size.w;
+    // height_ = data.render_wnd_size.h;
+    width_ = 1200;
+    height_= 600;
     x_ = data.render_wnd_pos.x;
     y_ = data.render_wnd_pos.y;
 }
 
 void Application::initialize()
 {
+    fs::path exe_dir = fs::current_path();
+    fs::current_path(exe_dir);
+
     init_config();
 
     glfwInit();

@@ -14,6 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
 find_package(Dawn REQUIRED)
 find_package(websocketpp CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 # 禁用 nlohmann-json 的隐式转换
@@ -36,6 +37,7 @@ add_executable(
     src/core/util/ClipContext.cpp
     src/core/renderer/TriangleRenderer.cpp
     src/core/renderer/TextureRenderer.cpp
+    src/core/renderer/EquirectangularRenderer.cpp
     src/core/ClipEngine.cpp
 
     src/Application.cpp
@@ -49,6 +51,7 @@ target_link_libraries(
     glfw3webgpu
     websocketpp::websocketpp
     nlohmann_json::nlohmann_json
+    glm::glm
 )
 
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT clipengine)

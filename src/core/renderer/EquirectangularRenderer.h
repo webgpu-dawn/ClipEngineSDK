@@ -1,11 +1,11 @@
 #pragma once
-#include "IRenderable.h"
-#include <webgpu/webgpu_cpp.h>
 
-class TextureRenderer : public IRenderable
+#include "IRenderable.h"
+
+class EquirectangularRenderer : public IRenderable 
 {
 public:
-    TextureRenderer(wgpu::Device device, wgpu::TextureFormat format)
+    EquirectangularRenderer(wgpu::Device device, wgpu::TextureFormat format)
         : IRenderable(device, format) { }
 
     void init();
@@ -19,10 +19,7 @@ private:
     void init_bindgroup();
     void init_pipeline();
 
-    void init_compute_pipeline_and_bind_group();
-
 private:
-    // 顶点缓冲 & 采样器
     wgpu::Buffer vertex_buffer_;
     wgpu::Sampler sampler_;
 
@@ -42,6 +39,4 @@ private:
     // ----------------------------
     wgpu::ComputePipeline compute_pipeline_;
     wgpu::BindGroup computeBindGroup_;
-
-    
 };

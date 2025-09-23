@@ -12,6 +12,7 @@
 #include "util/ClipContext.h"
 #include "renderer/TriangleRenderer.h"
 #include "renderer/TextureRenderer.h"
+#include "renderer/EquirectangularRenderer.h"
 
 #include <vector>
 
