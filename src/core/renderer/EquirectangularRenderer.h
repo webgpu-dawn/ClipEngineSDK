@@ -1,42 +1,33 @@
 #pragma once
-
 #include "IRenderable.h"
+#include <vector>
 
-class EquirectangularRenderer : public IRenderable 
-{
+class EquirectangularRenderer : public IRenderable {
 public:
     EquirectangularRenderer(wgpu::Device device, wgpu::TextureFormat format)
-        : IRenderable(device, format) { }
+        : IRenderable(device, format) {}
 
-    void init();
-    void render(wgpu::RenderPassEncoder& pass);
+    void init() override;
+    void render(wgpu::RenderPassEncoder& pass) override;
 
 private:
     void init_buffer();
     void init_sampler();
     void init_texture();
     void init_shader();
-    void init_bindgroup();
     void init_pipeline();
+    void init_bindgroup();
 
 private:
     wgpu::Buffer vertex_buffer_;
+    wgpu::Buffer index_buffer_;
+    uint32_t index_count_;
+
     wgpu::Sampler sampler_;
-
-    wgpu::Buffer uniform_buffer_;
-
-    // 渲染相关
-    
-
-    wgpu::TextureView y_tex_;
-    wgpu::TextureView u_tex_;
-    wgpu::TextureView v_tex_;
-
     wgpu::TextureView rgba_tex_;
-
-    // ----------------------------
-    // Compute Shader 相关
-    // ----------------------------
-    wgpu::ComputePipeline compute_pipeline_;
-    wgpu::BindGroup computeBindGroup_;
+    wgpu::ShaderModule module_;
+    wgpu::RenderPipeline pipeline_;
+    wgpu::BindGroupLayout bind_group_layout_;
+    wgpu::BindGroup bind_group_;
+    wgpu::Buffer uniform_buffer_;
 };

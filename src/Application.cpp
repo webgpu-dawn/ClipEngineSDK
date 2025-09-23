@@ -20,8 +20,8 @@ void Application::init_config()
 
     // width_  = data.render_wnd_size.w;
     // height_ = data.render_wnd_size.h;
-    width_ = 1200;
-    height_= 600;
+    width_ = 800;
+    height_= 800;
     x_ = data.render_wnd_pos.x;
     y_ = data.render_wnd_pos.y;
 }
