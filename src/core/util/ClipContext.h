@@ -26,7 +26,7 @@ private:
     wgpu::Surface create_surface_for_window(const wgpu::Instance& instance, GLFWwindow* window);
 
     friend class ClipEngine;
-private:
+public:
     wgpu::Instance       instance_;
     wgpu::Adapter        adapter_;
     wgpu::Device         device_;

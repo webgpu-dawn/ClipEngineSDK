@@ -34,9 +34,13 @@ public:
 
     void shutdown();
 
+    void addRenderer(std::unique_ptr<IRenderable> renderer) {
+        renderers_.push_back(std::move(renderer));
+        renderers_.back()->init();
+    }
+
     void render();
 
-private:
     ClipContext context_;
 
     std::vector<std::unique_ptr<IRenderable>> renderers_;

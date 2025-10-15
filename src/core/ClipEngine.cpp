@@ -9,17 +9,17 @@ void ClipEngine::initialize(GLFWwindow* window)
 {
     context_.initialize(window);
 
-    std::unique_ptr<TriangleRenderer> tri_renderer = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
-    std::unique_ptr<TextureRenderer> tex_renderer = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
-    std::unique_ptr<EquirectangularRenderer> equirectangular_renderer = make_unique<EquirectangularRenderer>(context_.device_, context_.surface_texture_fmt_);
+    // std::unique_ptr<TriangleRenderer> tri_renderer = make_unique<TriangleRenderer>(context_.device_, context_.surface_texture_fmt_);
+    // std::unique_ptr<TextureRenderer> tex_renderer = make_unique<TextureRenderer>(context_.device_, context_.surface_texture_fmt_);
+    // std::unique_ptr<EquirectangularRenderer> equirectangular_renderer = make_unique<EquirectangularRenderer>(context_.device_, context_.surface_texture_fmt_);
 
-    // renderers_.push_back(std::move(tri_renderer));
-    // renderers_.push_back(std::move(tex_renderer));
-    renderers_.push_back(std::move(equirectangular_renderer));
+    // // renderers_.push_back(std::move(tri_renderer));
+    // // renderers_.push_back(std::move(tex_renderer));
+    // renderers_.push_back(std::move(equirectangular_renderer));
 
-    for(int i = 0; i < renderers_.size(); i++) {
-        renderers_[i]->init();
-    }
+    // for(int i = 0; i < renderers_.size(); i++) {
+    //     renderers_[i]->init();
+    // }
     
 
 }
