@@ -40,6 +40,8 @@ add_executable(
     src/core/renderer/EquirectangularRenderer.cpp
     src/core/ClipEngine.cpp
 
+    src/core/rhi/RHIResourceFactory.cpp
+
     src/Application.cpp
     src/EventChannel.cpp
 )

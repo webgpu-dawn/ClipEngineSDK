@@ -1,6 +1,6 @@
 #include "WGPUHelpers.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+// #define STB_IMAGE_IMPLEMENTATION
+// #include "stb_image.h"
 
 #include <fstream>
 #include <sstream>
@@ -65,19 +65,19 @@ wgpu::TextureView CreateTextureFromPath(
                                   const char* filePath
 ) {
     // 1. 加载图片
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, 4);
-    if (!pixels) {
-        // std::cerr << "Failed to load texture: " << path << std::endl;
-        return wgpu::TextureView{};
-    }
+    // int texWidth, texHeight, texChannels;
+    // stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, 4);
+    // if (!pixels) {
+    //     // std::cerr << "Failed to load texture: " << path << std::endl;
+    //     return wgpu::TextureView{};
+    // }
 
     // 2. 创建 GPU Texture
     TextureDescriptor texDesc{};
     texDesc.usage = TextureUsage::TextureBinding | TextureUsage::CopyDst;
     texDesc.dimension = TextureDimension::e2D;
-    texDesc.size.width = texWidth;
-    texDesc.size.height = texHeight;
+    // texDesc.size.width = texWidth;
+    // texDesc.size.height = texHeight;
     texDesc.size.depthOrArrayLayers = 1;
     texDesc.format = TextureFormat::RGBA8Unorm;
     texDesc.mipLevelCount = 1;
@@ -87,24 +87,24 @@ wgpu::TextureView CreateTextureFromPath(
     TextureView view = texture.CreateView();
 
     // 3. 上传像素数据
-    TexelCopyTextureInfo copyTex{};
-    copyTex.texture = texture;
-    copyTex.mipLevel = 0;
-    copyTex.origin = { 0, 0, 0 };
+    // TexelCopyTextureInfo copyTex{};
+    // copyTex.texture = texture;
+    // copyTex.mipLevel = 0;
+    // copyTex.origin = { 0, 0, 0 };
 
-    TexelCopyBufferLayout dataLayout{};
-    dataLayout.offset = 0;
-    dataLayout.bytesPerRow = texWidth * 4; // RGBA8
-    dataLayout.rowsPerImage = texHeight;
+    // TexelCopyBufferLayout dataLayout{};
+    // dataLayout.offset = 0;
+    // dataLayout.bytesPerRow = texWidth * 4; // RGBA8
+    // dataLayout.rowsPerImage = texHeight;
 
-    Extent3D copySize{};
-    copySize.width = texWidth;
-    copySize.height = texHeight;
-    copySize.depthOrArrayLayers = 1;
+    // Extent3D copySize{};
+    // copySize.width = texWidth;
+    // copySize.height = texHeight;
+    // copySize.depthOrArrayLayers = 1;
 
-    device.GetQueue().WriteTexture(&copyTex, pixels, texWidth * texHeight * 4, &dataLayout, &copySize);
+    // device.GetQueue().WriteTexture(&copyTex, pixels, texWidth * texHeight * 4, &dataLayout, &copySize);
 
-    stbi_image_free(pixels);
+    // stbi_image_free(pixels);
 
     return view;
 }

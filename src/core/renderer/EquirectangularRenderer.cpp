@@ -1,5 +1,5 @@
 #include "EquirectangularRenderer.h"
-#include "../util/stb_image.h"
+// #include "../util/stb_image.h"
 #include <iostream>
 #include <cmath>
 
@@ -10,10 +10,14 @@ struct ColorParams {
 };
 
 void EquirectangularRenderer::init() {
-    init_texture();
     init_buffer();
-    init_sampler();
-    init_shader();
+    // init texture
+    rgba_tex_ = res_factory_->createTextureFromPath("assets/kloster_weltenburg.jpg").CreateView();
+    // init sampler
+    sampler_ = res_factory_->createSampler();
+    // init shader
+    shader_ = res_factory_->createShaderFromPath("D:/TestDawn/src/core/shader/equirectangular.wgsl");
+    
     init_pipeline();
     init_bindgroup();
 }
@@ -60,50 +64,17 @@ void EquirectangularRenderer::init_buffer() {
         }
     }
 
-    vertex_buffer_ = dawn::utils::CreateBufferFromData(
-        device_, vertex_data.data(), vertex_data.size()*sizeof(float), BufferUsage::Vertex
+    vertex_buffer_ = res_factory_->createBuffer(
+        vertex_data.data(), vertex_data.size()*sizeof(float), wgpu::BufferUsage::Vertex
     );
 
-    index_buffer_ = dawn::utils::CreateBufferFromData(
-        device_, index_data.data(), index_data.size()*sizeof(uint32_t), BufferUsage::Index
+    index_buffer_ = res_factory_->createBuffer(
+        index_data.data(), index_data.size()*sizeof(uint32_t), BufferUsage::Index
     );
 
     index_count_ = (uint32_t)index_data.size();
 }
 
-// ---------------- 纹理 ----------------
-void EquirectangularRenderer::init_texture() {
-    int w, h, channels;
-    stbi_uc* pixels = stbi_load("assets/kloster_weltenburg.jpg", &w, &h, &channels, 4);
-    if(!pixels) throw std::runtime_error("Failed to load texture");
-
-    TextureDescriptor desc{
-        .usage = TextureUsage::TextureBinding | TextureUsage::CopyDst,
-        .dimension = TextureDimension::e2D,
-        .size = { .width=(uint32_t)w, .height=(uint32_t)h, .depthOrArrayLayers=1 },
-        .format = TextureFormat::RGBA8Unorm,
-        .mipLevelCount = 1
-    };
-    Texture tex = device_.CreateTexture(&desc);
-    rgba_tex_ = tex.CreateView();
-
-    TexelCopyTextureInfo info{ .texture=tex, .mipLevel=0, .origin={0,0,0} };
-    TexelCopyBufferLayout layout{ .offset=0, .bytesPerRow=(uint32_t)w*4, .rowsPerImage=(uint32_t)h };
-    Extent3D copySize{ .width=(uint32_t)w, .height=(uint32_t)h, .depthOrArrayLayers=1 };
-
-    device_.GetQueue().WriteTexture(&info, pixels, w*h*4, &layout, &copySize);
-    stbi_image_free(pixels);
-}
-
-// ---------------- 采样器 ----------------
-void EquirectangularRenderer::init_sampler() {
-    sampler_ = dawn::utils::CreateSamper(device_);
-}
-
-// ---------------- Shader ----------------
-void EquirectangularRenderer::init_shader() {
-    module_ = dawn::utils::CreateShaderModuleFromePath(device_, "D:/TestDawn/src/core/shader/equirectangular.wgsl");
-}
 
 // ---------------- Pipeline ----------------
 void EquirectangularRenderer::init_pipeline() {
@@ -117,20 +88,21 @@ void EquirectangularRenderer::init_pipeline() {
     ColorTargetState target{};
     target.format = surface_texture_fmt_;
     target.writeMask = ColorWriteMask::All;
-    fragment_state.module = module_;
+    fragment_state.module = shader_;
     fragment_state.entryPoint = "fs";
     fragment_state.targetCount = 1;
     fragment_state.targets = &target;
 
-    bind_group_layout_ = dawn::utils::MakeBindGroupLayout(device_, {
-        {0, ShaderStage::Fragment, SamplerBindingType::Filtering},          // sampler
-        {1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D}, // texture
-        {2, ShaderStage::Fragment, BufferBindingType::Uniform, false}       // uniform
+    bind_group_layout_ = res_factory_->createBindGroupLayout({
+        { .binding = 0, .visibility = ShaderStage::Fragment, .sampler = { .type = SamplerBindingType::Filtering } },
+        { .binding = 1, .visibility = ShaderStage::Fragment, .texture = { .sampleType = TextureSampleType::Float, .viewDimension = TextureViewDimension::e2D } },
+        { .binding = 2, .visibility = ShaderStage::Fragment, .buffer = { .type = BufferBindingType::Uniform, .hasDynamicOffset = false } }
     });
 
     RenderPipelineDescriptor desc{};
     desc.layout = dawn::utils::MakeBasicPipelineLayout(device_, &bind_group_layout_);
-    desc.vertex = { .module=module_, .entryPoint="vs", .bufferCount=1, .buffers=&vb_layout };
+    desc.vertex = { .module = shader_, .entryPoint="vs", .bufferCount=1, .buffers=&vb_layout };
+
     desc.fragment = &fragment_state;
 
     pipeline_ = device_.CreateRenderPipeline(&desc);
@@ -138,23 +110,16 @@ void EquirectangularRenderer::init_pipeline() {
 
 // ---------------- BindGroup ----------------
 void EquirectangularRenderer::init_bindgroup() {
-    BufferDescriptor desc{};
-    desc.size = sizeof(ColorParams);
-    desc.usage = BufferUsage::Uniform | BufferUsage::CopyDst;
-    uniform_buffer_ = device_.CreateBuffer(&desc);
+    uniform_buffer_ = res_factory_->createBuffer(nullptr, sizeof(ColorParams), BufferUsage::Uniform | BufferUsage::CopyDst);
 
-    BindGroupEntry entries[3]{};
-    entries[0].binding = 0; entries[0].sampler = sampler_;
-    entries[1].binding = 1; entries[1].textureView = rgba_tex_;
-    entries[2].binding = 2; entries[2].buffer = uniform_buffer_;
-    entries[2].offset = 0; entries[2].size = sizeof(ColorParams);
-
-    BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
-    bgDesc.entryCount = 3;
-    bgDesc.entries = entries;
-
-    bind_group_ = device_.CreateBindGroup(&bgDesc);
+    bind_group_ = res_factory_->createBindGroup(
+        bind_group_layout_,
+        {
+            { .binding = 0, .sampler = sampler_ },
+            { .binding = 1, .textureView = rgba_tex_ },
+            { .binding = 2, .buffer = uniform_buffer_, .offset = 0, .size = sizeof(ColorParams) } 
+        }
+    );
 }
 
 // ---------------- 渲染 ----------------
