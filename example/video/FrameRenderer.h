@@ -24,28 +24,22 @@ public:
     void init();
     void render(wgpu::RenderPassEncoder& pass);
 
+    // 更新纹理：从硬解码 D3D11 NV12 纹理导入到 Dawn
     void update_texture(ID3D11Texture2D* tex, int index);
 
 private:
     void init_buffer();
     void init_sampler();
-    void init_texture();
     void init_shader();
     void init_bindgroup();
     void init_pipeline();
 
-    void init_8k_texture();
-
 private:
-    // 顶点缓冲 & 采样器
+    // 渲染资源
     wgpu::Buffer vertex_buffer_;
     wgpu::Sampler sampler_;
 
-    // NV12 纹理视图 (从硬解码获得)
+    // NV12 双平面纹理视图
     wgpu::TextureView y_tex_;   // Y 平面 (R8Unorm)
-    wgpu::TextureView uv_tex_;  // UV 平面 (RG8Unorm) - NV12 格式
-    wgpu::TextureView u_tex_;   // 保留用于测试加载 YUV 文件
-    wgpu::TextureView v_tex_;   // 保留用于测试加载 YUV 文件
-
-    
+    wgpu::TextureView uv_tex_;  // UV 平面 (RG8Unorm)
 };
