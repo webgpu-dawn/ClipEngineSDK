@@ -1,236 +1,348 @@
-# Media Render Engine
+# MediaRender SDK
 
-一个基于 WebGPU/Dawn 的高性能音视频渲染引擎。
+一个基于 WebGPU/Dawn 的专业级高性能音视频渲染引擎 SDK。
 
-## 特性
+## ✨ 核心特性
 
-- ✅ **GPU 零拷贝视频渲染** - 直接从 D3D11 硬解码纹理渲染
-- ✅ **NV12 格式支持** - 原生支持双平面 YUV 4:2:0 格式
-- ✅ **音频波形可视化** - 实时音频波形显示
-- ✅ **多层渲染** - 支持多个渲染器分层组合
-- ✅ **灵活的渲染管线** - 模块化设计，易于扩展
+- 🚀 **完全独立** - 内置完整的 WebGPU 上下文管理，无需外部依赖
+- ⚡ **GPU 零拷贝** - 直接从 D3D11 硬解码纹理渲染，无 CPU 内存拷贝
+- 🎬 **NV12 原生支持** - 硬件加速的双平面 YUV 4:2:0 格式处理
+- 🎨 **多层渲染系统** - 支持多个渲染器分层叠加，实现画中画等效果
+- 🔧 **模块化设计** - 清晰的渲染器接口，易于扩展自定义渲染器
+- 📱 **Viewport 系统** - 灵活的视口控制，支持任意区域渲染
 
 ## 架构
 
 ```
 media_render/
 ├── core/               # 核心接口和引擎
-│   ├── MediaRenderer.h     # 渲染器基类
+│   ├── MediaRenderer.h     # 渲染器基类和工厂
+│   ├── MediaRenderer.cpp   # 渲染器工厂实现
 │   ├── RenderEngine.h      # 渲染引擎
-│   └── RendererFactory     # 渲染器工厂
-├── renderers/          # 具体渲染器实现
-│   ├── VideoRenderer       # 视频渲染器
-│   └── AudioWaveformRenderer # 音频波形渲染器
-├── pipelines/          # 渲染管线
-└── shaders/            # WGSL 着色器
+│   └── RenderEngine.cpp    # 渲染引擎实现
+└── renderers/          # 具体渲染器实现
+    ├── VideoRenderer.h     # 视频渲染器
+    └── VideoRenderer.cpp   # 视频渲染器实现
 ```
 
-## 快速开始
+## 🚀 快速开始
 
-### 1. 初始化渲染引擎
+### 完整示例：视频播放器
 
 ```cpp
 #include "media_render/core/RenderEngine.h"
-#include "media_render/core/MediaRenderer.h"
+#include "media_render/renderers/VideoRenderer.h"
+#include <iostream>
 
-using namespace MediaRender;
+int main() {
+    // 1. 配置并初始化渲染引擎
+    MediaRender::RenderEngineConfig config;
+    config.width = 800;
+    config.height = 600;
+    config.title = "My Video Player";
 
-// 创建渲染引擎
-RenderEngine engine;
-engine.initialize(device, surfaceFormat);
-
-// 设置背景色
-engine.setBackgroundColor(0.0f, 0.0f, 0.0f, 1.0f);
-```
-
-### 2. 添加视频渲染器
-
-```cpp
-// 创建视频渲染器
-auto videoRenderer = RendererFactory::createVideoRenderer();
-
-// 配置渲染器
-videoRenderer->setViewport(0.0f, 0.0f, 1.0f, 1.0f);  // 全屏
-videoRenderer->setFillMode(VideoRenderer::FillMode::Fit);
-videoRenderer->setLayer(0);  // 底层
-
-// 添加到引擎
-engine.addRenderer(std::move(videoRenderer));
-```
-
-### 3. 更新视频帧
-
-```cpp
-// 从硬解码获取视频帧
-AVFrame* frame = decoder.decode();
-if(frame->format == AV_PIX_FMT_D3D11) {
-    ID3D11Texture2D* texture = (ID3D11Texture2D*)frame->data[0];
-    int arrayIndex = (int)frame->data[1];
-
-    // 获取视频渲染器
-    auto* videoRenderer = engine.getRenderer<VideoRenderer>();
-    if(videoRenderer) {
-        videoRenderer->updateFrame(texture, arrayIndex);
+    MediaRender::RenderEngine engine;
+    if (!engine.initialize(config)) {
+        std::cerr << "Failed to initialize engine" << std::endl;
+        return -1;
     }
+
+    // 2. 创建并配置视频渲染器
+    auto videoRenderer = std::make_unique<MediaRender::VideoRenderer>();
+    videoRenderer->setViewport(0.0f, 0.0f, 1.0f, 1.0f);  // 全屏
+
+    // 保存指针以便后续更新帧
+    MediaRender::VideoRenderer* videoRendererPtr = videoRenderer.get();
+
+    // 3. 添加到引擎
+    engine.addRenderer(std::move(videoRenderer));
+
+    // 4. 初始化视频解码器（使用 FFmpeg + D3D11 硬解码）
+    Decoder decoder;
+    decoder.open_video("video.mp4", [&](AVFrame* frame) {
+        if (frame->format == AV_PIX_FMT_D3D11) {
+            ID3D11Texture2D* texture = (ID3D11Texture2D*)frame->data[0];
+            int arrayIndex = (int)(intptr_t)frame->data[1];
+
+            // 更新视频帧
+            videoRendererPtr->updateFrame(texture, arrayIndex);
+
+            // 渲染当前帧
+            engine.renderFrame();
+        }
+    });
+
+    // 5. 主循环
+    while (!engine.shouldClose()) {
+        engine.pollEvents();
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+
+    // 6. 清理
+    engine.shutdown();
+    return 0;
 }
 ```
 
-### 4. 添加音频波形渲染器
+## 📦 集成到项目
 
-```cpp
-// 创建音频波形渲染器
-auto audioRenderer = RendererFactory::createAudioWaveformRenderer();
+### CMakeLists.txt
 
-// 配置渲染器
-audioRenderer->setViewport(0.0f, 0.8f, 1.0f, 0.2f);  // 底部 20%
-audioRenderer->setWaveformColor(0.0f, 1.0f, 0.0f, 1.0f);  // 绿色
-audioRenderer->setLayer(1);  // 上层
+```cmake
+# 添加 MediaRender SDK 源文件
+set(MEDIARENDER_DIR ${CMAKE_SOURCE_DIR}/src/media_render)
 
-// 添加到引擎
-engine.addRenderer(std::move(audioRenderer));
+add_executable(your_app
+    main.cpp
+
+    # MediaRender SDK
+    ${MEDIARENDER_DIR}/core/MediaRenderer.cpp
+    ${MEDIARENDER_DIR}/core/RenderEngine.cpp
+    ${MEDIARENDER_DIR}/renderers/VideoRenderer.cpp
+)
+
+# 包含目录
+target_include_directories(your_app PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${DAWN_INCLUDE_DIR}
+)
+
+# 链接库
+target_link_libraries(your_app PRIVATE
+    dawn::webgpu_dawn
+    glfw
+    glfw3webgpu
+    d3d11
+    dxgi
+)
 ```
 
-### 5. 更新音频数据
+## 🎨 高级用法
+
+### 画中画 (Picture-in-Picture)
 
 ```cpp
-// 从音频解码器获取音频样本
-float* samples = audioDecoder.getSamples();
-size_t sampleCount = audioDecoder.getSampleCount();
-int channels = 2;  // 立体声
-
-// 更新波形数据
-auto* audioRenderer = engine.getRenderer<AudioWaveformRenderer>();
-if(audioRenderer) {
-    audioRenderer->updateAudioData(samples, sampleCount, channels);
-}
-```
-
-### 6. 渲染循环
-
-```cpp
-while(!shouldClose) {
-    // 更新
-    float deltaTime = getDeltaTime();
-    engine.update(deltaTime);
-
-    // 获取当前帧纹理
-    wgpu::TextureView view = surface.GetCurrentTextureView();
-
-    // 创建 RenderPass
-    wgpu::RenderPassColorAttachment attachment = {};
-    attachment.view = view;
-    attachment.loadOp = wgpu::LoadOp::Clear;
-    attachment.storeOp = wgpu::StoreOp::Store;
-    attachment.clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
-
-    wgpu::RenderPassDescriptor passDesc = {};
-    passDesc.colorAttachmentCount = 1;
-    passDesc.colorAttachments = &attachment;
-
-    wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
-    wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&passDesc);
-
-    // 渲染所有启用的渲染器
-    engine.render(pass);
-
-    pass.End();
-    wgpu::CommandBuffer commands = encoder.Finish();
-    device.GetQueue().Submit(1, &commands);
-
-    surface.Present();
-}
-```
-
-## 高级用法
-
-### 多视频画中画
-
-```cpp
-// 主视频
-auto mainVideo = RendererFactory::createVideoRenderer();
+// 主视频（全屏）
+auto mainVideo = std::make_unique<MediaRender::VideoRenderer>();
 mainVideo->setViewport(0.0f, 0.0f, 1.0f, 1.0f);
-mainVideo->setLayer(0);
+mainVideo->setLayer(0);  // 底层
+MediaRender::VideoRenderer* mainPtr = mainVideo.get();
 engine.addRenderer(std::move(mainVideo));
 
-// 画中画视频
-auto pipVideo = RendererFactory::createVideoRenderer();
-pipVideo->setViewport(0.7f, 0.7f, 0.25f, 0.25f);  // 右下角
-pipVideo->setLayer(1);
+// 画中画视频（右下角 25% 大小）
+auto pipVideo = std::make_unique<MediaRender::VideoRenderer>();
+pipVideo->setViewport(0.7f, 0.7f, 0.25f, 0.25f);
+pipVideo->setLayer(1);  // 上层
+MediaRender::VideoRenderer* pipPtr = pipVideo.get();
 engine.addRenderer(std::move(pipVideo));
+
+// 分别更新两个视频
+mainPtr->updateFrame(mainTexture, mainIndex);
+pipPtr->updateFrame(pipTexture, pipIndex);
 ```
 
-### 启用/禁用渲染器
+### 控制渲染器状态
 
 ```cpp
-auto* videoRenderer = engine.getRenderer<VideoRenderer>();
-if(videoRenderer) {
-    videoRenderer->setEnabled(false);  // 暂停视频渲染
+// 获取渲染器
+auto* videoRenderer = engine.getRenderer<MediaRender::VideoRenderer>();
+
+if (videoRenderer) {
+    // 暂停渲染
+    videoRenderer->setEnabled(false);
+
+    // 恢复渲染
+    videoRenderer->setEnabled(true);
+
+    // 改变渲染区域
+    videoRenderer->setViewport(0.0f, 0.0f, 0.5f, 0.5f);
+
+    // 改变层级
+    videoRenderer->setLayer(5);
 }
 ```
 
-### 动态切换渲染器
+### 动态管理渲染器
 
 ```cpp
-// 移除旧渲染器
-engine.removeRenderer(oldRenderer);
+// 移除特定渲染器
+auto* oldRenderer = engine.getRenderer<MediaRender::VideoRenderer>();
+if (oldRenderer) {
+    engine.removeRenderer(oldRenderer);
+}
 
-// 添加新渲染器
-engine.addRenderer(RendererFactory::createVideoRenderer());
+// 清空所有渲染器
+engine.clear();
+
+// 重新添加渲染器
+auto newRenderer = std::make_unique<MediaRender::VideoRenderer>();
+engine.addRenderer(std::move(newRenderer));
 ```
 
-## API 参考
+## 📚 API 参考
 
-### IMediaRenderer (基类)
+### RenderEngine (渲染引擎)
 
-- `bool initialize(device, format)` - 初始化渲染器
-- `void render(pass)` - 渲染
-- `void update(deltaTime)` - 更新状态
-- `void setViewport(x, y, width, height)` - 设置渲染区域
-- `void setEnabled(bool)` - 启用/禁用
-- `void setLayer(int)` - 设置渲染层级
+#### 初始化和生命周期
+```cpp
+bool initialize(const RenderEngineConfig& config);  // 初始化引擎（创建窗口、WebGPU上下文）
+void shutdown();                                     // 关闭引擎并释放资源
+bool shouldClose() const;                            // 检查窗口是否应该关闭
+void pollEvents();                                   // 处理窗口事件
+```
 
-### VideoRenderer
+#### 渲染器管理
+```cpp
+void addRenderer(std::unique_ptr<IMediaRenderer> renderer);  // 添加渲染器
+void removeRenderer(IMediaRenderer* renderer);               // 移除渲染器
+T* getRenderer<T>();                                          // 获取指定类型的渲染器
+std::vector<T*> getRenderers<T>();                          // 获取所有指定类型的渲染器
+IMediaRenderer* getRendererByType(RendererType type);       // 按类型获取渲染器
+void clear();                                                 // 清空所有渲染器
+```
 
-- `bool updateFrame(texture, arrayIndex)` - 更新视频帧
-- `void setVideoFormat(format)` - 设置视频格式
-- `void setFillMode(mode)` - 设置填充模式
-  - `Fit` - 适应（保持比例）
-  - `Fill` - 填充（可能裁剪）
-  - `Stretch` - 拉伸（可能变形）
+#### 渲染控制
+```cpp
+void renderFrame();                          // 渲染一帧（自动管理RenderPass）
+void update(float deltaTime);                // 更新所有渲染器
+void setBackgroundColor(float r, g, b, a);   // 设置背景色
+```
 
-### AudioWaveformRenderer
+#### 访问器
+```cpp
+wgpu::Device getDevice() const;           // 获取WebGPU设备
+wgpu::Queue getQueue() const;             // 获取命令队列
+wgpu::TextureFormat getSurfaceFormat() const;  // 获取Surface格式
+GLFWwindow* getWindow() const;            // 获取GLFW窗口
+```
 
-- `void updateAudioData(samples, count, channels)` - 更新音频数据
-- `void setWaveformColor(r, g, b, a)` - 设置波形颜色
-- `void setDisplayMode(mode)` - 设置显示模式
-  - `Waveform` - 波形
-  - `Spectrum` - 频谱
-  - `Both` - 两者
+### RenderEngineConfig (引擎配置)
+```cpp
+struct RenderEngineConfig {
+    uint32_t width = 800;                    // 窗口宽度
+    uint32_t height = 600;                   // 窗口高度
+    const char* title = "MediaRender Engine";  // 窗口标题
+    bool vsync = true;                       // 垂直同步
+    wgpu::PresentMode presentMode = wgpu::PresentMode::Fifo;  // 呈现模式
+};
+```
 
-### RenderEngine
+### IMediaRenderer (渲染器基类)
 
-- `bool initialize(device, format)` - 初始化引擎
-- `void addRenderer(renderer)` - 添加渲染器
-- `void removeRenderer(renderer)` - 移除渲染器
-- `void render(pass)` - 渲染所有渲染器
-- `void update(deltaTime)` - 更新所有渲染器
-- `T* getRenderer<T>()` - 获取指定类型的渲染器
-- `void clear()` - 清空所有渲染器
+#### 核心方法
+```cpp
+virtual bool initialize(wgpu::Device device, wgpu::TextureFormat format) = 0;
+virtual void render(wgpu::RenderPassEncoder& pass) = 0;
+virtual void update(float deltaTime) = 0;
+virtual RendererType getType() const = 0;
+virtual void setViewport(float x, float y, float width, float height) = 0;
+```
 
-## 性能优化
+#### 状态控制
+```cpp
+void setEnabled(bool enabled);    // 启用/禁用渲染
+bool isEnabled() const;           // 检查是否启用
+void setLayer(int layer);         // 设置渲染层级（越小越先渲染）
+int getLayer() const;             // 获取层级
+```
 
-1. **GPU 零拷贝** - 视频纹理直接从 D3D11 共享到 Dawn，无 CPU 拷贝
-2. **纹理复用** - 相同尺寸的视频帧复用共享纹理
-3. **层级排序** - 渲染器按层级排序，减少状态切换
-4. **延迟初始化** - 渲染资源按需创建
+### VideoRenderer (视频渲染器)
 
-## 系统要求
+#### 核心功能
+```cpp
+bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);  // 更新视频帧（GPU零拷贝）
+void setVideoFormat(VideoFormat format);                         // 设置视频格式
+```
 
-- Windows 10/11
-- D3D11/D3D12 支持
-- Dawn (WebGPU 实现)
-- C++17 或更高
+#### 填充模式
+```cpp
+enum class FillMode {
+    Fit,      // 适应（保持宽高比，可能有黑边）
+    Fill,     // 填充（保持宽高比，可能裁剪）
+    Stretch   // 拉伸（填满视口，可能变形）
+};
+void setFillMode(FillMode mode);
+```
 
-## 许可证
+#### 支持的格式
+```cpp
+enum class VideoFormat {
+    NV12,   // 双平面 YUV 4:2:0（主要支持）
+    I420,   // 三平面 YUV 4:2:0
+    RGBA    // RGBA 8位
+};
+```
+
+## ⚡ 性能优化技术
+
+### GPU 零拷贝架构
+- 使用 `SharedTextureMemory` + DXGI 共享句柄
+- D3D11 硬解码纹理 → Dawn WebGPU 直接访问
+- 完全避免 CPU 内存拷贝和 GPU→CPU→GPU 往返
+
+### 纹理管理
+- 使用静态变量管理共享纹理生命周期
+- 相同尺寸视频帧自动复用共享纹理
+- 仅在分辨率变化时重新创建纹理
+
+### 渲染优化
+- 渲染器按 Layer 自动排序，优化渲染顺序
+- 支持禁用不需要的渲染器，节省 GPU 资源
+- 单一 RenderPass 完成所有渲染，减少状态切换
+
+### 色彩空间转换
+- 使用 GPU Shader 进行 YUV→RGB 转换
+- BT.709 标准色彩空间转换矩阵
+- 完全在 GPU 端完成，零 CPU 开销
+
+## 💻 系统要求
+
+### 操作系统
+- Windows 10 1809+ (with D3D12 support)
+- Windows 11
+
+### 硬件要求
+- 支持 D3D11 或 D3D12 的 GPU
+- NVIDIA / AMD / Intel 集成显卡
+
+### 软件依赖
+- **Dawn** - Google 的 WebGPU 实现
+- **GLFW** 3.3+ - 窗口管理
+- **glfw3webgpu** - GLFW/WebGPU 集成
+- **C++17** 或更高版本编译器
+
+## 🗂️ 文件结构
+
+```
+media_render/
+├── core/
+│   ├── MediaRenderer.h      # 渲染器基类接口定义和工厂
+│   ├── MediaRenderer.cpp    # 渲染器工厂实现
+│   ├── RenderEngine.h       # 渲染引擎（独立，包含完整WebGPU上下文）
+│   └── RenderEngine.cpp     # 渲染引擎实现
+│
+├── renderers/
+│   ├── VideoRenderer.h      # 视频渲染器（支持NV12 GPU零拷贝）
+│   └── VideoRenderer.cpp    # 视频渲染器实现
+│
+└── README.md                # 本文档
+```
+
+**示例项目**: 参考 `example/video/` 目录中的完整视频播放器实现。
+
+## 📝 许可证
 
 MIT License
+
+## 🙋 技术支持
+
+如有问题或建议，欢迎提交 Issue 或 Pull Request。
+
+## 🔖 版本历史
+
+### v1.0.0 (2024)
+- ✅ 完全独立的渲染引擎，内置 WebGPU 上下文管理
+- ✅ GPU 零拷贝视频渲染（D3D11→Dawn）
+- ✅ NV12 格式原生支持
+- ✅ 多层渲染系统
+- ✅ Viewport 灵活控制

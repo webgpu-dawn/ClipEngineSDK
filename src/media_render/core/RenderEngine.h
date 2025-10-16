@@ -1,25 +1,39 @@
 #pragma once
 #include "MediaRenderer.h"
+#include <webgpu/webgpu_cpp.h>
+#include <dawn/webgpu_cpp_print.h>
+#include <GLFW/glfw3.h>
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <functional>
 
 namespace MediaRender {
+
+struct RenderEngineConfig {
+    uint32_t width = 800;
+    uint32_t height = 600;
+    const char* title = "MediaRender Engine";
+    bool vsync = true;
+    wgpu::PresentMode presentMode = wgpu::PresentMode::Fifo;
+};
 
 class RenderEngine {
 public:
     RenderEngine() = default;
-    ~RenderEngine() = default;
+    ~RenderEngine();
 
-    bool initialize(wgpu::Device device, wgpu::TextureFormat format);
+    bool initialize(const RenderEngineConfig& config);
+    void shutdown();
 
     void addRenderer(std::unique_ptr<IMediaRenderer> renderer);
-
     void removeRenderer(IMediaRenderer* renderer);
 
-    void render(wgpu::RenderPassEncoder& pass);
-
+    void renderFrame();
     void update(float deltaTime);
+
+    bool shouldClose() const;
+    void pollEvents();
 
     template<typename T>
     T* getRenderer() {
@@ -43,19 +57,33 @@ public:
     }
 
     IMediaRenderer* getRendererByType(RendererType type);
-
     void clear();
 
     void setBackgroundColor(float r, float g, float b, float a = 1.0f);
 
+    wgpu::Device getDevice() const { return device_; }
+    wgpu::Queue getQueue() const { return queue_; }
+    wgpu::TextureFormat getSurfaceFormat() const { return surfaceFormat_; }
+    GLFWwindow* getWindow() const { return window_; }
+
 private:
+    bool initializeWindow(const RenderEngineConfig& config);
+    bool initializeWebGPU();
     void sortRenderersByLayer();
 
+    GLFWwindow* window_ = nullptr;
+    wgpu::Instance instance_;
+    wgpu::Adapter adapter_;
     wgpu::Device device_;
-    wgpu::TextureFormat surfaceFormat_;
-    std::vector<std::unique_ptr<IMediaRenderer>> renderers_;
+    wgpu::Queue queue_;
+    wgpu::Surface surface_;
+    wgpu::TextureFormat surfaceFormat_ = wgpu::TextureFormat::BGRA8Unorm;
 
+    std::vector<std::unique_ptr<IMediaRenderer>> renderers_;
     float backgroundColor_[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    uint32_t width_ = 800;
+    uint32_t height_ = 600;
 };
 
 } // namespace MediaRender
