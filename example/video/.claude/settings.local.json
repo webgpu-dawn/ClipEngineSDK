@@ -9,7 +9,9 @@
       "Bash(./video.exe)",
       "Bash(timeout:*)",
       "Bash(wc:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(tree:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

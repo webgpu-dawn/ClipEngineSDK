@@ -1,0 +1,110 @@
+@PACKAGE_INIT@
+
+# ClipEngine CMake Configuration File
+# This file allows other CMake projects to find and use ClipEngine
+
+# Compute paths
+get_filename_component(ClipEngine_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(ClipEngine_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+# Find required dependencies
+include(CMakeFindDependencyMacro)
+
+# Dawn is required (installed with ClipEngine SDK)
+if(NOT Dawn_FOUND)
+    # Dawn is installed in the SDK directory
+    list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_PREFIX_DIR}/lib/cmake")
+    find_package(Dawn REQUIRED PATHS "${PACKAGE_PREFIX_DIR}/lib/cmake/Dawn" NO_DEFAULT_PATH)
+endif()
+
+# Note: websocketpp, glm, nlohmann_json, GLFW, and glfw3webgpu are PRIVATE dependencies
+# They are statically linked into clipengine.lib and not required by users
+
+# Create the IMPORTED target manually
+if(NOT TARGET ClipEngine::clipengine)
+    add_library(ClipEngine::clipengine STATIC IMPORTED)
+
+    # Set the library location
+    set_target_properties(ClipEngine::clipengine PROPERTIES
+        IMPORTED_LOCATION_DEBUG "@PACKAGE_LIB_INSTALL_DIR@/clipengine.lib"
+        IMPORTED_LOCATION_RELEASE "@PACKAGE_LIB_INSTALL_DIR@/clipengine.lib"
+        IMPORTED_LOCATION "@PACKAGE_LIB_INSTALL_DIR@/clipengine.lib"
+    )
+
+    # Set include directories
+    set_target_properties(ClipEngine::clipengine PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${ClipEngine_INCLUDE_DIR};${ClipEngine_INCLUDE_DIR}/dawn"
+    )
+
+    # Link against Dawn and required static libraries
+    # Note: glfw and glfw3webgpu are statically linked into clipengine
+    # but their symbols need to be explicitly linked on Windows
+    set_target_properties(ClipEngine::clipengine PROPERTIES
+        INTERFACE_LINK_LIBRARIES "dawn::webgpu_dawn;${PACKAGE_PREFIX_DIR}/lib/glfw3.lib;${PACKAGE_PREFIX_DIR}/lib/glfw3webgpu.lib"
+    )
+endif()
+
+# Define ClipEngine variables
+set(ClipEngine_FOUND TRUE)
+set(ClipEngine_VERSION "1.0.0")
+set(ClipEngine_INCLUDE_DIRS "${ClipEngine_INCLUDE_DIR}")
+set(ClipEngine_LIBRARIES ClipEngine::clipengine)
+set(ClipEngine_LIBRARY_DIR "@PACKAGE_LIB_INSTALL_DIR@")
+set(ClipEngine_SHADER_DIR "@PACKAGE_SHARE_INSTALL_DIR@/shaders")
+set(ClipEngine_BIN_DIR "${PACKAGE_PREFIX_DIR}/bin")
+
+# ============================================================================
+# Automatic DLL deployment helper function
+# ============================================================================
+# This function automatically copies ClipEngine DLLs to the target's output directory
+# For multi-config generators, it uses the SDK directory based on the build configuration
+function(clipengine_copy_dlls target)
+    if(WIN32)
+        # Get the SDK root directory (parent of lib/cmake/ClipEngine)
+        get_filename_component(_sdk_root "${PACKAGE_PREFIX_DIR}" ABSOLUTE)
+
+        # For configuration-specific SDKs (ClipEngineSDK-Debug, ClipEngineSDK-Release),
+        # we need to determine if this is a config-specific SDK
+        get_filename_component(_sdk_name "${_sdk_root}" NAME)
+
+        if(_sdk_name MATCHES "ClipEngineSDK-(Debug|Release)")
+            # This is a configuration-specific SDK
+            # Extract the config name
+            string(REGEX REPLACE "ClipEngineSDK-(.*)" "\\1" _sdk_config "${_sdk_name}")
+
+            # For multi-config generators, we need to copy from the matching SDK
+            get_filename_component(_sdk_base "${_sdk_root}" DIRECTORY)
+
+            add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_sdk_base}/ClipEngineSDK-$<CONFIG>/bin/webgpu_dawn.dll"
+                    $<TARGET_FILE_DIR:${target}>
+                COMMENT "[ClipEngine] Copying webgpu_dawn.dll from ClipEngineSDK-$<CONFIG>"
+            )
+        else()
+            # Legacy single SDK directory
+            add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${ClipEngine_BIN_DIR}/webgpu_dawn.dll"
+                    $<TARGET_FILE_DIR:${target}>
+                COMMENT "[ClipEngine] Copying webgpu_dawn.dll to output directory"
+            )
+        endif()
+
+        if(NOT ClipEngine_FIND_QUIETLY)
+            message(STATUS "  Auto-copy DLLs: Enabled for target '${target}'")
+        endif()
+    endif()
+endfunction()
+
+# Print found message
+if(NOT ClipEngine_FIND_QUIETLY)
+    message(STATUS "Found ClipEngine: ${ClipEngine_VERSION}")
+    message(STATUS "  Include dir: ${ClipEngine_INCLUDE_DIRS}")
+    message(STATUS "  Libraries: ${ClipEngine_LIBRARIES}")
+    message(STATUS "  Shader dir: ${ClipEngine_SHADER_DIR}")
+    message(STATUS "  Bin dir: ${ClipEngine_BIN_DIR}")
+    message(STATUS "  Use clipengine_copy_dlls(<target>) to auto-copy runtime DLLs")
+endif()
+
+check_required_components(ClipEngine)

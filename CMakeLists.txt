@@ -5,6 +5,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_TOOLCHAIN_FILE "D:/code/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
 project(clipengine)
 
+# Set default install prefix based on build configuration
+# SDK will be installed to output/ClipEngineSDK-Debug or output/ClipEngineSDK-Release
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    # Use generator expression for multi-config generators (like Visual Studio)
+    # This will be evaluated at install time, not configure time
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/output/ClipEngineSDK-$<CONFIG>" CACHE PATH "Default install path" FORCE)
+endif()
+
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -13,7 +21,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
 find_package(Dawn REQUIRED)
-find_package(websocketpp CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -28,32 +35,151 @@ include_directories(
 )
 add_subdirectory(deps/glfw3webgpu)
 
-add_executable(
-    clipengine 
-    main.cpp
+# ============================================================================
+# ClipEngine Library - Professional Video Editing Engine Core
+# ============================================================================
 
-    src/core/util/WGPUHelpers.cpp
-    src/core/util/ComboRenderPipelineDescriptor.cpp
-    src/core/util/ClipContext.cpp
-    src/core/renderer/TriangleRenderer.cpp
-    src/core/renderer/TextureRenderer.cpp
-    src/core/renderer/EquirectangularRenderer.cpp
-    src/core/ClipEngine.cpp
-
-    src/core/rhi/RHIResourceFactory.cpp
-
-    src/Application.cpp
-    src/EventChannel.cpp
+add_library(clipengine STATIC
+    src/clipengine/render/RenderEngine.cpp
+    src/clipengine/render/VideoRenderer.cpp
+    src/clipengine/render/Renderer.cpp
 )
 
-target_link_libraries(
-    clipengine 
-    dawn::webgpu_dawn
-    glfw
-    glfw3webgpu
-    websocketpp::websocketpp
-    nlohmann_json::nlohmann_json
-    glm::glm
+# Set public headers for installation
+set(CLIPENGINE_PUBLIC_HEADERS
+    src/clipengine/ClipEngine.h
+    src/clipengine/render/Renderer.h
+    src/clipengine/render/RenderEngine.h
+    src/clipengine/render/VideoRenderer.h
+    src/clipengine/codec/Decoder.h
+    src/clipengine/codec/Encoder.h
+    src/clipengine/codec/CodecFactory.h
+    src/clipengine/core/RHIHelper.h
 )
 
-set_directory_properties(PROPERTIES VS_STARTUP_PROJECT clipengine)
+# Configure library properties
+target_include_directories(clipengine
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/dawn/include>
+        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:include/dawn>
+)
+
+target_link_libraries(clipengine
+    PUBLIC
+        dawn::webgpu_dawn
+    PRIVATE
+        glfw
+        glfw3webgpu
+        nlohmann_json::nlohmann_json
+        glm::glm
+)
+
+# Alias for consistent naming
+add_library(ClipEngine::clipengine ALIAS clipengine)
+
+# ============================================================================
+# Installation Rules
+# ============================================================================
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install library (without EXPORT to avoid exporting PRIVATE dependencies)
+install(TARGETS clipengine
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Note: GLFW and glfw3webgpu are PRIVATE dependencies
+# They are statically linked into clipengine.lib and not exposed to users
+
+# Install headers with directory structure
+install(DIRECTORY src/clipengine/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/clipengine
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+)
+
+# Install Dawn headers (required dependency)
+install(DIRECTORY deps/dawn/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dawn
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+)
+
+# Install shaders
+install(DIRECTORY src/clipengine/shader/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/clipengine/shaders
+    FILES_MATCHING PATTERN "*.wgsl"
+)
+
+# Install Dawn DLLs and libraries
+install(FILES deps/dawn/bin/webgpu_dawn.dll
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+# Install Dawn lib files to both lib/ and lib/dawn/
+install(FILES deps/dawn/lib/webgpu_dawn.lib
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY deps/dawn/lib/
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/dawn
+    FILES_MATCHING PATTERN "*.lib" PATTERN "*.a"
+)
+
+# Install GLFW and glfw3webgpu libraries (they are statically linked into clipengine)
+install(TARGETS glfw glfw3webgpu
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+# Install Dawn CMake files
+install(DIRECTORY deps/dawn/lib/cmake/Dawn/
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Dawn
+)
+
+# Note: Not using install(EXPORT) to avoid issues with PRIVATE dependencies
+# Instead, ClipEngineConfig.cmake manually creates the IMPORTED target
+
+# Configure package config files
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+set(SHARE_INSTALL_DIR ${CMAKE_INSTALL_DATADIR}/clipengine)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ClipEngineConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/ClipEngineConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ClipEngine
+    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR SHARE_INSTALL_DIR
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/ClipEngineConfigVersion.cmake"
+    VERSION 1.0.0
+    COMPATIBILITY SameMajorVersion
+)
+
+# Install CMake config files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/ClipEngineConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/ClipEngineConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ClipEngine
+)
+
+# Backward compatibility alias
+add_library(clipengine_lib ALIAS clipengine)
+
+# ============================================================================
+# Post-build SDK generation
+# ============================================================================
+
+# Add custom target to automatically install SDK after building
+# Each configuration will install to its own directory
+add_custom_target(install_sdk ALL
+    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --config $<CONFIG> --prefix ${CMAKE_SOURCE_DIR}/output/ClipEngineSDK-$<CONFIG>
+    DEPENDS clipengine
+    COMMENT "Installing ClipEngine SDK to output/ClipEngineSDK-$<CONFIG>"
+)
+
+# Make sure clipengine is built before installing
+add_dependencies(install_sdk clipengine)
