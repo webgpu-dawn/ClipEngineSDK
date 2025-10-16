@@ -127,6 +127,21 @@ install(DIRECTORY deps/dawn/lib/
     FILES_MATCHING PATTERN "*.lib" PATTERN "*.a"
 )
 
+# Install extra runtime dependencies (D3D compiler, Vulkan)
+# These are required for Dawn/WebGPU to work on Windows
+set(EXTRA_RUNTIME_DLLS
+    deps/extra/d3dcompiler_47.dll
+    deps/extra/vulkan-1.dll
+)
+
+foreach(DLL ${EXTRA_RUNTIME_DLLS})
+    if(EXISTS "${CMAKE_SOURCE_DIR}/${DLL}")
+        install(FILES ${DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+    endif()
+endforeach()
+
 # Install GLFW and glfw3webgpu libraries (they are statically linked into clipengine)
 install(TARGETS glfw glfw3webgpu
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

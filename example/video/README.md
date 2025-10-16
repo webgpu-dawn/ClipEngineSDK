@@ -66,7 +66,9 @@ cmake --build build-release --config Release
 ```
 ClipEngineSDK-{Debug|Release}/
 ├── bin/
-│   └── webgpu_dawn.dll         # Dawn WebGPU 动态库
+│   ├── webgpu_dawn.dll         # Dawn WebGPU 动态库
+│   ├── d3dcompiler_47.dll      # DirectX 着色器编译器
+│   └── vulkan-1.dll            # Vulkan 运行时
 ├── include/
 │   ├── clipengine/             # ClipEngine 头文件
 │   └── dawn/                   # Dawn/WebGPU 头文件
@@ -90,18 +92,19 @@ ClipEngineSDK-{Debug|Release}/
 # 查找 ClipEngine SDK
 find_package(ClipEngine REQUIRED)
 
-# 链接 ClipEngine
+# 链接 ClipEngine - 就这么简单！
 target_link_libraries(your_target PRIVATE ClipEngine::clipengine)
-
-# 自动复制运行时 DLL（webgpu_dawn.dll）
-# 这个函数由 ClipEngineConfig.cmake 提供
-clipengine_copy_dlls(your_target)
 ```
 
-就这么简单！`clipengine_copy_dlls()` 函数会：
-- 自动检测 SDK 配置（Debug 或 Release）
-- 根据构建配置复制正确的 DLL 文件
+**就这两行！** 当你链接 `ClipEngine::clipengine` 时，SDK 会自动：
+- 检测 SDK 配置（Debug 或 Release）
+- 根据构建配置复制正确的 DLL 文件到可执行文件目录
 - 支持多配置生成器（Visual Studio）
+
+自动复制的 DLL：
+- `webgpu_dawn.dll` - WebGPU 运行时
+- `d3dcompiler_47.dll` - DirectX 着色器编译器
+- `vulkan-1.dll` - Vulkan 运行时
 
 ## 依赖项
 
@@ -109,7 +112,7 @@ clipengine_copy_dlls(your_target)
 - **FFMPEG**: 视频解码（通过 vcpkg 安装）
 - **vcpkg**: 包管理器（用于 FFMPEG）
 
-所有必要的 ClipEngine DLL 文件会通过 `clipengine_copy_dlls()` 自动拷贝到输出目录。
+ClipEngine SDK 的所有运行时 DLL 会通过 `clipengine_copy_dlls()` 自动拷贝到输出目录。
 
 ## 重要说明
 

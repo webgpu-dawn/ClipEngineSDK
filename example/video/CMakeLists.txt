@@ -64,6 +64,7 @@ add_executable(video
 )
 
 # Link against ClipEngine SDK and other dependencies
+# ClipEngine DLLs will be automatically copied when linking ClipEngine::clipengine
 target_link_libraries(video PRIVATE
     ClipEngine::clipengine
     ${FFMPEG_LIBRARIES}
@@ -71,29 +72,6 @@ target_link_libraries(video PRIVATE
     dxgi
     d3dcompiler
 )
-
-# Automatically copy ClipEngine runtime DLLs (webgpu_dawn.dll)
-# This function is provided by ClipEngineConfig.cmake
-clipengine_copy_dlls(video)
-
-# Copy extra dependencies (d3dcompiler, vulkan)
-# These should be in the source tree's deps/extra directory
-set(EXTRA_DLLS
-    d3dcompiler_47.dll
-    vulkan-1.dll
-)
-
-set(EXTRA_DLL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/extra")
-foreach(DLL ${EXTRA_DLLS})
-    if(EXISTS "${EXTRA_DLL_DIR}/${DLL}")
-        add_custom_command(TARGET video POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${EXTRA_DLL_DIR}/${DLL}"
-                $<TARGET_FILE_DIR:video>
-            COMMENT "Copying ${DLL}"
-        )
-    endif()
-endforeach()
 
 # Copy FFMPEG DLLs to output directory (only the necessary ones)
 set(FFMPEG_DLLS
