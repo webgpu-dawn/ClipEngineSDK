@@ -45,8 +45,6 @@ add_executable(video
     main.cpp
     decoder.cpp
 
-    FrameRenderer.cpp
-
     ${SOURCE_DIR}/core/util/WGPUHelpers.cpp
     ${SOURCE_DIR}/core/util/ComboRenderPipelineDescriptor.cpp
     ${SOURCE_DIR}/core/util/ClipContext.cpp
@@ -54,6 +52,10 @@ add_executable(video
     ${SOURCE_DIR}/core/renderer/EquirectangularRenderer.cpp
     ${SOURCE_DIR}/core/ClipEngine.cpp
     ${SOURCE_DIR}/core/rhi/RHIResourceFactory.cpp
+
+    ${SOURCE_DIR}/media_render/core/MediaRenderer.cpp
+    ${SOURCE_DIR}/media_render/core/RenderEngine.cpp
+    ${SOURCE_DIR}/media_render/renderers/VideoRenderer.cpp
 )
 
 target_link_libraries(video PRIVATE

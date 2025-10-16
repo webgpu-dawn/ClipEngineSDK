@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/TestDawn/src/core/shader/**)",
+      "Read(//d/TestDawn/**)",
+      "Bash(cmake:*)",
+      "Bash(find:*)",
+      "Bash(taskkill:*)",
+      "Bash(./video.exe)",
+      "Bash(timeout:*)",
+      "Bash(wc:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

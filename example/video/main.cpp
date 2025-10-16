@@ -10,8 +10,9 @@
 #include <filesystem>
 
 #include "../src/core/ClipEngine.h"
-
-#include "FrameRenderer.h"
+#include "../src/core/util/ComboRenderPipelineDescriptor.h"
+#include "../src/media_render/core/RenderEngine.h"
+#include "../src/media_render/renderers/VideoRenderer.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -34,28 +35,38 @@ int main()
 
     engine_.initialize(window_);
 
-    FrameRenderer texture_renderer(engine_.context_.device_, engine_.context_.surface_texture_fmt_);
-    std::unique_ptr<FrameRenderer> frameRenderer = std::make_unique<FrameRenderer>(texture_renderer);
-    engine_.addRenderer(std::move(frameRenderer));
+    auto videoRenderer = std::make_unique<MediaRender::VideoRenderer>();
+    videoRenderer->initialize(engine_.context_.device_, engine_.context_.surface_texture_fmt_);
+    videoRenderer->setViewport(0.0f, 0.0f, 0.5f, 1.0f);
+
+    MediaRender::VideoRenderer* videoRendererPtr = videoRenderer.get();
+    MediaRender::RenderEngine renderEngine;
+    renderEngine.initialize(engine_.context_.device_, engine_.context_.surface_texture_fmt_);
+    renderEngine.addRenderer(std::move(videoRenderer));
 
     Decoder decoder;
-    decoder.open_video("D:/video/8K.mp4", [&](AVFrame* frame) {
+    decoder.open_video("D:/video/video.mp4", [&](AVFrame* frame) {
         if(frame->format == AV_PIX_FMT_D3D11) {
             ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
             int subIndex = (int)frame->data[1];
 
-            dynamic_cast<FrameRenderer*>(engine_.renderers_[0].get())->update_texture(srcTex, subIndex);
+            videoRendererPtr->updateFrame(srcTex, subIndex);
 
-            // wgpu::TextureViewDescriptor uvViewDesc = {
-            //     .format = wgpu::TextureFormat::RG8Unorm,
-            //     .dimension = wgpu::TextureViewDimension::e2D,
-            // };
-            // wgpu::TextureView uvView = sharedTexture.CreateView(&uvViewDesc);
-            engine_.render();
+            wgpu::SurfaceTexture surface_texture;
+            engine_.context_.surface_.GetCurrentTexture(&surface_texture);
+            dawn::utils::ComboRenderPassDescriptor render_pass({ surface_texture.texture.CreateView()});
 
+            wgpu::CommandEncoder encoder = engine_.context_.device_.CreateCommandEncoder();
+            {
+                wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&render_pass);
+                renderEngine.render(pass);
+                pass.End();
+            }
+
+            wgpu::CommandBuffer commands = encoder.Finish();
+            engine_.context_.queue_.Submit(1, &commands);
+            engine_.context_.surface_.Present();
         }
-
-        
     });
     while(!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
