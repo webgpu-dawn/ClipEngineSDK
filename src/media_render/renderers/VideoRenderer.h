@@ -41,6 +41,7 @@ private:
     void initializeShader();
     void initializePipeline();
     void updateBindGroup();
+    void updateVertexBuffer();
 
     wgpu::Buffer vertexBuffer_;
     wgpu::Sampler sampler_;

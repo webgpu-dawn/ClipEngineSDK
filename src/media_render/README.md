@@ -252,6 +252,57 @@ int getLayer() const;             // 获取层级
 ```cpp
 bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);  // 更新视频帧（GPU零拷贝）
 void setVideoFormat(VideoFormat format);                         // 设置视频格式
+void setViewport(float x, float y, float width, float height);  // 设置渲染区域
+```
+
+#### Viewport 坐标系统
+
+`setViewport(x, y, width, height)` 参数说明：
+- **`x, y`**：显示区域的**左下角**位置（归一化坐标 0.0-1.0）
+- **`width, height`**：显示区域的宽度和高度（归一化坐标 0.0-1.0）
+- **窗口原点**：位于左下角 `(0, 0)`
+
+```
+窗口坐标系统（左下角为原点）：
+
+(0, 1) +-----------------+ (1, 1)  ← 左上角 | 右上角
+       |                 |
+       |                 |
+       |                 |
+(0, 0) +-----------------+ (1, 0)  ← 左下角 | 右下角
+       ↑                 ↑
+     原点              (1, 0)
+```
+
+**示例**：
+```cpp
+// 全屏
+videoRenderer->setViewport(0.0f, 0.0f, 1.0f, 1.0f);
+// 左下角在(0.0, 0.0)，右上角在(1.0, 1.0)
+
+// 左下角 1/4 屏幕
+videoRenderer->setViewport(0.0f, 0.0f, 0.5f, 0.5f);
+// 左下角在(0.0, 0.0)，右上角在(0.5, 0.5)
+
+// 左上角 1/4 屏幕
+videoRenderer->setViewport(0.0f, 0.5f, 0.5f, 0.5f);
+// 左下角在(0.0, 0.5)，右上角在(0.5, 1.0)
+
+// 右下角 1/4 屏幕
+videoRenderer->setViewport(0.5f, 0.0f, 0.5f, 0.5f);
+// 左下角在(0.5, 0.0)，右上角在(1.0, 0.5)
+
+// 右上角 1/4 屏幕
+videoRenderer->setViewport(0.5f, 0.5f, 0.5f, 0.5f);
+// 左下角在(0.5, 0.5)，右上角在(1.0, 1.0)
+
+// 右下角画中画 (25%大小，距离边缘5%)
+videoRenderer->setViewport(0.7f, 0.05f, 0.25f, 0.25f);
+// 左下角在(0.7, 0.05)，右上角在(0.95, 0.3)
+
+// 中心 1/4 屏幕
+videoRenderer->setViewport(0.25f, 0.25f, 0.5f, 0.5f);
+// 左下角在(0.25, 0.25)，右上角在(0.75, 0.75)
 ```
 
 #### 填充模式

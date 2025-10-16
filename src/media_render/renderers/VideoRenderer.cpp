@@ -21,20 +21,12 @@ bool VideoRenderer::initialize(wgpu::Device device, wgpu::TextureFormat format) 
 }
 
 void VideoRenderer::initializeBuffers() {
-    float vertices[] = {
-        -1.0f, -1.0f, 0.0f, 1.0f,
-         1.0f, -1.0f, 1.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f,
-         1.0f, -1.0f, 1.0f, 1.0f,
-         1.0f,  1.0f, 1.0f, 0.0f
-    };
-
     wgpu::BufferDescriptor bufferDesc = {};
-    bufferDesc.size = sizeof(vertices);
+    bufferDesc.size = sizeof(float) * 4 * 6;  // 6 vertices, 4 floats each (pos + uv)
     bufferDesc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
     vertexBuffer_ = device_.CreateBuffer(&bufferDesc);
-    device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
+
+    updateVertexBuffer();
 }
 
 void VideoRenderer::initializeSampler() {
@@ -331,11 +323,35 @@ void VideoRenderer::render(wgpu::RenderPassEncoder& pass) {
 void VideoRenderer::update(float deltaTime) {
 }
 
+void VideoRenderer::updateVertexBuffer() {
+    // Convert viewport (0-1 normalized) to NDC (-1 to 1)
+    float x1 = viewport_.x * 2.0f - 1.0f;
+    float y1 = viewport_.y * 2.0f - 1.0f;
+    float x2 = (viewport_.x + viewport_.width) * 2.0f - 1.0f;
+    float y2 = (viewport_.y + viewport_.height) * 2.0f - 1.0f;
+
+    float vertices[] = {
+        // pos.x, pos.y, uv.x, uv.y
+        x1, y1, 0.0f, 1.0f,  // bottom-left
+        x2, y1, 1.0f, 1.0f,  // bottom-right
+        x1, y2, 0.0f, 0.0f,  // top-left
+        x1, y2, 0.0f, 0.0f,  // top-left
+        x2, y1, 1.0f, 1.0f,  // bottom-right
+        x2, y2, 1.0f, 0.0f   // top-right
+    };
+
+    device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
+}
+
 void VideoRenderer::setViewport(float x, float y, float width, float height) {
     viewport_.x = x;
     viewport_.y = y;
     viewport_.width = width;
     viewport_.height = height;
+
+    if (vertexBuffer_) {
+        updateVertexBuffer();
+    }
 }
 
 } // namespace MediaRender

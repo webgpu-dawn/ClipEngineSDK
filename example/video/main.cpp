@@ -27,7 +27,7 @@ int main()
     }
 
     auto videoRenderer = std::make_unique<MediaRender::VideoRenderer>();
-    videoRenderer->setViewport(0.0f, 0.0f, 1.0f, 1.0f);
+    videoRenderer->setViewport(0.f, 0.5f, 0.5f, 0.5f);
 
     MediaRender::VideoRenderer* videoRendererPtr = videoRenderer.get();
     engine.addRenderer(std::move(videoRenderer));
