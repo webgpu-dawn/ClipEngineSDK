@@ -41,10 +41,11 @@ private:
     wgpu::Buffer vertex_buffer_;
     wgpu::Sampler sampler_;
 
-    // Y 纹理 (从硬解码获得或从文件加载)
-    wgpu::TextureView y_tex_;
-    wgpu::TextureView u_tex_;  // 保留用于测试加载 YUV 文件
-    wgpu::TextureView v_tex_;
+    // NV12 纹理视图 (从硬解码获得)
+    wgpu::TextureView y_tex_;   // Y 平面 (R8Unorm)
+    wgpu::TextureView uv_tex_;  // UV 平面 (RG8Unorm) - NV12 格式
+    wgpu::TextureView u_tex_;   // 保留用于测试加载 YUV 文件
+    wgpu::TextureView v_tex_;   // 保留用于测试加载 YUV 文件
 
     
 };

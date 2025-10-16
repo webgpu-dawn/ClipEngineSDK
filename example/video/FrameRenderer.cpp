@@ -132,26 +132,28 @@ void FrameRenderer::init_texture()
 
 void FrameRenderer::init_shader()
 {
-    module_ = dawn::utils::CreateShaderModuleFromePath(device_, "D:/TestDawn/src/core/shader/y_plane_renderer.wgsl");
+    module_ = dawn::utils::CreateShaderModuleFromePath(device_, "D:/TestDawn/src/core/shader/nv12_renderer.wgsl");
 }
 
 void FrameRenderer::init_bindgroup()
 {
-    // 渲染管线直接使用 Y 纹理
+    // 渲染管线使用 Y 和 UV 纹理
     if (!sampler_) {
         init_sampler();
     }
 
-    // 简化的 bindgroup，只需要 sampler 和 Y 纹理
-    BindGroupEntry entries[2]{};
+    // bindgroup: sampler + Y 纹理 + UV 纹理
+    BindGroupEntry entries[3]{};
     entries[0].binding = 0;
     entries[0].sampler = sampler_;
     entries[1].binding = 1;
     entries[1].textureView = y_tex_;
+    entries[2].binding = 2;
+    entries[2].textureView = uv_tex_;
 
     BindGroupDescriptor renderBGDesc{
         .layout = pipeline_.GetBindGroupLayout(0),
-        .entryCount = 2,
+        .entryCount = 3,
         .entries = entries
     };
     bind_group_ = device_.CreateBindGroup(&renderBGDesc);
@@ -388,21 +390,33 @@ void FrameRenderer::update_texture(ID3D11Texture2D* tex, int index)
     }
 
     // -------------------------------
-    // 6️⃣ 创建 TextureView - 访问 Y 平面 (plane 0)
+    // 6️⃣ 创建 TextureView - 访问 Y 和 UV 平面
     // -------------------------------
     // R8BG8Biplanar420Unorm 是双平面格式：
     // - Plane 0: Y (R8Unorm)
     // - Plane 1: UV (RG8Unorm)
-    wgpu::TextureViewDescriptor viewDesc = {};
-    viewDesc.format = wgpu::TextureFormat::R8Unorm;  // Y 平面是 R8
-    viewDesc.dimension = wgpu::TextureViewDimension::e2D;
-    viewDesc.baseMipLevel = 0;
-    viewDesc.mipLevelCount = 1;
-    viewDesc.baseArrayLayer = 0;  // Plane 0 = Y
-    viewDesc.arrayLayerCount = 1;
-    viewDesc.aspect = wgpu::TextureAspect::Plane0Only;  // 只访问 Y 平面
 
-    y_tex_ = dawnTexture.CreateView(&viewDesc);
+    // Y 平面 (Plane 0)
+    wgpu::TextureViewDescriptor yViewDesc = {};
+    yViewDesc.format = wgpu::TextureFormat::R8Unorm;  // Y 平面是 R8
+    yViewDesc.dimension = wgpu::TextureViewDimension::e2D;
+    yViewDesc.baseMipLevel = 0;
+    yViewDesc.mipLevelCount = 1;
+    yViewDesc.baseArrayLayer = 0;
+    yViewDesc.arrayLayerCount = 1;
+    yViewDesc.aspect = wgpu::TextureAspect::Plane0Only;  // 只访问 Y 平面
+    y_tex_ = dawnTexture.CreateView(&yViewDesc);
+
+    // UV 平面 (Plane 1)
+    wgpu::TextureViewDescriptor uvViewDesc = {};
+    uvViewDesc.format = wgpu::TextureFormat::RG8Unorm;  // UV 平面是 RG8
+    uvViewDesc.dimension = wgpu::TextureViewDimension::e2D;
+    uvViewDesc.baseMipLevel = 0;
+    uvViewDesc.mipLevelCount = 1;
+    uvViewDesc.baseArrayLayer = 0;
+    uvViewDesc.arrayLayerCount = 1;
+    uvViewDesc.aspect = wgpu::TextureAspect::Plane1Only;  // 访问 UV 平面
+    uv_tex_ = dawnTexture.CreateView(&uvViewDesc);
 }
 
 void FrameRenderer::init_pipeline()
@@ -437,7 +451,8 @@ void FrameRenderer::init_pipeline()
         device_,
         {
             { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },   // sampler
-            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }  // Y texture
+            { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D },  // Y texture
+            { 2, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D }   // UV texture
         }
     );
 
@@ -467,10 +482,10 @@ void FrameRenderer::render(RenderPassEncoder& pass)
         init_bindgroup();
     }
 
-    // 直接渲染 Y 分量作为灰度图像
-    // Y 纹理可以来自：
+    // 渲染 NV12 YUV 转换为 RGB
+    // Y 和 UV 纹理来自：
     // 1. init_texture() 从 YUV 文件加载 (测试用)
-    // 2. update_texture() 从硬解码 DX11 纹理转换得到
+    // 2. update_texture() 从硬解码 DX11 NV12 纹理转换得到
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertex_buffer_);
     pass.SetBindGroup(0, bind_group_);
