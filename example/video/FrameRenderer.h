@@ -3,6 +3,7 @@
 #include <webgpu/webgpu_cpp.h>
 
 #include <dawn/native/D3D12Backend.h>
+#include <dawn/native/D3D11Backend.h>
 
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -35,29 +36,15 @@ private:
 
     void init_8k_texture();
 
-    void init_compute_pipeline_and_bind_group();
-
 private:
     // 顶点缓冲 & 采样器
     wgpu::Buffer vertex_buffer_;
     wgpu::Sampler sampler_;
 
-    wgpu::Buffer uniform_buffer_;
-
-    // 渲染相关
-    
-
+    // Y 纹理 (从硬解码获得或从文件加载)
     wgpu::TextureView y_tex_;
-    wgpu::TextureView u_tex_;
+    wgpu::TextureView u_tex_;  // 保留用于测试加载 YUV 文件
     wgpu::TextureView v_tex_;
-
-    wgpu::TextureView rgba_tex_;
-
-    // ----------------------------
-    // Compute Shader 相关
-    // ----------------------------
-    wgpu::ComputePipeline compute_pipeline_;
-    wgpu::BindGroup computeBindGroup_;
 
     
 };

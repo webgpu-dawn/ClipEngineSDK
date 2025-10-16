@@ -76,8 +76,17 @@ bool ClipContext::initialize(GLFWwindow* window)
     Limits limits;
     limits.maxTextureDimension2D = 16384;
     limits.maxBufferSize = 2147483648;
+
+    // 启用 SharedTextureMemory 特性用于硬解码纹理共享
+    static constexpr FeatureName required_features[] = {
+        FeatureName::SharedTextureMemoryDXGISharedHandle,
+        FeatureName::DawnMultiPlanarFormats
+    };
+
     DeviceDescriptor device_desc = {};
     device_desc.nextInChain = nullptr;
+    device_desc.requiredFeatureCount = 2;
+    device_desc.requiredFeatures = required_features;
     device_desc.requiredLimits = &limits;
     device_desc.SetDeviceLostCallback(
         CallbackMode::AllowSpontaneous,
