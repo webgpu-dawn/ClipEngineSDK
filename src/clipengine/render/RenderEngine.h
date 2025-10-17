@@ -12,6 +12,8 @@ struct GLFWwindow;
 
 namespace ClipEngine {
 
+class GPUTimer;
+
 struct RenderEngineConfig {
     uint32_t width = 800;
     uint32_t height = 600;
@@ -68,6 +70,10 @@ public:
     wgpu::TextureFormat getSurfaceFormat() const { return surfaceFormat_; }
     GLFWwindow* getWindow() const { return window_; }
 
+    // GPU Timer
+    void setGPUTimer(std::shared_ptr<GPUTimer> timer);
+    std::shared_ptr<GPUTimer> getGPUTimer() const;
+
 private:
     bool initializeWindow(const RenderEngineConfig& config);
     bool initializeWebGPU();
@@ -86,6 +92,8 @@ private:
 
     uint32_t width_ = 800;
     uint32_t height_ = 600;
+
+    std::shared_ptr<GPUTimer> gpuTimer_;
 };
 
 } // namespace ClipEngine

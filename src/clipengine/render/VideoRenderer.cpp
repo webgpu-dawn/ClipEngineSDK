@@ -1,4 +1,5 @@
 #include "VideoRenderer.h"
+// #include "../util/GPUProfiler.h"  // Temporarily disabled due to compilation issues
 #include <dawn/native/D3D11Backend.h>
 #include <dawn/native/D3D12Backend.h>
 #include <iostream>
@@ -240,6 +241,9 @@ namespace {
 bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
     if(!texture) return false;
 
+    // 性能测量：GPU 拷贝操作
+    // if (profiler_) profiler_->beginEvent("GPU_Copy");  // Temporarily disabled
+
     ComPtr<ID3D11Device> d3d11Device;
     texture->GetDevice(d3d11Device.GetAddressOf());
     ComPtr<ID3D11DeviceContext> ctx;
@@ -291,6 +295,8 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
 
     updateBindGroup();
 
+    // if (profiler_) profiler_->endEvent();  // End GPU_Copy  // Temporarily disabled
+
     return true;
 }
 
@@ -314,10 +320,15 @@ void VideoRenderer::updateBindGroup() {
 void VideoRenderer::render(wgpu::RenderPassEncoder& pass) {
     if(!enabled_ || !bindGroup_) return;
 
+    // 性能测量：渲染操作
+    // if (profiler_) profiler_->beginEvent("Render");  // Temporarily disabled
+
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertexBuffer_);
     pass.SetBindGroup(0, bindGroup_);
     pass.Draw(6);
+
+    // if (profiler_) profiler_->endEvent();  // End Render  // Temporarily disabled
 }
 
 void VideoRenderer::update(float deltaTime) {

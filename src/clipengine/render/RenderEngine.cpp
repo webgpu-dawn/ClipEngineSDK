@@ -1,6 +1,8 @@
 #include "RenderEngine.h"
+#include "../util/GPUTimer.h"
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
+#include <dawn/native/DawnNative.h>
 #include <iostream>
 
 namespace ClipEngine {
@@ -97,11 +99,19 @@ bool RenderEngine::initializeWebGPU() {
 
     wgpu::FeatureName requiredFeatures[] = {
         wgpu::FeatureName::SharedTextureMemoryDXGISharedHandle,
-        wgpu::FeatureName::DawnMultiPlanarFormats
+        wgpu::FeatureName::DawnMultiPlanarFormats,
+        wgpu::FeatureName::TimestampQuery
     };
 
+    // Enable unsafe APIs toggle for timestamp queries
+    const char* enabledToggles[] = {"allow_unsafe_apis"};
+    wgpu::DawnTogglesDescriptor togglesDesc = {};
+    togglesDesc.enabledToggleCount = 1;
+    togglesDesc.enabledToggles = enabledToggles;
+
     wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.requiredFeatureCount = 2;
+    deviceDesc.nextInChain = &togglesDesc;
+    deviceDesc.requiredFeatureCount = 3;
     deviceDesc.requiredFeatures = requiredFeatures;
     deviceDesc.defaultQueue.label = "ClipEngine Queue";
     deviceDesc.SetUncapturedErrorCallback(
@@ -222,6 +232,12 @@ void RenderEngine::renderFrame() {
     renderPassDesc.colorAttachments = &colorAttachment;
 
     wgpu::CommandEncoder encoder = device_.CreateCommandEncoder();
+
+    // GPU timing: begin render timestamp
+    if (gpuTimer_ && gpuTimer_->isSupported()) {
+        gpuTimer_->beginQuery(encoder, "Render");
+    }
+
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
 
@@ -234,8 +250,20 @@ void RenderEngine::renderFrame() {
         pass.End();
     }
 
+    // GPU timing: end render timestamp
+    if (gpuTimer_ && gpuTimer_->isSupported()) {
+        gpuTimer_->endQuery(encoder);
+        gpuTimer_->resolveQueries(encoder);
+    }
+
     wgpu::CommandBuffer commands = encoder.Finish();
     queue_.Submit(1, &commands);
+
+    // Read GPU timing results after submission
+    if (gpuTimer_ && gpuTimer_->isSupported()) {
+        gpuTimer_->readResults();
+    }
+
     surface_.Present();
 }
 
@@ -280,6 +308,14 @@ void RenderEngine::sortRenderersByLayer() {
         [](const std::unique_ptr<IMediaRenderer>& a, const std::unique_ptr<IMediaRenderer>& b) {
             return a->getLayer() < b->getLayer();
         });
+}
+
+void RenderEngine::setGPUTimer(std::shared_ptr<GPUTimer> timer) {
+    gpuTimer_ = timer;
+}
+
+std::shared_ptr<GPUTimer> RenderEngine::getGPUTimer() const {
+    return gpuTimer_;
 }
 
 } // namespace ClipEngine

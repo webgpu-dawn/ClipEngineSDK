@@ -43,6 +43,8 @@ add_library(clipengine STATIC
     src/clipengine/render/RenderEngine.cpp
     src/clipengine/render/VideoRenderer.cpp
     src/clipengine/render/Renderer.cpp
+    src/clipengine/util/GPUTimer.cpp
+    # src/clipengine/util/GPUProfiler.cpp  # Temporarily disabled
 )
 
 # Set public headers for installation
@@ -64,6 +66,12 @@ target_include_directories(clipengine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/dawn/include>
         $<INSTALL_INTERFACE:include>
         $<INSTALL_INTERFACE:include/dawn>
+)
+
+target_compile_definitions(clipengine
+    PRIVATE
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
 )
 
 target_link_libraries(clipengine
