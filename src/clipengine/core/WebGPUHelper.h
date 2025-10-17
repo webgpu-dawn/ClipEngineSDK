@@ -4,24 +4,26 @@
 #include <string>
 #include <vector>
 
-namespace RHI {
+namespace ClipEngine {
 
 // ============================================================================
-// 简单实用的资源创建辅助函数
+// 资源创建辅助函数
 // ============================================================================
 
-class Helper {
+class WebGPUHelper {
 public:
-    explicit Helper(wgpu::Device device) : device_(device) {}
+    explicit WebGPUHelper(wgpu::Device device) : device_(device) {}
 
     // ========== 缓冲区 ==========
 
     // 创建顶点缓冲区（带初始数据）
     wgpu::Buffer createVertexBuffer(const void* data, size_t size, const char* label = nullptr) {
-        wgpu::BufferDescriptor desc = {};
-        desc.size = size;
-        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.label = label;
+        wgpu::BufferDescriptor desc = {
+            .label = label,
+            .usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst
+            .size = size,
+            
+        };
 
         auto buffer = device_.CreateBuffer(&desc);
         if (data) {
@@ -30,21 +32,23 @@ public:
         return buffer;
     }
 
-    // 创建Uniform缓冲区
+    // 创建 Uniform 缓冲区
     wgpu::Buffer createUniformBuffer(size_t size, const char* label = nullptr) {
-        wgpu::BufferDescriptor desc = {};
-        desc.size = size;
-        desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        desc.label = label;
+        wgpu::BufferDescriptor desc = {
+            .label = label,
+            .usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+            .size = size,
+        };
         return device_.CreateBuffer(&desc);
     }
 
     // 创建索引缓冲区
     wgpu::Buffer createIndexBuffer(const void* data, size_t size, const char* label = nullptr) {
-        wgpu::BufferDescriptor desc = {};
-        desc.size = size;
-        desc.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        desc.label = label;
+        wgpu::BufferDescriptor desc = {
+            .label = label,
+            .usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst,
+            .size = size,
+        };
 
         auto buffer = device_.CreateBuffer(&desc);
         if (data) {
@@ -55,10 +59,11 @@ public:
 
     // 通用缓冲区创建
     wgpu::Buffer createBuffer(size_t size, wgpu::BufferUsage usage, const void* data = nullptr, const char* label = nullptr) {
-        wgpu::BufferDescriptor desc = {};
-        desc.size = size;
-        desc.usage = usage;
-        desc.label = label;
+        wgpu::BufferDescriptor desc = {
+            .label = label,
+            .usage = usage,
+            .size = size,
+        };
 
         auto buffer = device_.CreateBuffer(&desc);
         if (data) {
@@ -77,14 +82,19 @@ public:
         wgpu::TextureUsage usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
         const char* label = nullptr
     ) {
-        wgpu::TextureDescriptor desc = {};
-        desc.size = {width, height, 1};
-        desc.format = format;
-        desc.usage = usage;
-        desc.dimension = wgpu::TextureDimension::e2D;
-        desc.mipLevelCount = 1;
-        desc.sampleCount = 1;
-        desc.label = label;
+        wgpu::TextureDescriptor desc = {
+            .label = label,
+            .usage = usage,
+            .dimension = wgpu::TextureDimension::e2D,
+            .size = {
+                .width = width,
+                .height = height,
+                .depthOrArrayLayers = 1
+            },
+            .format = format,
+            .mipLevelCount = 1,
+            .sampleCount = 1,
+        };
         return device_.CreateTexture(&desc);
     }
 
@@ -96,14 +106,19 @@ public:
         uint32_t sampleCount = 1,
         const char* label = nullptr
     ) {
-        wgpu::TextureDescriptor desc = {};
-        desc.size = {width, height, 1};
-        desc.format = format;
-        desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-        desc.dimension = wgpu::TextureDimension::e2D;
-        desc.mipLevelCount = 1;
-        desc.sampleCount = sampleCount;
-        desc.label = label;
+        wgpu::TextureDescriptor desc = {
+            .label = label,
+            .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::RenderAttachment,
+            .dimension = wgpu::TextureDimension::e2D,
+            .size = {
+                .width = width,
+                .height = height,
+                .depthOrArrayLayers = 1
+            },
+            .format = format,
+            .mipLevelCount = 1,
+            .sampleCount = sampleCount,
+        };
         return device_.CreateTexture(&desc);
     }
 
@@ -111,40 +126,43 @@ public:
 
     // 线性采样器（最常用）
     wgpu::Sampler createLinearSampler(const char* label = nullptr) {
-        wgpu::SamplerDescriptor desc = {};
-        desc.addressModeU = wgpu::AddressMode::ClampToEdge;
-        desc.addressModeV = wgpu::AddressMode::ClampToEdge;
-        desc.addressModeW = wgpu::AddressMode::ClampToEdge;
-        desc.magFilter = wgpu::FilterMode::Linear;
-        desc.minFilter = wgpu::FilterMode::Linear;
-        desc.mipmapFilter = wgpu::MipmapFilterMode::Linear;
-        desc.label = label;
+        wgpu::SamplerDescriptor desc = {
+            .label = label,
+            .addressModeU = wgpu::AddressMode::ClampToEdge,
+            .addressModeV = wgpu::AddressMode::ClampToEdge,
+            .addressModeW = wgpu::AddressMode::ClampToEdge,
+            .magFilter = wgpu::FilterMode::Linear,
+            .minFilter = wgpu::FilterMode::Linear,
+            .mipmapFilter = wgpu::MipmapFilterMode::Linear,
+        };
         return device_.CreateSampler(&desc);
     }
 
     // 最近邻采样器
     wgpu::Sampler createNearestSampler(const char* label = nullptr) {
-        wgpu::SamplerDescriptor desc = {};
-        desc.addressModeU = wgpu::AddressMode::ClampToEdge;
-        desc.addressModeV = wgpu::AddressMode::ClampToEdge;
-        desc.addressModeW = wgpu::AddressMode::ClampToEdge;
-        desc.magFilter = wgpu::FilterMode::Nearest;
-        desc.minFilter = wgpu::FilterMode::Nearest;
-        desc.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
-        desc.label = label;
+        wgpu::SamplerDescriptor desc = {
+            .label = label,
+            .addressModeU = wgpu::AddressMode::ClampToEdge,
+            .addressModeV = wgpu::AddressMode::ClampToEdge,
+            .addressModeW = wgpu::AddressMode::ClampToEdge,
+            .magFilter = wgpu::FilterMode::Nearest,
+            .minFilter = wgpu::FilterMode::Nearest,
+            .mipmapFilter = wgpu::MipmapFilterMode::Nearest,
+        };
         return device_.CreateSampler(&desc);
     }
 
     // 重复采样器
     wgpu::Sampler createRepeatSampler(const char* label = nullptr) {
-        wgpu::SamplerDescriptor desc = {};
-        desc.addressModeU = wgpu::AddressMode::Repeat;
-        desc.addressModeV = wgpu::AddressMode::Repeat;
-        desc.addressModeW = wgpu::AddressMode::Repeat;
-        desc.magFilter = wgpu::FilterMode::Linear;
-        desc.minFilter = wgpu::FilterMode::Linear;
-        desc.mipmapFilter = wgpu::MipmapFilterMode::Linear;
-        desc.label = label;
+        wgpu::SamplerDescriptor desc = {
+            .label = label,
+            .addressModeU = wgpu::AddressMode::Repeat,
+            .addressModeV = wgpu::AddressMode::Repeat,
+            .addressModeW = wgpu::AddressMode::Repeat,
+            .magFilter = wgpu::FilterMode::Linear,
+            .minFilter = wgpu::FilterMode::Linear,
+            .mipmapFilter = wgpu::MipmapFilterMode::Linear,
+        };
         return device_.CreateSampler(&desc);
     }
 
@@ -155,9 +173,10 @@ public:
         wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
         wgslDesc.code = code;
 
-        wgpu::ShaderModuleDescriptor desc = {};
-        desc.nextInChain = &wgslDesc;
-        desc.label = label;
+        wgpu::ShaderModuleDescriptor desc = {
+            .nextInChain = &wgslDesc,
+            .label = label
+        };
 
         return device_.CreateShaderModule(&desc);
     }
@@ -187,7 +206,7 @@ public:
         entries[2].visibility = wgpu::ShaderStage::Fragment;
         entries[2].sampler.type = wgpu::SamplerBindingType::Filtering;
 
-        wgpu::BindGroupLayoutDescriptor desc = {};
+        wgpu::BindGroupLayoutDescriptor desc = { };
         desc.entryCount = 3;
         desc.entries = entries;
         desc.label = label;
@@ -200,7 +219,7 @@ public:
         const std::vector<wgpu::BindGroupLayoutEntry>& entries,
         const char* label = nullptr
     ) {
-        wgpu::BindGroupLayoutDescriptor desc = {};
+        wgpu::BindGroupLayoutDescriptor desc = { };
         desc.entryCount = static_cast<uint32_t>(entries.size());
         desc.entries = entries.data();
         desc.label = label;
@@ -209,12 +228,13 @@ public:
 
     // ========== 绑定组 ==========
 
+
     wgpu::BindGroup createBindGroup(
         wgpu::BindGroupLayout layout,
         const std::vector<wgpu::BindGroupEntry>& entries,
         const char* label = nullptr
     ) {
-        wgpu::BindGroupDescriptor desc = {};
+        wgpu::BindGroupDescriptor desc = { };
         desc.layout = layout;
         desc.entryCount = static_cast<uint32_t>(entries.size());
         desc.entries = entries.data();
@@ -228,7 +248,7 @@ public:
         const std::vector<wgpu::BindGroupLayout>& layouts,
         const char* label = nullptr
     ) {
-        wgpu::PipelineLayoutDescriptor desc = {};
+        wgpu::PipelineLayoutDescriptor desc = { };
         desc.bindGroupLayoutCount = static_cast<uint32_t>(layouts.size());
         desc.bindGroupLayouts = layouts.data();
         desc.label = label;
@@ -253,8 +273,8 @@ namespace VertexLayout {
     // Position + UV (vec2 + vec2)
     inline wgpu::VertexBufferLayout PositionUV() {
         static wgpu::VertexAttribute attrs[2] = {
-            {wgpu::VertexFormat::Float32x2, 0, 0},                    // position
-            {wgpu::VertexFormat::Float32x2, sizeof(float) * 2, 1}     // uv
+            { wgpu::VertexFormat::Float32x2, 0, 0 },                    // position
+            { wgpu::VertexFormat::Float32x2, sizeof(float) * 2, 1 }     // uv
         };
 
         static wgpu::VertexBufferLayout layout = {};
@@ -269,9 +289,9 @@ namespace VertexLayout {
     // Position 3D + Normal + UV (vec3 + vec3 + vec2)
     inline wgpu::VertexBufferLayout PositionNormalUV() {
         static wgpu::VertexAttribute attrs[3] = {
-            {wgpu::VertexFormat::Float32x3, 0, 0},                    // position
-            {wgpu::VertexFormat::Float32x3, sizeof(float) * 3, 1},    // normal
-            {wgpu::VertexFormat::Float32x2, sizeof(float) * 6, 2}     // uv
+            { wgpu::VertexFormat::Float32x3, 0, 0 },                    // position
+            { wgpu::VertexFormat::Float32x3, sizeof(float) * 3, 1 },    // normal
+            { wgpu::VertexFormat::Float32x2, sizeof(float) * 6, 2 }     // uv
         };
 
         static wgpu::VertexBufferLayout layout = {};
@@ -285,4 +305,4 @@ namespace VertexLayout {
 
 } // namespace VertexLayout
 
-} // namespace RHI
+}

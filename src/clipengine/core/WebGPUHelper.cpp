@@ -1,11 +1,11 @@
-#include "RHIHelper.h"
+#include "WebGPUHelper.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
 namespace RHI {
 
-wgpu::ShaderModule Helper::createShaderFromFile(const char* path) {
+wgpu::ShaderModule WebGPUHelper::createShaderFromFile(const char* path) {
     std::ifstream file(path);
     if (!file.is_open()) {
         std::cerr << "Failed to open shader file: " << path << std::endl;
@@ -19,4 +19,4 @@ wgpu::ShaderModule Helper::createShaderFromFile(const char* path) {
     return createShader(code.c_str(), path);
 }
 
-} // namespace RHI
+}

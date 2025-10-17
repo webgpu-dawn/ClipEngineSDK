@@ -11,11 +11,6 @@
 #include "render/RenderEngine.h"
 #include "render/VideoRenderer.h"
 
-// Codec modules (placeholder)
-// #include "codec/Decoder.h"
-// #include "codec/Encoder.h"
-// #include "codec/CodecFactory.h"
-
 // Shader modules
 // Shaders are loaded at runtime from clipengine/shader/
 

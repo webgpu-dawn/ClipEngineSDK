@@ -73,6 +73,44 @@ target_link_libraries(video PRIVATE
     d3dcompiler
 )
 
+# Copy ClipEngine DLLs to output directory
+# When building from source, copy from deps directory
+# When using SDK, copy from SDK bin directory
+if(TARGET clipengine)
+    # Building from source - copy from deps directory
+    set(CLIPENGINE_DLL_SOURCE "${CMAKE_SOURCE_DIR}/deps/dawn/bin")
+    set(CLIPENGINE_EXTRA_DLL_SOURCE "${CMAKE_SOURCE_DIR}/deps/extra")
+else()
+    # Using SDK - copy from SDK bin directory
+    set(CLIPENGINE_DLL_SOURCE "${ClipEngine_BIN_DIR}")
+    set(CLIPENGINE_EXTRA_DLL_SOURCE "${ClipEngine_BIN_DIR}")
+endif()
+
+# Copy ClipEngine required DLLs
+set(CLIPENGINE_DLLS
+    webgpu_dawn.dll
+    d3dcompiler_47.dll
+    vulkan-1.dll
+)
+
+foreach(DLL ${CLIPENGINE_DLLS})
+    if(EXISTS "${CLIPENGINE_DLL_SOURCE}/${DLL}")
+        add_custom_command(TARGET video POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CLIPENGINE_DLL_SOURCE}/${DLL}"
+                $<TARGET_FILE_DIR:video>
+            COMMENT "Copying ClipEngine DLL: ${DLL}"
+        )
+    elseif(EXISTS "${CLIPENGINE_EXTRA_DLL_SOURCE}/${DLL}")
+        add_custom_command(TARGET video POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CLIPENGINE_EXTRA_DLL_SOURCE}/${DLL}"
+                $<TARGET_FILE_DIR:video>
+            COMMENT "Copying ClipEngine DLL: ${DLL}"
+        )
+    endif()
+endforeach()
+
 # Copy FFMPEG DLLs to output directory (only the necessary ones)
 set(FFMPEG_DLLS
     avcodec-61.dll

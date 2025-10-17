@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0111 NEW)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_TOOLCHAIN_FILE "D:/code/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
+if(WIN32)
+    set(CMAKE_TOOLCHAIN_FILE "D:/code/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
+elseif(APPLE)
+    message(STATUS "Building on MacOS")
+elseif(UNIX)
+    message(STATUS "Building on Linux")
+endif()
+
 project(clipengine)
 
-# Set default install prefix based on build configuration
-# SDK will be installed to output/ClipEngineSDK-Debug or output/ClipEngineSDK-Release
+# 设置 SDK 安装路径
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    # Use generator expression for multi-config generators (like Visual Studio)
-    # This will be evaluated at install time, not configure time
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/output/ClipEngineSDK-$<CONFIG>" CACHE PATH "Default install path" FORCE)
 endif()
 
@@ -23,17 +27,13 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
 find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-find_package(nlohmann_json CONFIG REQUIRED)
-# 禁用 nlohmann-json 的隐式转换
-set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
-
 add_subdirectory(deps/glfw)
+add_subdirectory(deps/glfw3webgpu)
 
 include_directories(
     deps/dawn/include
     ${PROJECT_SOURCE_DIR}/src
 )
-add_subdirectory(deps/glfw3webgpu)
 
 # ============================================================================
 # ClipEngine Library - Professional Video Editing Engine Core
@@ -53,10 +53,7 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/render/Renderer.h
     src/clipengine/render/RenderEngine.h
     src/clipengine/render/VideoRenderer.h
-    src/clipengine/codec/Decoder.h
-    src/clipengine/codec/Encoder.h
-    src/clipengine/codec/CodecFactory.h
-    src/clipengine/core/RHIHelper.h
+    src/clipengine/core/WebGPUHelper.h
 )
 
 # Configure library properties
@@ -80,7 +77,6 @@ target_link_libraries(clipengine
     PRIVATE
         glfw
         glfw3webgpu
-        nlohmann_json::nlohmann_json
         glm::glm
 )
 
@@ -206,3 +202,13 @@ add_custom_target(install_sdk ALL
 
 # Make sure clipengine is built before installing
 add_dependencies(install_sdk clipengine)
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+# Add example subdirectory (optional, can be disabled with -DBUILD_EXAMPLES=OFF)
+option(BUILD_EXAMPLES "Build example projects" ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(example/video)
+endif()

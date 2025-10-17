@@ -5,6 +5,8 @@
 #include <dawn/native/DawnNative.h>
 #include <iostream>
 
+using namespace wgpu;
+
 namespace ClipEngine {
 
 RenderEngine::~RenderEngine() {
@@ -52,10 +54,13 @@ bool RenderEngine::initializeWindow(const RenderEngineConfig& config) {
 }
 
 bool RenderEngine::initializeWebGPU() {
-    static constexpr auto timedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
-    wgpu::InstanceDescriptor instanceDesc = {};
-    instanceDesc.requiredFeatureCount = 1;
-    instanceDesc.requiredFeatures = &timedWaitAny;
+    constexpr InstanceFeatureName requiredFeatures[] ={
+        InstanceFeatureName::TimedWaitAny
+    };
+    wgpu::InstanceDescriptor instanceDesc = {
+        .requiredFeatureCount = std::size(requiredFeatures),
+        .requiredFeatures = requiredFeatures
+    };
     instance_ = wgpu::CreateInstance(&instanceDesc);
     if (!instance_) {
         std::cerr << "Failed to create WebGPU instance" << std::endl;
@@ -97,7 +102,7 @@ bool RenderEngine::initializeWebGPU() {
     std::cout << "  Device: " << adapterInfo.device.data << std::endl;
     std::cout << "  Architecture: " << adapterInfo.architecture.data << std::endl;
 
-    wgpu::FeatureName requiredFeatures[] = {
+    wgpu::FeatureName deviceFeatures[] = {
         wgpu::FeatureName::SharedTextureMemoryDXGISharedHandle,
         wgpu::FeatureName::DawnMultiPlanarFormats,
         wgpu::FeatureName::TimestampQuery
@@ -112,7 +117,7 @@ bool RenderEngine::initializeWebGPU() {
     wgpu::DeviceDescriptor deviceDesc = {};
     deviceDesc.nextInChain = &togglesDesc;
     deviceDesc.requiredFeatureCount = 3;
-    deviceDesc.requiredFeatures = requiredFeatures;
+    deviceDesc.requiredFeatures = deviceFeatures;
     deviceDesc.defaultQueue.label = "ClipEngine Queue";
     deviceDesc.SetUncapturedErrorCallback(
         [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
