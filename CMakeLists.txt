@@ -23,9 +23,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake)
+list(APPEND CMAKE_PREFIX_PATH 
+    ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake
+    ${CMAKE_SOURCE_DIR}/deps/spdlog/shard/spdlog
+)
 find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 add_subdirectory(deps/glfw)
 add_subdirectory(deps/glfw3webgpu)
@@ -40,9 +44,13 @@ include_directories(
 # ============================================================================
 
 add_library(clipengine STATIC
+    src/clipengine/ClipEngine.cpp
+    src/clipengine/core/CeContext.cpp
+    src/clipengine/common/RuntimeInspector.cpp
     src/clipengine/render/RenderEngine.cpp
     src/clipengine/render/VideoRenderer.cpp
     src/clipengine/render/Renderer.cpp
+    # src/clipengine/core/WebGPUHelper.cpp
     src/clipengine/util/GPUTimer.cpp
     # src/clipengine/util/GPUProfiler.cpp  # Temporarily disabled
 )
@@ -74,10 +82,12 @@ target_compile_definitions(clipengine
 target_link_libraries(clipengine
     PUBLIC
         dawn::webgpu_dawn
+        spdlog::spdlog
     PRIVATE
         glfw
         glfw3webgpu
         glm::glm
+        spdlog::spdlog_header_only
 )
 
 # Alias for consistent naming

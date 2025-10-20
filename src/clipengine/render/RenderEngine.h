@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "../core/CeContext.h"
+
 // Forward declaration to avoid exposing GLFW in public header
 struct GLFWwindow;
 
@@ -20,6 +22,7 @@ struct RenderEngineConfig {
     const char* title = "ClipEngine";
     bool vsync = true;
     wgpu::PresentMode presentMode = wgpu::PresentMode::Fifo;
+    CeContextMode mode = CeContextMode::CREATE_WINDOW;  // 默认创建窗口
 };
 
 class RenderEngine {
@@ -65,33 +68,24 @@ public:
 
     void setBackgroundColor(float r, float g, float b, float a = 1.0f);
 
-    wgpu::Device getDevice() const { return device_; }
-    wgpu::Queue getQueue() const { return queue_; }
-    wgpu::TextureFormat getSurfaceFormat() const { return surfaceFormat_; }
-    GLFWwindow* getWindow() const { return window_; }
+    wgpu::Device getDevice() const { return context_.getDevice(); }
+    wgpu::Queue getQueue() const { return context_.getQueue(); }
+    wgpu::TextureFormat getSurfaceFormat() const { return context_.getSurfaceFormat(); }
+    GLFWwindow* getWindow() const { return context_.getWindow(); }
+
+    CeContext& getContext() { return context_; }
 
     // GPU Timer
     void setGPUTimer(std::shared_ptr<GPUTimer> timer);
     std::shared_ptr<GPUTimer> getGPUTimer() const;
 
 private:
-    bool initializeWindow(const RenderEngineConfig& config);
-    bool initializeWebGPU();
     void sortRenderersByLayer();
 
-    GLFWwindow* window_ = nullptr;
-    wgpu::Instance instance_;
-    wgpu::Adapter adapter_;
-    wgpu::Device device_;
-    wgpu::Queue queue_;
-    wgpu::Surface surface_;
-    wgpu::TextureFormat surfaceFormat_ = wgpu::TextureFormat::BGRA8Unorm;
+    CeContext context_;
 
     std::vector<std::unique_ptr<IMediaRenderer>> renderers_;
     float backgroundColor_[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-
-    uint32_t width_ = 800;
-    uint32_t height_ = 600;
 
     std::shared_ptr<GPUTimer> gpuTimer_;
 };

@@ -4,8 +4,7 @@
 #include "decoder.h"
 #include <filesystem>
 
-#include <clipengine/render/RenderEngine.h>
-#include <clipengine/render/VideoRenderer.h>
+#include "clipengine/ClipEngine.h"
 #include <clipengine/util/GPUTimer.h>
 
 using namespace std;
@@ -19,7 +18,7 @@ int main()
     ClipEngine::RenderEngineConfig config;
     config.width = 800;
     config.height = 600;
-    config.title = "Video Player - ClipEngine";
+    config.title = "clipforge";
 
     ClipEngine::RenderEngine engine;
     if (!engine.initialize(config)) {
