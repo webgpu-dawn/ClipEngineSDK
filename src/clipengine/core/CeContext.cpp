@@ -1,13 +1,6 @@
 #include "CeContext.h"
 
-#include <vector>
-#include <string>
-#include <GLFW/glfw3.h>
-#include <glfw3webgpu.h>
-
-#if _WIN32
-#include <Windows.h>
-#endif
+#include "../common/CeHelper.h"
 
 namespace ClipEngine {
 
@@ -219,24 +212,18 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
         switch (config.mode) {
             case CeContextMode::CREATE_WINDOW:
                 {
-                   surface_ = Surface::Acquire(glfwGetWGPUSurface(instance_.Get(), window_));
-                   if (surface_) {
-                       surface_.SetLabel("Main Surface");
-                   }
-                   LOG_INFO("Surface created from GLFW window");
+                //    native_.surface = Surface::Acquire(glfwGetWGPUSurface(instance_.Get(), window_));
+                //    if (native_.surface) {
+                //        native_.surface.SetLabel("Main Surface");
+                //    }
+                //    LOG_INFO("Surface created from GLFW window");
                 }
                 break;
             case CeContextMode::FIND_WINDOW:
                 {
                     #if _WIN32
-                        if (!hwnd_) {
-                            LOG_ERROR("External window handle is null");
-                            return false;
-                        }
-                        surface_ = Surface::Acquire(createSurfaceFromHWND(instance_.Get(), static_cast<HWND>(hwnd_)));
-                        if (surface_) {
-                            surface_.SetLabel("Main Surface");
-                        }
+                        native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.windowTitle);
+                        // native_.surface = Surface::Acquire(createSurfaceFromHWND(instance_.Get(), static_cast<HWND>(hwnd_)));
                     #endif
                 }
                 break;
@@ -244,7 +231,7 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
                 break;
         }
 
-        if (!surface_) {
+        if (!native_.surface) {
             LOG_ERROR("Failed to create WebGPU surface");
             return false;
         }
@@ -256,7 +243,7 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
     {
         RequestAdapterOptions opts = {
             .powerPreference = PowerPreference::HighPerformance,
-            .compatibleSurface = surface_
+            .compatibleSurface = native_.surface
         };
         instance_.WaitAny(
             instance_.RequestAdapter(
@@ -334,7 +321,7 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
     // 配置 Surface
     {
         SurfaceCapabilities caps;
-        surface_.GetCapabilities(adapter_, &caps);
+        native_.surface.GetCapabilities(adapter_, &caps);
 
         LOG_INFO("Surface capabilities:");
         LOG_INFO("  - Format count: {}", caps.formatCount);
@@ -360,12 +347,12 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
         };
 
         LOG_INFO("Configuring surface: {}x{}, format: {}", width_, height_, static_cast<int>(surface_format_));
-        surface_.Configure(&surfaceConfig);
+        native_.surface.Configure(&surfaceConfig);
         LOG_INFO("Surface configured successfully");
 
         // 验证配置：尝试立即获取一次 texture 来测试
         SurfaceTexture testTexture;
-        surface_.GetCurrentTexture(&testTexture);
+        native_.surface.GetCurrentTexture(&testTexture);
         LOG_INFO("Test GetCurrentTexture status: {}", static_cast<int>(testTexture.status));
 
         if (testTexture.texture) {
@@ -380,9 +367,9 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
 }
 
 void CeContext::shutdown() {
-    if (surface_) {
-        surface_.Unconfigure();
-        surface_ = nullptr;
+    if (native_.surface) {
+        native_.surface.Unconfigure();
+        native_.surface = nullptr;
     }
 
     queue_ = nullptr;
@@ -401,7 +388,7 @@ void CeContext::reconfigureSurface(uint32_t width, uint32_t height) {
     width_ = width;
     height_ = height;
 
-    if (!surface_ || !device_) {
+    if (!native_.surface || !device_) {
         LOG_ERROR("Cannot reconfigure surface: not initialized");
         return;
     }
@@ -415,7 +402,7 @@ void CeContext::reconfigureSurface(uint32_t width, uint32_t height) {
         .alphaMode = CompositeAlphaMode::Opaque,
         .presentMode = PresentMode::Fifo
     };
-    surface_.Configure(&surfaceConfig);
+    native_.surface.Configure(&surfaceConfig);
 
     LOG_INFO("Surface reconfigured to {}x{}", width_, height_);
 }

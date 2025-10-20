@@ -39,7 +39,7 @@ NativeWindow CeHelper::getSurfaceFromWndName(WGPUInstance instance, const char* 
             .length = label.length()
         }
     };
-    native.surface = wgpuInstanceCreateSurface(instance, &desc);
+    native.surface = wgpu::Surface(wgpuInstanceCreateSurface(instance, &desc));
     if(!native.surface) {
         LOG_ERROR("Failed to create surface");
     }

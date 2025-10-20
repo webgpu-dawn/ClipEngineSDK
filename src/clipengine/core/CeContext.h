@@ -33,7 +33,7 @@ public:
     wgpu::Adapter  getAdapter()  const { return adapter_; }
     wgpu::Device   getDevice()   const { return device_; }
     wgpu::Queue    getQueue()    const { return queue_; }
-    wgpu::Surface  getSurface()  const { return surface_; }
+    wgpu::Surface  getSurface()  const { return native_.surface; }
     wgpu::TextureFormat getSurfaceFormat() const { return surface_format_; }
     GLFWwindow* getWindow() const { return window_; }
 
@@ -58,6 +58,8 @@ private:
 
     uint32_t width_ = 800;
     uint32_t height_ = 600;
+
+    NativeWindow native_;
 };
 
 } // namespace ClipEngine
