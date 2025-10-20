@@ -1,7 +1,5 @@
 #include "RenderEngine.h"
 #include "../util/GPUTimer.h"
-#include "../util/Logger.h"
-#include <GLFW/glfw3.h>
 
 using namespace wgpu;
 

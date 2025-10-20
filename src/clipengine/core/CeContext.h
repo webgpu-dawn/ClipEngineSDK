@@ -1,9 +1,6 @@
 #pragma once
 
-#include <webgpu/webgpu_cpp.h>
-#include "../util/Logger.h"
-
-#include <Windows.h>
+#include "../common/Common.h"
 
 // Forward declaration
 struct GLFWwindow;

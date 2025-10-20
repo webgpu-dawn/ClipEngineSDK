@@ -7,11 +7,11 @@
 namespace ClipEngine {
 
 // ClipEngine 日志封装类（基于 spdlog）
-class Logger {
+class CeLogger {
 public:
     // 获取单例实例
-    static Logger& instance() {
-        static Logger logger;
+    static CeLogger& instance() {
+        static CeLogger logger;
         return logger;
     }
 
@@ -32,7 +32,7 @@ public:
     }
 
 private:
-    Logger() {
+    CeLogger() {
         // 创建带颜色的控制台 logger
         logger_ = spdlog::stdout_color_mt("ClipEngine");
         
@@ -46,12 +46,12 @@ private:
         logger_->flush_on(spdlog::level::trace);
     }
 
-    ~Logger() {
+    ~CeLogger() {
         spdlog::shutdown();
     }
 
-    Logger(const Logger&) = delete;
-    Logger& operator=(const Logger&) = delete;
+    CeLogger(const CeLogger&) = delete;
+    CeLogger& operator=(const CeLogger&) = delete;
 
     std::shared_ptr<spdlog::logger> logger_;
 };
@@ -59,9 +59,9 @@ private:
 } // namespace ClipEngine
 
 // 便捷的日志宏（支持格式化字符串）
-#define LOG_TRACE(...)    SPDLOG_LOGGER_TRACE(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
-#define LOG_DEBUG(...)    SPDLOG_LOGGER_DEBUG(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
-#define LOG_INFO(...)     SPDLOG_LOGGER_INFO(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
-#define LOG_WARN(...)     SPDLOG_LOGGER_WARN(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
-#define LOG_ERROR(...)    SPDLOG_LOGGER_ERROR(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
-#define LOG_CRITICAL(...) SPDLOG_LOGGER_CRITICAL(::ClipEngine::Logger::instance().get(), __VA_ARGS__)
+#define LOG_TRACE(...)    SPDLOG_LOGGER_TRACE(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)
+#define LOG_DEBUG(...)    SPDLOG_LOGGER_DEBUG(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)
+#define LOG_INFO(...)     SPDLOG_LOGGER_INFO(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)
+#define LOG_WARN(...)     SPDLOG_LOGGER_WARN(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)
+#define LOG_ERROR(...)    SPDLOG_LOGGER_ERROR(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)
+#define LOG_CRITICAL(...) SPDLOG_LOGGER_CRITICAL(::ClipEngine::CeLogger::instance().get(), __VA_ARGS__)

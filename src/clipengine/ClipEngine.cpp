@@ -1,5 +1,4 @@
 #include "ClipEngine.h"
-#include "./util/Logger.h"
 
 namespace ClipEngine {
 

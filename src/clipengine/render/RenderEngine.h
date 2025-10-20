@@ -1,6 +1,7 @@
 #pragma once
+#include "../common/Common.h"
 #include "Renderer.h"
-#include <webgpu/webgpu_cpp.h>
+
 #include <dawn/webgpu_cpp_print.h>
 #include <vector>
 #include <memory>

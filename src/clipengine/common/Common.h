@@ -1,0 +1,22 @@
+#pragma once
+
+#include <vector>
+#include <string>
+#include <GLFW/glfw3.h>
+
+#include <webgpu/webgpu.h>
+#include <webgpu/webgpu_cpp.h>
+
+#include "CeLogger.h"
+
+#if _WIN32
+#include <Windows.h>
+#elif __APPLE__
+#endif
+
+struct NativeWindow {
+    WGPUSurface surface = nullptr;
+    void* handle = nullptr;
+    uint32_t width = 0;
+    uint32_t height = 0;
+};

@@ -1,7 +1,6 @@
 #pragma
 
-#include <webgpu/webgpu_cpp.h>
-#include "../util/Logger.h"
+#include "Common.h"
 
 namespace ClipEngine {
 

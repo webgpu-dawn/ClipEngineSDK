@@ -7,12 +7,10 @@
 // #include "core/RHIHelper.h"  // Optional helper, not required by default
 
 // Render modules
+#include "common/Common.h"
 #include "render/Renderer.h"
 #include "render/RenderEngine.h"
 #include "render/VideoRenderer.h"
-
-// Utility modules
-#include "util/Logger.h"
 
 // Shader modules
 // Shaders are loaded at runtime from clipengine/shader/

@@ -46,6 +46,7 @@ include_directories(
 add_library(clipengine STATIC
     src/clipengine/ClipEngine.cpp
     src/clipengine/core/CeContext.cpp
+    src/clipengine/common/CeHelper.cpp
     src/clipengine/common/RuntimeInspector.cpp
     src/clipengine/render/RenderEngine.cpp
     src/clipengine/render/VideoRenderer.cpp
