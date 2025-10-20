@@ -22,7 +22,7 @@ struct RenderEngineConfig {
     const char* title = "ClipEngine";
     bool vsync = true;
     wgpu::PresentMode presentMode = wgpu::PresentMode::Fifo;
-    CeContextMode mode = CeContextMode::CREATE_WINDOW;  // 默认创建窗口
+    CeContextMode mode = CeContextMode::FIND_WINDOW;
 };
 
 class RenderEngine {

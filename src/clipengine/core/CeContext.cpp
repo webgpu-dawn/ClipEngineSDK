@@ -93,66 +93,99 @@ bool CeContext::createWindowMode(const CeContextConfig& config) {
     return true;
 }
 
+static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    // 窗口消息处理
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
 bool CeContext::findWindowMode(const CeContextConfig& config) {
 #if _WIN32
-    // 查找窗口
-    HWND hwnd = FindWindowA(nullptr, config.windowTitle);
-    if (!hwnd) {
-        LOG_ERROR("Failed to find window: {}", config.windowTitle);
-        LOG_ERROR("Make sure the window with title '{}' exists", config.windowTitle);
-        return false;
-    }
+    // // 查找窗口
+    // HWND hwnd = FindWindowA(nullptr, config.windowTitle);
+    // if (!hwnd) {
+    //     LOG_ERROR("Failed to find window: {}", config.windowTitle);
+    //     LOG_ERROR("Make sure the window with title '{}' exists", config.windowTitle);
+    //     return false;
+    // }
 
-    // 保存窗口句柄供后续使用
-    external_hwnd_ = hwnd;
+    // // 保存窗口句柄供后续使用
+    // external_hwnd_ = hwnd;
 
-    LOG_INFO("Found window with title: {}", config.windowTitle);
-    LOG_INFO("Window handle: 0x{:X}", reinterpret_cast<uintptr_t>(external_hwnd_));
+    // LOG_INFO("Found window with title: {}", config.windowTitle);
+    // LOG_INFO("Window handle: 0x{:X}", reinterpret_cast<uintptr_t>(external_hwnd_));
 
-    // 检查窗口状态
-    if (!IsWindow(hwnd)) {
-        LOG_ERROR("Invalid window handle");
-        return false;
-    }
+    // // 检查窗口状态
+    // if (!IsWindow(hwnd)) {
+    //     LOG_ERROR("Invalid window handle");
+    //     return false;
+    // }
 
-    if (!IsWindowVisible(hwnd)) {
-        LOG_WARN("Window is not visible (may be hidden or minimized)");
-    }
+    // if (!IsWindowVisible(hwnd)) {
+    //     LOG_WARN("Window is not visible (may be hidden or minimized)");
+    // }
 
-    // 获取窗口状态
-    WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
-    if (GetWindowPlacement(hwnd, &placement)) {
-        switch (placement.showCmd) {
-            case SW_SHOWMINIMIZED:
-                LOG_WARN("Window is minimized");
-                break;
-            case SW_SHOWMAXIMIZED:
-                LOG_INFO("Window is maximized");
-                break;
-            case SW_SHOWNORMAL:
-                LOG_INFO("Window is in normal state");
-                break;
-        }
-    }
+    // // 获取窗口状态
+    // WINDOWPLACEMENT placement = { sizeof(WINDOWPLACEMENT) };
+    // if (GetWindowPlacement(hwnd, &placement)) {
+    //     switch (placement.showCmd) {
+    //         case SW_SHOWMINIMIZED:
+    //             LOG_WARN("Window is minimized");
+    //             break;
+    //         case SW_SHOWMAXIMIZED:
+    //             LOG_INFO("Window is maximized");
+    //             break;
+    //         case SW_SHOWNORMAL:
+    //             LOG_INFO("Window is in normal state");
+    //             break;
+    //     }
+    // }
 
+    // // 获取窗口客户区尺寸
+    // RECT rect;
+    // if (!GetClientRect(hwnd, &rect)) {
+    //     LOG_ERROR("Failed to get client rect for window");
+    //     return false;
+    // }
+
+    // width_ = rect.right - rect.left;
+    // height_ = rect.bottom - rect.top;
+
+    // // 验证尺寸有效
+    // if (width_ == 0 || height_ == 0) {
+    //     LOG_ERROR("Invalid window size: {}x{}", width_, height_);
+    //     LOG_ERROR("The window may not be fully initialized yet or is minimized");
+    //     return false;
+    // }
+
+    // LOG_INFO("Window client area size: {}x{}", width_, height_);
+
+    // WNDCLASSEX wc = {};
+    // wc.cbSize = sizeof(WNDCLASSEX);
+    // wc.style = CS_HREDRAW | CS_VREDRAW;
+    // wc.lpfnWndProc = WindowProc;
+    // wc.hInstance = GetModuleHandle(NULL);
+    // wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    // wc.lpszClassName = "WebGPUWindowaaa";
+    // RegisterClassEx(&wc);
+
+    // // 创建窗口
+    // hwnd_ = CreateWindowEx(
+    //     0, "WebGPUWindowaaa", "WebGPU Windowaaa",
+    //     WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+    //     config.width, config.height, nullptr, nullptr, GetModuleHandle(NULL), this
+    // );
+
+    // ShowWindow(hwnd_, SW_SHOW);
+    hwnd_ = FindWindow(NULL, "Clipforge");
     // 获取窗口客户区尺寸
     RECT rect;
-    if (!GetClientRect(hwnd, &rect)) {
+    if (!GetClientRect(hwnd_, &rect)) {
         LOG_ERROR("Failed to get client rect for window");
         return false;
     }
 
     width_ = rect.right - rect.left;
     height_ = rect.bottom - rect.top;
-
-    // 验证尺寸有效
-    if (width_ == 0 || height_ == 0) {
-        LOG_ERROR("Invalid window size: {}x{}", width_, height_);
-        LOG_ERROR("The window may not be fully initialized yet or is minimized");
-        return false;
-    }
-
-    LOG_INFO("Window client area size: {}x{}", width_, height_);
 
     return true;
 #else
@@ -162,8 +195,8 @@ bool CeContext::findWindowMode(const CeContextConfig& config) {
 }
 
 bool CeContext::initializeWebGPU(const CeContextConfig& config) {
-    width_ = config.width;
-    height_ = config.height;
+    // width_ = config.width;
+    // height_ = config.height;
 
     // 创建 Instance
     {
@@ -196,12 +229,11 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
             case CeContextMode::FIND_WINDOW:
                 {
                     #if _WIN32
-                        if (!external_hwnd_) {
+                        if (!hwnd_) {
                             LOG_ERROR("External window handle is null");
                             return false;
                         }
-                        LOG_INFO("Creating surface from external window handle: {}", external_hwnd_);
-                        surface_ = Surface::Acquire(createSurfaceFromHWND(instance_.Get(), static_cast<HWND>(external_hwnd_)));
+                        surface_ = Surface::Acquire(createSurfaceFromHWND(instance_.Get(), static_cast<HWND>(hwnd_)));
                         if (surface_) {
                             surface_.SetLabel("Main Surface");
                         }

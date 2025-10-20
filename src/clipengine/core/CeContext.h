@@ -3,6 +3,8 @@
 #include <webgpu/webgpu_cpp.h>
 #include "../util/Logger.h"
 
+#include <Windows.h>
+
 // Forward declaration
 struct GLFWwindow;
 
@@ -48,7 +50,7 @@ private:
 
 private:
     GLFWwindow* window_ = nullptr;
-    void* external_hwnd_ = nullptr;  // 外部窗口句柄 (Windows HWND)
+    HWND hwnd_;
 
     wgpu::Instance instance_;
     wgpu::Adapter  adapter_;
