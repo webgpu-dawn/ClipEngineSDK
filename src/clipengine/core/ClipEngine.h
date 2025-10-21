@@ -1,77 +1,56 @@
 /**
- * @file CeEngine.h
+ * @file ClipEngine.h
  * @brief Core engine class for ClipEngine SDK
  * @author ClipEngine Team
  * @version 1.0.0
  *
  * This file contains the main engine interface for the ClipEngine SDK.
- * CeEngine manages the rendering context, renderers, and frame updates.
+ * ClipEngine manages the rendering context, renderers, and frame updates.
  */
 
 #pragma once
 
-// Standard library includes
-#include <vector>
 #include <memory>
-#include <algorithm>
-#include <functional>
-
-// ClipEngine includes
-#include "../common/Common.h"
-#include "CeContext.h"
-#include "CeRenderable.h"
+#include <vector>
+#include <cstdint>
 
 // Forward declarations
-struct GLFWwindow;
-class GPUTimer;
+class CeRenderable;
+class CeContext;
 
-/**
- * @brief Configuration structure for initializing the ClipEngine
- *
- * This structure holds all the parameters required to initialize
- * the rendering engine, including window dimensions and title.
- */
-struct CeEngineConfig {
+struct CeConfig {
     uint32_t width = 800;               ///< Window width in pixels
     uint32_t height = 600;              ///< Window height in pixels
     const char* title = "ClipEngine";   ///< Window title
 };
 
-class CeEngine {
-public:
+enum class CeRendererType : int;
 
+// Note: WebGPU types are intentionally forward declared to minimize dependencies
+// The actual types will be available when linking against the ClipEngine library
+namespace wgpu {
+    class Device;
+    class Queue;
+    enum class TextureFormat : uint32_t;
+}
+
+
+
+class ClipEngine {
+public:
     /**
      * @brief Default constructor
      */
-    CeEngine() = default;
+    ClipEngine();
 
     /**
      * @brief Destructor - cleans up engine resources
      */
-    ~CeEngine();
+    ~ClipEngine();
 
-    /**
-     * @brief Initialize the engine with the given configuration
-     *
-     * This method sets up the WebGPU context, creates the window,
-     * and prepares the rendering pipeline.
-     *
-     * @param config Configuration parameters for the engine
-     * @return true if initialization succeeded, false otherwise
-     */
-    bool initialize(const CeEngineConfig& config);
+    bool initialize(const CeConfig& config);
 
-    /**
-     * @brief Shutdown the engine and release all resources
-     *
-     * Call this method before destroying the engine to ensure
-     * proper cleanup of GPU resources and the rendering context.
-     */
     void shutdown();
-
-    // ========================================================================
-    // Renderer Management
-    // ========================================================================
 
     /**
      * @brief Add a renderer to the engine
@@ -115,10 +94,6 @@ public:
      */
     void update(float deltaTime);
 
-    // ========================================================================
-    // Window Management
-    // ========================================================================
-
     /**
      * @brief Check if the window should close
      *
@@ -143,49 +118,53 @@ public:
      *
      * @return The WebGPU device handle
      */
-    wgpu::Device getDevice() const { return context_.getDevice(); }
+    wgpu::Device getDevice() const;
 
     /**
      * @brief Get the WebGPU command queue
      *
      * @return The WebGPU queue handle
      */
-    wgpu::Queue getQueue() const { return context_.getQueue(); }
+    wgpu::Queue getQueue() const;
 
     /**
      * @brief Get the surface texture format
      *
      * @return The texture format used by the rendering surface
      */
-    wgpu::TextureFormat getSurfaceFormat() const { return context_.getSurfaceFormat(); }
+    wgpu::TextureFormat getSurfaceFormat() const;
 
     /**
      * @brief Get the rendering context
      *
+     * Provides access to the underlying rendering context for advanced use cases.
+     *
      * @return Reference to the CeContext object
      */
-    CeContext& getContext() { return context_; }
+    CeContext& getContext();
 
     /**
-     * @brief Get the current GPU timer
+     * @brief Get the rendering context (const version)
      *
-     * @return Shared pointer to the GPUTimer instance
+     * @return Const reference to the CeContext object
      */
-    std::shared_ptr<GPUTimer> getGPUTimer() const;
+    const CeContext& getContext() const;
 
 private:
     // ========================================================================
-    // Internal Methods
+    // Implementation Details (Pimpl Idiom)
     // ========================================================================
 
     /**
-     * @brief Sort renderers by their layer order
+     * @brief Opaque pointer to implementation details
      *
-     * This is called automatically when renderers are added.
+     * This hides all internal implementation details from the public API,
+     * reducing compilation dependencies and improving ABI stability.
      */
-    void sortRenderersByLayer();
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 
-    CeContext context_;                                      ///< WebGPU rendering context
-    std::vector<std::unique_ptr<CeRenderable>> renderers_;  ///< Registered renderers
-    float backgroundColor_[4] = {0.0f, 0.0f, 0.0f, 1.0f};   ///< Background clear color (RGBA)
+    // Helper method for template implementation
+    std::vector<CeRenderable*> getRenderersInternal();
+    const std::vector<CeRenderable*> getRenderersInternal() const;
 };

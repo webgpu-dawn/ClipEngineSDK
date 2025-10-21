@@ -4,7 +4,7 @@
 #include "decoder.h"
 #include <filesystem>
 
-#include "clipengine/ClipEngine.h"
+#include "clipengine/clipengine.h"
 #include <clipengine/util/GPUTimer.h>
 
 using namespace std;
@@ -20,13 +20,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     default:
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
-}
-
-
-void createWindow()
-{
-    
-
 }
 
 int main()
@@ -59,12 +52,12 @@ int main()
     fs::path exe_dir = fs::current_path();
     fs::current_path(exe_dir);
 
-    CeEngineConfig config;
+    CeConfig config;
     config.width = 800;
     config.height = 600;
     config.title = "clipforge";
 
-    CeEngine engine;
+    ClipEngine engine;
     if (!engine.initialize(config)) {
         std::cerr << "Failed to initialize render engine" << std::endl;
         return -1;

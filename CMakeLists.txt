@@ -44,9 +44,8 @@ include_directories(
 # ============================================================================
 
 add_library(clipengine STATIC
-    src/clipengine/ClipEngine.cpp
     src/clipengine/core/CeContext.cpp
-    src/clipengine/core/CeEngine.cpp
+    src/clipengine/core/ClipEngine.cpp
     src/clipengine/common/CeHelper.cpp
     src/clipengine/common/RuntimeInspector.cpp
     src/clipengine/render/VideoRenderer.cpp
@@ -57,9 +56,9 @@ add_library(clipengine STATIC
 
 # Set public headers for installation
 set(CLIPENGINE_PUBLIC_HEADERS
-    src/clipengine/ClipEngine.h
+    src/clipengine/clipengine.h
     src/clipengine/core/CeRenderable.h
-    src/clipengine/core/CeEngine.h
+    src/clipengine/core/ClipEngine.h
     src/clipengine/core/CeContext.h
     src/clipengine/render/VideoRenderer.h
     src/clipengine/core/WebGPUHelper.h

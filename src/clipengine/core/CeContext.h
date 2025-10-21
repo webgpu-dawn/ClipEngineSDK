@@ -25,6 +25,7 @@ public:
     wgpu::Queue    getQueue()    const { return queue_; }
     wgpu::Surface  getSurface()  const { return native_.surface; }
     wgpu::TextureFormat getSurfaceFormat() const { return surface_format_; }
+    const NativeWindow& getNativeWindow() const { return native_; }
 
     // 重新配置 surface 尺寸
     void reconfigureSurface(uint32_t width, uint32_t height);
