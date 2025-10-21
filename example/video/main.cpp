@@ -70,15 +70,6 @@ int main()
         return -1;
     }
 
-    // 创建GPU计时器
-    auto gpuTimer = std::make_shared<GPUTimer>(engine.getDevice());
-    if (!gpuTimer->initialize()) {
-        std::cerr << "Warning: GPU timestamp queries not supported, timing disabled" << std::endl;
-    }
-
-    // 设置GPU计时器到引擎
-    engine.setGPUTimer(gpuTimer);
-
     auto videoRenderer = std::make_unique<VideoRenderer>();
     videoRenderer->setViewport(0.f, 0.0f, 1.0f, 1.0f);
 
@@ -98,12 +89,6 @@ int main()
             engine.renderFrame();
         }
     });
-
-    // 最终性能报告
-    std::cout << "\n=== Final Performance Report ===" << std::endl;
-    if (gpuTimer->isSupported()) {
-        gpuTimer->printResults();
-    }
 
     while(!engine.shouldClose()) {
         engine.pollEvents();

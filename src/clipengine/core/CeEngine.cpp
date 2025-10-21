@@ -88,10 +88,6 @@ void CeEngine::renderFrame() {
     wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
 
     // GPU timing: begin render timestamp
-    if (gpuTimer_ && gpuTimer_->isSupported()) {
-        gpuTimer_->beginQuery(encoder, "Render");
-    }
-
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
 
@@ -104,19 +100,8 @@ void CeEngine::renderFrame() {
         pass.End();
     }
 
-    // GPU timing: end render timestamp
-    if (gpuTimer_ && gpuTimer_->isSupported()) {
-        gpuTimer_->endQuery(encoder);
-        gpuTimer_->resolveQueries(encoder);
-    }
-
     wgpu::CommandBuffer commands = encoder.Finish();
     queue.Submit(1, &commands);
-
-    // Read GPU timing results after submission
-    if (gpuTimer_ && gpuTimer_->isSupported()) {
-        gpuTimer_->readResults();
-    }
 
     surface.Present();
 }
@@ -138,24 +123,9 @@ void CeEngine::pollEvents() {
     
 }
 
-CeRenderable* CeEngine::getRendererByType(CeRendererType type) {
-    for (auto& renderer : renderers_) {
-        if (renderer->getType() == type) {
-            return renderer.get();
-        }
-    }
-    return nullptr;
-}
 
 void CeEngine::clear() {
     renderers_.clear();
-}
-
-void CeEngine::setBackgroundColor(float r, float g, float b, float a) {
-    backgroundColor_[0] = r;
-    backgroundColor_[1] = g;
-    backgroundColor_[2] = b;
-    backgroundColor_[3] = a;
 }
 
 void CeEngine::sortRenderersByLayer() {
@@ -163,12 +133,4 @@ void CeEngine::sortRenderersByLayer() {
         [](const std::unique_ptr<CeRenderable>& a, const std::unique_ptr<CeRenderable>& b) {
             return a->getLayer() < b->getLayer();
         });
-}
-
-void CeEngine::setGPUTimer(std::shared_ptr<GPUTimer> timer) {
-    gpuTimer_ = timer;
-}
-
-std::shared_ptr<GPUTimer> CeEngine::getGPUTimer() const {
-    return gpuTimer_;
 }
