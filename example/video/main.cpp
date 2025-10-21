@@ -96,24 +96,6 @@ int main()
 
             videoRendererPtr->updateFrame(srcTex, subIndex);
             engine.renderFrame();
-
-            frame_count++;
-
-            // 每 60 帧打印一次性能报告
-            if (frame_count % 60 == 0) {
-                auto now = std::chrono::high_resolution_clock::now();
-                auto elapsed = std::chrono::duration<double>(now - start_time).count();
-                double fps = frame_count / elapsed;
-
-                std::cout << "\n=== Performance Stats ===" << std::endl;
-                std::cout << "Frames: " << frame_count << std::endl;
-                std::cout << "FPS: " << fps << std::endl;
-
-                if (gpuTimer->isSupported()) {
-                    gpuTimer->printResults();
-                    std::cout << "GPU Render Time: " << gpuTimer->getTime("Render") << " ms" << std::endl;
-                }
-            }
         }
     });
 

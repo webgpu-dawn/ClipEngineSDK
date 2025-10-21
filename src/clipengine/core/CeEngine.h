@@ -18,9 +18,6 @@ struct CeEngineConfig {
     uint32_t width = 800;
     uint32_t height = 600;
     const char* title = "ClipEngine";
-    bool vsync = true;
-    wgpu::PresentMode presentMode = wgpu::PresentMode::Fifo;
-    CeContextMode mode = CeContextMode::FIND_WINDOW;
 };
 
 class CeEngine {
@@ -37,7 +34,7 @@ public:
     void renderFrame();
     void update(float deltaTime);
 
-    bool shouldClose() const;
+    bool shouldClose();
     void pollEvents();
 
     template<typename T>
@@ -69,7 +66,6 @@ public:
     wgpu::Device getDevice() const { return context_.getDevice(); }
     wgpu::Queue getQueue() const { return context_.getQueue(); }
     wgpu::TextureFormat getSurfaceFormat() const { return context_.getSurfaceFormat(); }
-    GLFWwindow* getWindow() const { return context_.getWindow(); }
 
     CeContext& getContext() { return context_; }
 

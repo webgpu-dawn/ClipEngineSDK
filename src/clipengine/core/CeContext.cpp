@@ -8,20 +8,6 @@ CeContext::~CeContext() {
 }
 
 bool CeContext::initialize(const CeContextConfig& config) {
-    // 根据模式初始化
-    switch (config.mode) {
-        case CeContextMode::CREATE_WINDOW:
-            if (!createWindowMode(config)) {
-                return false;
-            }
-            break;
-        case CeContextMode::FIND_WINDOW:
-            break;
-        default:
-            LOG_ERROR("Unknown context mode");
-            return false;
-    }
-
     // 初始化 WebGPU
     if (!initializeWebGPU(config)) {
         return false;
@@ -34,37 +20,7 @@ bool CeContext::initialize(const CeContextConfig& config) {
     return true;
 }
 
-bool CeContext::createWindowMode(const CeContextConfig& config) {
-    // 初始化 GLFW
-    if (!glfwInit()) {
-        LOG_ERROR("Failed to initialize GLFW");
-        return false;
-    }
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-    // 创建窗口
-    window_ = glfwCreateWindow(config.width, config.height, config.windowTitle, nullptr, nullptr);
-    if (!window_) {
-        LOG_ERROR("Failed to create GLFW window");
-        glfwTerminate();
-        return false;
-    }
-
-    LOG_INFO("Window created: {} ({}x{})", config.windowTitle, config.width, config.height);
-    return true;
-}
-
-static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    // 窗口消息处理
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
 bool CeContext::initializeWebGPU(const CeContextConfig& config) {
-    // width_ = config.width;
-    // height_ = config.height;
-
     // 创建 Instance
     {
         constexpr InstanceFeatureName requiredFeatures[] = {
@@ -83,27 +39,9 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
 
     // 创建 Surface
     {
-        switch (config.mode) {
-            case CeContextMode::CREATE_WINDOW:
-                {
-                //    native_.surface = Surface::Acquire(glfwGetWGPUSurface(instance_.Get(), window_));
-                //    if (native_.surface) {
-                //        native_.surface.SetLabel("Main Surface");
-                //    }
-                //    LOG_INFO("Surface created from GLFW window");
-                }
-                break;
-            case CeContextMode::FIND_WINDOW:
-                {
-                    #if _WIN32
-                        native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.windowTitle);
-                        // native_.surface = Surface::Acquire(createSurfaceFromHWND(instance_.Get(), static_cast<HWND>(hwnd_)));
-                    #endif
-                }
-                break;
-            default:
-                break;
-        }
+        #if _WIN32
+            native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.windowTitle);
+        #endif
 
         if (!native_.surface) {
             LOG_ERROR("Failed to create WebGPU surface");
@@ -223,7 +161,6 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
 
         if (testTexture.texture) {
             LOG_INFO("Test texture obtained successfully, will be released");
-            // 不需要手动释放，Present() 会处理
         } else {
             LOG_WARN("Test texture is null, status: {}", static_cast<int>(testTexture.status));
         }
@@ -242,12 +179,6 @@ void CeContext::shutdown() {
     device_ = nullptr;
     adapter_ = nullptr;
     instance_ = nullptr;
-
-    if (window_) {
-        glfwDestroyWindow(window_);
-        window_ = nullptr;
-        glfwTerminate();
-    }
 }
 
 void CeContext::reconfigureSurface(uint32_t width, uint32_t height) {

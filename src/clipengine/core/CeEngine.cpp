@@ -10,7 +10,6 @@ CeEngine::~CeEngine() {
 bool CeEngine::initialize(const CeEngineConfig& config) {
     // 配置 CeContext
     CeContextConfig contextConfig;
-    contextConfig.mode = config.mode;
     contextConfig.windowTitle = config.title;
     contextConfig.width = config.width;
     contextConfig.height = config.height;
@@ -130,19 +129,13 @@ void CeEngine::update(float deltaTime) {
     }
 }
 
-bool CeEngine::shouldClose() const {
-    GLFWwindow* window = context_.getWindow();
-    // 只有在有 GLFW 窗口时才检查
-    return window && glfwWindowShouldClose(window);
+bool CeEngine::shouldClose()
+{
+    return false;
 }
 
 void CeEngine::pollEvents() {
-    // 只有在有 GLFW 窗口时才调用 GLFW 的事件循环
-    GLFWwindow* window = context_.getWindow();
-    if (window) {
-        glfwPollEvents();
-    }
-    // FIND_WINDOW 模式下，窗口事件由外部窗口的消息循环处理
+    
 }
 
 CeRenderable* CeEngine::getRendererByType(CeRendererType type) {
