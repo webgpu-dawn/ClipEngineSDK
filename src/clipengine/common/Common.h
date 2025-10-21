@@ -24,3 +24,11 @@ struct NativeWindow {
     uint32_t width = 0;
     uint32_t height = 0;
 };
+
+struct CeConfigure
+{
+    uint32_t width;
+    uint32_t height;
+    std::string window_title;
+};
+

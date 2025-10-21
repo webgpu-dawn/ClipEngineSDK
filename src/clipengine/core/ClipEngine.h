@@ -17,12 +17,7 @@
 // Forward declarations
 class CeRenderable;
 class CeContext;
-
-struct CeConfig {
-    uint32_t width = 800;               ///< Window width in pixels
-    uint32_t height = 600;              ///< Window height in pixels
-    const char* title = "ClipEngine";   ///< Window title
-};
+struct CeConfigure;
 
 enum class CeRendererType : int;
 
@@ -48,7 +43,7 @@ public:
      */
     ~ClipEngine();
 
-    bool initialize(const CeConfig& config);
+    bool initialize(const CeConfigure& config);
 
     void shutdown();
 
@@ -69,6 +64,14 @@ public:
      * @param renderer Pointer to the renderer to remove
      */
     void removeRenderer(CeRenderable* renderer);
+
+    /**
+     * @brief Get a renderer by its name
+     *
+     * @param name The name of the renderer to search for
+     * @return Pointer to the renderer if found, nullptr otherwise
+     */
+    CeRenderable* getRendererByName(const char* name);
 
     /**
      * @brief Clear all renderers from the engine
@@ -93,21 +96,6 @@ public:
      * @param deltaTime Time elapsed since last update in seconds
      */
     void update(float deltaTime);
-
-    /**
-     * @brief Check if the window should close
-     *
-     * @return true if the window close event has been triggered
-     */
-    bool shouldClose();
-
-    /**
-     * @brief Poll and process window events
-     *
-     * This should be called once per frame to handle user input
-     * and window system events.
-     */
-    void pollEvents();
 
     // ========================================================================
     // GPU Resource Access

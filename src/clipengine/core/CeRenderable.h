@@ -1,5 +1,6 @@
 #pragma once
 #include "../common/Common.h"
+#include <string>
 
 enum class CeRendererType {
     Video,
@@ -31,11 +32,16 @@ public:
     void setLayer(int layer) { layer_ = layer; }
     int getLayer() const { return layer_; }
 
+    void setName(const std::string& name) { name_ = name; }
+    void setName(const char* name) { name_ = name ? name : ""; }
+    const std::string& getName() const { return name_; }
+
 protected:
     wgpu::Device device_;
     wgpu::TextureFormat surfaceFormat_;
     bool enabled_ = true;
     int layer_ = 0;
+    std::string name_;
 
     CeRenderViewport viewport_;
 };

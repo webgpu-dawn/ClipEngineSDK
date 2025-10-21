@@ -20,7 +20,6 @@ public:
     CeContext context_;
     std::vector<std::unique_ptr<CeRenderable>> renderers_;
     float backgroundColor_[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-    bool shouldClose_ = false;
 
     void sortRenderersByLayer() {
         std::sort(renderers_.begin(), renderers_.end(),
@@ -32,22 +31,17 @@ public:
 
 ClipEngine::ClipEngine()
     : pimpl_(std::make_unique<Impl>()) {
-    LOG_INFO("ClipEngine version : {}", "v1.0.0");
+    LOG_INFO("ClipEngine version : {}", "v1.0.2");
 }
 
 ClipEngine::~ClipEngine() {
     shutdown();
 }
 
-bool ClipEngine::initialize(const CeConfig& config) {
-    // 配置 CeContext
-    CeContextConfig contextConfig;
-    contextConfig.windowTitle = config.title;
-    contextConfig.width  = config.width;
-    contextConfig.height = config.height;
+bool ClipEngine::initialize(const CeConfigure& config) {
 
     // 初始化 CeContext
-    if (!pimpl_->context_.initialize(contextConfig)) {
+    if (!pimpl_->context_.initialize(config)) {
         LOG_ERROR("Failed to initialize CeContext");
         return false;
     }
@@ -86,6 +80,17 @@ void ClipEngine::removeRenderer(CeRenderable* renderer) {
             return r.get() == renderer;
         });
     pimpl_->renderers_.erase(it, pimpl_->renderers_.end());
+}
+
+CeRenderable* ClipEngine::getRendererByName(const char* name) {
+    if (!name) return nullptr;
+
+    for (auto& renderer : pimpl_->renderers_) {
+        if (renderer->getName() == name) {
+            return renderer.get();
+        }
+    }
+    return nullptr;
 }
 
 void ClipEngine::clear() {
@@ -164,28 +169,6 @@ void ClipEngine::update(float deltaTime) {
 // ============================================================================
 // Window Management
 // ============================================================================
-
-bool ClipEngine::shouldClose() {
-    if (!pimpl_) return true;
-    return pimpl_->shouldClose_;
-}
-
-void ClipEngine::pollEvents() {
-#if _WIN32
-    if (!pimpl_) return;
-
-    MSG msg;
-    // 使用 NULL 处理当前线程的所有消息
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) {
-            pimpl_->shouldClose_ = true;
-            break;
-        }
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-#endif
-}
 
 // ============================================================================
 // GPU Resource Access

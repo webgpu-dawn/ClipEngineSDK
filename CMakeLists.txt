@@ -31,9 +31,6 @@ find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
-add_subdirectory(deps/glfw)
-add_subdirectory(deps/glfw3webgpu)
-
 include_directories(
     deps/dawn/include
     ${PROJECT_SOURCE_DIR}/src
@@ -84,8 +81,6 @@ target_link_libraries(clipengine
         dawn::webgpu_dawn
         spdlog::spdlog
     PRIVATE
-        glfw
-        glfw3webgpu
         glm::glm
         spdlog::spdlog_header_only
 )
@@ -106,9 +101,6 @@ install(TARGETS clipengine
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-# Note: GLFW and glfw3webgpu are PRIVATE dependencies
-# They are statically linked into clipengine.lib and not exposed to users
 
 # Install headers with directory structure
 install(DIRECTORY src/clipengine/
@@ -155,12 +147,6 @@ foreach(DLL ${EXTRA_RUNTIME_DLLS})
         )
     endif()
 endforeach()
-
-# Install GLFW and glfw3webgpu libraries (they are statically linked into clipengine)
-install(TARGETS glfw glfw3webgpu
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
 
 # Install Dawn CMake files
 install(DIRECTORY deps/dawn/lib/cmake/Dawn/

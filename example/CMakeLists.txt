@@ -16,6 +16,8 @@ list(APPEND CMAKE_PREFIX_PATH
 find_package(ClipEngine REQUIRED)
 find_package(FFMPEG REQUIRED)
 
+add_subdirectory(deps/glfw)
+
 message(STATUS "Building video example as standalone test project")
 message(STATUS "  ClipEngine version: ${ClipEngine_VERSION}")
 message(STATUS "  ClipEngine include: ${ClipEngine_INCLUDE_DIRS}")
@@ -25,7 +27,8 @@ message(STATUS "  ClipEngine shaders: ${ClipEngine_SHADER_DIR}")
 add_executable(
     ${PROJECT_NAME}
     main.cpp
-    decoder.cpp
+    Decoder.cpp
+    Application.cpp
 )
 
 # Link against ClipEngine SDK and other dependencies
@@ -37,6 +40,7 @@ target_link_libraries(
     d3d11
     dxgi
     d3dcompiler
+    glfw
 )
 
 # Copy ClipEngine DLLs to output directory

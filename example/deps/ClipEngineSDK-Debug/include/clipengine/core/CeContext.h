@@ -3,19 +3,13 @@
 #include "../common/Common.h"
 #include "../common/CeHelper.h"
 
-struct CeContextConfig {
-    const char* windowTitle = "ClipEngine";
-    uint32_t width = 800;
-    uint32_t height = 600;
-};
-
 class CeContext
 {
 public:
     CeContext() = default;
     ~CeContext();
 
-    bool initialize(const CeContextConfig& config);
+    bool initialize(const CeConfigure& config);
     void shutdown();
 
     // Getters
@@ -31,7 +25,7 @@ public:
     void reconfigureSurface(uint32_t width, uint32_t height);
 
 private:
-    bool initializeWebGPU(const CeContextConfig& config);
+    bool initializeWebGPU(const CeConfigure& config);
 
 private:
     wgpu::Instance instance_;

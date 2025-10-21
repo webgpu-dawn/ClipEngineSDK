@@ -1,4 +1,4 @@
-#include "decoder.h"
+#include "Decoder.h"
 #include <windows.h>
 #include <iostream>
 #include <thread>

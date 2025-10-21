@@ -7,7 +7,7 @@ CeContext::~CeContext() {
     shutdown();
 }
 
-bool CeContext::initialize(const CeContextConfig& config) {
+bool CeContext::initialize(const CeConfigure& config) {
     // 初始化 WebGPU
     if (!initializeWebGPU(config)) {
         return false;
@@ -20,7 +20,7 @@ bool CeContext::initialize(const CeContextConfig& config) {
     return true;
 }
 
-bool CeContext::initializeWebGPU(const CeContextConfig& config) {
+bool CeContext::initializeWebGPU(const CeConfigure& config) {
     // 创建 Instance
     {
         constexpr InstanceFeatureName requiredFeatures[] = {
@@ -40,7 +40,7 @@ bool CeContext::initializeWebGPU(const CeContextConfig& config) {
     // 创建 Surface
     {
         #if _WIN32
-            native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.windowTitle);
+            native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.window_title.c_str());
         #endif
 
         if (!native_.surface) {
