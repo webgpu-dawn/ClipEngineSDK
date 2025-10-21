@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 
-namespace ClipEngine {
-
 enum class RendererType {
     Video,
     Audio,
@@ -44,5 +42,3 @@ class RendererFactory {
 public:
     static std::unique_ptr<IMediaRenderer> createVideoRenderer();
 };
-
-} // namespace ClipEngine

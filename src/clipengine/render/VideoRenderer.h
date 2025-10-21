@@ -4,15 +4,14 @@
 #define NOMINMAX
 #endif
 
-#include "Renderer.h"
+#include "../core/CeRenderable.h"
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <memory>
 
 using Microsoft::WRL::ComPtr;
 
-namespace ClipEngine {
-
+// Forward declarations (GPUTimer is in global namespace)
 class GPUProfiler;
 class GPUTimer;
 
@@ -22,7 +21,7 @@ enum class VideoFormat {
     RGBA
 };
 
-class VideoRenderer : public IMediaRenderer {
+class VideoRenderer : public CeRenderable {
 public:
     VideoRenderer();
     ~VideoRenderer() override;
@@ -30,7 +29,7 @@ public:
     bool initialize(wgpu::Device device, wgpu::TextureFormat format) override;
     void render(wgpu::RenderPassEncoder& pass) override;
     void update(float deltaTime) override;
-    RendererType getType() const override { return RendererType::Video; }
+    CeRendererType getType() const override { return CeRendererType::Video; }
     void setViewport(float x, float y, float width, float height) override;
 
     bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);
@@ -76,5 +75,3 @@ private:
     std::shared_ptr<GPUProfiler> profiler_;
     std::shared_ptr<GPUTimer> gpuTimer_;
 };
-
-} // namespace ClipEngine

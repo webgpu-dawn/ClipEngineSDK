@@ -1,22 +1,11 @@
 #pragma once
 
-// ClipEngine - Professional Video Editing Engine
-// Main entry point header
-
-// Core modules
-// #include "core/RHIHelper.h"  // Optional helper, not required by default
-
-// Render modules
 #include "common/Common.h"
-#include "render/Renderer.h"
-#include "render/RenderEngine.h"
+#include "core/CeRenderable.h"
+#include "core/CeEngine.h"
 #include "render/VideoRenderer.h"
 
 // Shader modules
 // Shaders are loaded at runtime from clipengine/shader/
 
-namespace ClipEngine {
-
 const char* getVersion();
-
-} // namespace ClipEngine

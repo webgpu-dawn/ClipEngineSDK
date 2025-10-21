@@ -13,8 +13,6 @@
 // Forward declaration to avoid exposing GLFW in public header
 struct GLFWwindow;
 
-namespace ClipEngine {
-
 class GPUTimer;
 
 struct RenderEngineConfig {
@@ -90,5 +88,3 @@ private:
 
     std::shared_ptr<GPUTimer> gpuTimer_;
 };
-
-} // namespace ClipEngine

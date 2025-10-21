@@ -46,11 +46,10 @@ include_directories(
 add_library(clipengine STATIC
     src/clipengine/ClipEngine.cpp
     src/clipengine/core/CeContext.cpp
+    src/clipengine/core/CeEngine.cpp
     src/clipengine/common/CeHelper.cpp
     src/clipengine/common/RuntimeInspector.cpp
-    src/clipengine/render/RenderEngine.cpp
     src/clipengine/render/VideoRenderer.cpp
-    src/clipengine/render/Renderer.cpp
     # src/clipengine/core/WebGPUHelper.cpp
     src/clipengine/util/GPUTimer.cpp
     # src/clipengine/util/GPUProfiler.cpp  # Temporarily disabled
@@ -59,8 +58,9 @@ add_library(clipengine STATIC
 # Set public headers for installation
 set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/ClipEngine.h
-    src/clipengine/render/Renderer.h
-    src/clipengine/render/RenderEngine.h
+    src/clipengine/core/CeRenderable.h
+    src/clipengine/core/CeEngine.h
+    src/clipengine/core/CeContext.h
     src/clipengine/render/VideoRenderer.h
     src/clipengine/core/WebGPUHelper.h
 )

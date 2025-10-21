@@ -2,10 +2,14 @@
 
 #include <vector>
 #include <string>
+#include <memory>
+#include <functional>
+#include <algorithm>
 #include <GLFW/glfw3.h>
 
 #include <webgpu/webgpu.h>
 #include <webgpu/webgpu_cpp.h>
+#include <dawn/webgpu_cpp_print.h>
 
 #include "CeLogger.h"
 

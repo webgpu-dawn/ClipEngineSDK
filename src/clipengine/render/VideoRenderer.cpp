@@ -4,8 +4,6 @@
 #include <dawn/native/D3D12Backend.h>
 #include <iostream>
 
-namespace ClipEngine {
-
 VideoRenderer::VideoRenderer() = default;
 VideoRenderer::~VideoRenderer() = default;
 
@@ -338,8 +336,8 @@ void VideoRenderer::updateVertexBuffer() {
     // Convert viewport (0-1 normalized) to NDC (-1 to 1)
     float x1 = viewport_.x * 2.0f - 1.0f;
     float y1 = viewport_.y * 2.0f - 1.0f;
-    float x2 = (viewport_.x + viewport_.width) * 2.0f - 1.0f;
-    float y2 = (viewport_.y + viewport_.height) * 2.0f - 1.0f;
+    float x2 = (viewport_.x + viewport_.w) * 2.0f - 1.0f;
+    float y2 = (viewport_.y + viewport_.h) * 2.0f - 1.0f;
 
     float vertices[] = {
         // pos.x, pos.y, uv.x, uv.y
@@ -357,12 +355,10 @@ void VideoRenderer::updateVertexBuffer() {
 void VideoRenderer::setViewport(float x, float y, float width, float height) {
     viewport_.x = x;
     viewport_.y = y;
-    viewport_.width = width;
-    viewport_.height = height;
+    viewport_.w = width;
+    viewport_.h = height;
 
     if (vertexBuffer_) {
         updateVertexBuffer();
     }
 }
-
-} // namespace ClipEngine

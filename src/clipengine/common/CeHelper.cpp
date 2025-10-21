@@ -1,10 +1,11 @@
 #include "CeHelper.h"
 
+using namespace wgpu;
+
 NativeWindow CeHelper::getSurfaceFromWndName(WGPUInstance instance, const char* name)
 {
     NativeWindow native {};
 #if _WIN32
-    // 获取指定名字的窗口句柄
     HWND hwnd = FindWindow(NULL, name);
     if(!hwnd) {
         LOG_ERROR("Failed to find window : {}", name);
@@ -22,6 +23,7 @@ NativeWindow CeHelper::getSurfaceFromWndName(WGPUInstance instance, const char* 
     native.width  = rect.right - rect.left;
     native.height = rect.bottom - rect.top;
 
+    // 获取 surface
     WGPUSurfaceDescriptorFromWindowsHWND  source = {
         .chain = {
             .next = NULL,
@@ -46,5 +48,6 @@ NativeWindow CeHelper::getSurfaceFromWndName(WGPUInstance instance, const char* 
 
     return native;
 #elif __APPLE__
+    return native;
 #endif
 }

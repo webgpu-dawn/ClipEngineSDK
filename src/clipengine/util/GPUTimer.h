@@ -9,8 +9,6 @@
 #include <vector>
 #include <unordered_map>
 
-namespace ClipEngine {
-
 /**
  * @brief Simple GPU timer using WebGPU timestamp queries
  *
@@ -68,5 +66,3 @@ private:
     std::vector<TimingData> timings_;
     std::unordered_map<std::string, double> results_;
 };
-
-} // namespace ClipEngine

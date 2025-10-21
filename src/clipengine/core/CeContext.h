@@ -1,15 +1,14 @@
 #pragma once
 
 #include "../common/Common.h"
+#include "../common/CeHelper.h"
 
 // Forward declaration
 struct GLFWwindow;
 
-namespace ClipEngine {
-
 enum class CeContextMode {
     CREATE_WINDOW,    // 创建新窗口
-    FIND_WINDOW           // 查找已存在的窗口
+    FIND_WINDOW       // 查找已存在的窗口
 };
 
 struct CeContextConfig {
@@ -43,7 +42,6 @@ public:
 private:
     bool initializeWebGPU(const CeContextConfig& config);
     bool createWindowMode(const CeContextConfig& config);
-    bool findWindowMode(const CeContextConfig& config);
 
 private:
     GLFWwindow* window_ = nullptr;
@@ -53,13 +51,7 @@ private:
     wgpu::Adapter  adapter_;
     wgpu::Device   device_;
     wgpu::Queue    queue_;
-    wgpu::Surface  surface_;
     wgpu::TextureFormat surface_format_ = wgpu::TextureFormat::BGRA8Unorm;
-
-    uint32_t width_ = 800;
-    uint32_t height_ = 600;
 
     NativeWindow native_;
 };
-
-} // namespace ClipEngine

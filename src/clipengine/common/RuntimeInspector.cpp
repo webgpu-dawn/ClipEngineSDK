@@ -2,8 +2,6 @@
 
 using namespace wgpu;
 
-namespace ClipEngine {
-
 void RuntimeInspector::dumpGPUInfo(const Adapter& adapter) {
     AdapterInfo info;
     adapter.GetInfo(&info);
@@ -41,4 +39,7 @@ void RuntimeInspector::dumpGPUInfo(const Adapter& adapter) {
     LOG_INFO("");
 }
 
+void RuntimeInspector::dumpNativeWindowInfo(const NativeWindow& native)
+{
+    LOG_INFO("{:<18} : {} x {}", " Window Size", native.width, native.height);
 }

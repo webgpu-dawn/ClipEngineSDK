@@ -10,24 +10,68 @@
 using namespace std;
 namespace fs = std::filesystem;
 
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+}
+
+
+void createWindow()
+{
+    
+
+}
+
 int main()
 {
+    const char CLASS_NAME[] = "clipforge";
+
+    // 注册窗口类
+    WNDCLASS wc = {};
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClass(&wc);
+
+    // 创建窗口
+    HWND hwnd = CreateWindowEx(
+        0,
+        CLASS_NAME,
+        CLASS_NAME,
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        800, 600,
+        NULL, NULL, GetModuleHandle(NULL), NULL
+    );
+
+    if (!hwnd) return -1;
+
+    ShowWindow(hwnd, 1);
+
     fs::path exe_dir = fs::current_path();
     fs::current_path(exe_dir);
 
-    ClipEngine::RenderEngineConfig config;
+    CeEngineConfig config;
     config.width = 800;
     config.height = 600;
     config.title = "clipforge";
 
-    ClipEngine::RenderEngine engine;
+    CeEngine engine;
     if (!engine.initialize(config)) {
         std::cerr << "Failed to initialize render engine" << std::endl;
         return -1;
     }
 
     // 创建GPU计时器
-    auto gpuTimer = std::make_shared<ClipEngine::GPUTimer>(engine.getDevice());
+    auto gpuTimer = std::make_shared<GPUTimer>(engine.getDevice());
     if (!gpuTimer->initialize()) {
         std::cerr << "Warning: GPU timestamp queries not supported, timing disabled" << std::endl;
     }
@@ -35,10 +79,10 @@ int main()
     // 设置GPU计时器到引擎
     engine.setGPUTimer(gpuTimer);
 
-    auto videoRenderer = std::make_unique<ClipEngine::VideoRenderer>();
+    auto videoRenderer = std::make_unique<VideoRenderer>();
     videoRenderer->setViewport(0.f, 0.0f, 1.0f, 1.0f);
 
-    ClipEngine::VideoRenderer* videoRendererPtr = videoRenderer.get();
+    VideoRenderer* videoRendererPtr = videoRenderer.get();
     engine.addRenderer(std::move(videoRenderer));
 
     Decoder decoder;

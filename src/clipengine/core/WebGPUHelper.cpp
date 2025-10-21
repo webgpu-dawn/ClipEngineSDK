@@ -3,8 +3,6 @@
 #include <sstream>
 #include <iostream>
 
-namespace ClipEngine {
-
 void WebGPUHelper::printAdapterInfo(wgpu::Adapter& adapter) {
     wgpu::AdapterInfo info;
     adapter.GetInfo(&info);
@@ -49,6 +47,4 @@ wgpu::ShaderModule WebGPUHelper::createShaderFromFile(const char* path) {
     std::string code = buffer.str();
 
     return createShader(code.c_str(), path);
-}
-
 }

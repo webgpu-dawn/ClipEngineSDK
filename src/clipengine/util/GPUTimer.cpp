@@ -2,8 +2,6 @@
 #include <iostream>
 #include <iomanip>
 
-namespace ClipEngine {
-
 GPUTimer::GPUTimer(wgpu::Device device)
     : device_(device) {
 }
@@ -153,5 +151,3 @@ void GPUTimer::reset() {
     timings_.clear();
     results_.clear();
 }
-
-} // namespace ClipEngine

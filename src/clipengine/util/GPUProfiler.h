@@ -12,8 +12,6 @@
 #include <memory>
 #include <limits>
 
-namespace ClipEngine {
-
 /**
  * @brief GPU 性能分析器
  *
@@ -179,5 +177,3 @@ private:
 // 便捷宏定义
 #define PROFILE_SCOPE(profiler, name) ProfileScope _profile_scope_##__LINE__(profiler, name)
 #define PROFILE_FUNCTION(profiler) ProfileScope _profile_scope_##__LINE__(profiler, __FUNCTION__)
-
-} // namespace ClipEngine
