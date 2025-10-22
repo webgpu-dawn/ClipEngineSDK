@@ -32,7 +32,7 @@ public:
 
 ClipEngine::ClipEngine()
     : pimpl_(std::make_unique<Impl>()) {
-    LOG_INFO("ClipEngine version : {}", "v1.0.2");
+    LOG_INFO("ClipEngine version : {}", "v1.0.0");
 }
 
 ClipEngine::~ClipEngine() {

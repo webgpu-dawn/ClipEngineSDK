@@ -44,6 +44,11 @@ target_link_libraries(
     glfw
 )
 
+target_include_directories(
+    ${PROJECT_NAME} PRIVATE
+    ${FFMPEG_INCLUDE_DIRS}
+)
+
 # Copy ClipEngine DLLs to output directory
 # When building from source, copy from deps directory
 # When using SDK, copy from SDK bin directory

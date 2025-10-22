@@ -81,6 +81,7 @@ target_link_libraries(clipengine
         dawn::webgpu_dawn
     PRIVATE
         spdlog::spdlog_header_only
+        fmt::fmt
         glm::glm
 )
 
