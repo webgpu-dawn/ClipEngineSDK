@@ -1,5 +1,6 @@
 #include "CeContext.h"
 #include "../common/CeHelper.h"
+#include "../common/CeLogger.h"
 
 using namespace wgpu;
 

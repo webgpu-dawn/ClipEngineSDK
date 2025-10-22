@@ -19,6 +19,5 @@ private:
     std::string title_;
 
     ClipEngine  ce_;
-    std::unique_ptr<VideoRenderer> video_renderer_;
 
 };

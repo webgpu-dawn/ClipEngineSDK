@@ -1,6 +1,7 @@
 #include "ClipEngine.h"
 #include "CeContext.h"
 #include "CeRenderable.h"
+#include "../common/CeLogger.h"
 #include <algorithm>
 
 using namespace wgpu;

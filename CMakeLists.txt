@@ -79,10 +79,9 @@ target_compile_definitions(clipengine
 target_link_libraries(clipengine
     PUBLIC
         dawn::webgpu_dawn
-        spdlog::spdlog
     PRIVATE
-        glm::glm
         spdlog::spdlog_header_only
+        glm::glm
 )
 
 # Alias for consistent naming
@@ -103,9 +102,13 @@ install(TARGETS clipengine
 )
 
 # Install headers with directory structure
+# Exclude CeLogger.h to avoid exposing spdlog dependency
 install(DIRECTORY src/clipengine/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/clipengine
-    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+        PATTERN "CeLogger.h" EXCLUDE
 )
 
 # Install Dawn headers (required dependency)

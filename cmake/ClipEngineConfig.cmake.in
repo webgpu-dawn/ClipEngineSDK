@@ -17,8 +17,9 @@ if(NOT Dawn_FOUND)
     find_package(Dawn REQUIRED PATHS "${PACKAGE_PREFIX_DIR}/lib/cmake/Dawn" NO_DEFAULT_PATH)
 endif()
 
-# Note: websocketpp, glm, nlohmann_json, GLFW, and glfw3webgpu are PRIVATE dependencies
+# Note: spdlog, websocketpp, glm, nlohmann_json, GLFW, and glfw3webgpu are PRIVATE dependencies
 # They are statically linked into clipengine.lib and not required by users
+# CeLogger.h is not exported to avoid exposing spdlog dependency
 
 # Create the IMPORTED target manually
 if(NOT TARGET ClipEngine::clipengine)
@@ -37,7 +38,7 @@ if(NOT TARGET ClipEngine::clipengine)
     )
 
     # Link against Dawn and required static libraries
-    # Note: glfw and glfw3webgpu are statically linked into clipengine
+    # Note: glfw, glfw3webgpu, and spdlog are statically linked into clipengine
     # but their symbols need to be explicitly linked on Windows
     set_target_properties(ClipEngine::clipengine PROPERTIES
         INTERFACE_LINK_LIBRARIES "dawn::webgpu_dawn;${PACKAGE_PREFIX_DIR}/lib/glfw3.lib;${PACKAGE_PREFIX_DIR}/lib/glfw3webgpu.lib"

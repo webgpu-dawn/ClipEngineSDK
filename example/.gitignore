@@ -1,0 +1,18 @@
+# Build directories
+build/
+out/
+cmake-build-*/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Dependencies (will be deployed via script)
+deps/ClipEngineSDK-Debug/
+deps/ClipEngineSDK-Release/
+deps/ffmpeg_x64-windows/
+deps/glfw/
+
+# Keep only source files in version control
+# FFmpeg and other external deps should be managed separately

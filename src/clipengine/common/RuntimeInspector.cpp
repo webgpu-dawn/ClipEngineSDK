@@ -1,4 +1,5 @@
 #include "RuntimeInspector.h"
+#include "CeLogger.h"
 
 using namespace wgpu;
 
