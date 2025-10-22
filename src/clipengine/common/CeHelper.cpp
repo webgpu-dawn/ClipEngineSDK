@@ -3,14 +3,16 @@
 
 using namespace wgpu;
 
-NativeWindow CeHelper::getSurfaceFromWndName(WGPUInstance instance, const char* name)
+NativeWindow CeHelper::getSurface(WGPUInstance instance, const char* name, HWND h)
 {
     NativeWindow native {};
 #if _WIN32
-    HWND hwnd = FindWindow(NULL, name);
+    HWND hwnd;
+
+    hwnd = h? h : FindWindow(NULL, name);
+    
     if(!hwnd) {
         LOG_ERROR("Failed to find window : {}", name);
-        return native;
     }
 
     // 获取客户区大小

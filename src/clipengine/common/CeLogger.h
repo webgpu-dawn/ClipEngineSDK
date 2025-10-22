@@ -33,6 +33,11 @@ public:
 
 private:
     CeLogger() {
+    #if _WIN32
+        SetConsoleOutputCP(CP_UTF8);
+    #elif __APPLE__
+    #endif
+
         // 创建带颜色的控制台 logger
         logger_ = spdlog::stdout_color_mt("ClipEngine");
 

@@ -5,6 +5,18 @@
 
 using namespace std;
 
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+}
+
 void Application::initialize() 
 {
     // 初始化窗口
@@ -29,7 +41,7 @@ void Application::initialize()
     CeConfigure config = {
         .width  = width_,
         .height = height_,
-        .window_title = title_ 
+        .window_title = title_
     };
     if(!ce_.initialize(config)) {
         std::cerr << "Failed to initialize clip engine" << std::endl;

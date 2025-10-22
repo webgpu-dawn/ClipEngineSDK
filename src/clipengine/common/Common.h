@@ -28,5 +28,9 @@ struct CeConfigure
     uint32_t width;
     uint32_t height;
     std::string window_title;
+#if _WIN32
+    HWND hwnd;
+#elif __APPLE__
+#endif
 };
 

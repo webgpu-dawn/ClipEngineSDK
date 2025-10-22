@@ -7,8 +7,7 @@ public:
     CeHelper() = default;
     ~CeHelper() = default;
 
-    static NativeWindow getSurfaceFromWndName(WGPUInstance instance, const char* name);
-    static NativeWindow getSurfaceFromHWND(wgpu::Instance instance, HWND hwnd);
+    static NativeWindow getSurface(WGPUInstance instance, const char* name, HWND hwnd = NULL);
 
 private:
 };

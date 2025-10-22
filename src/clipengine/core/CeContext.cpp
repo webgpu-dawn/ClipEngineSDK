@@ -1,6 +1,7 @@
 #include "CeContext.h"
 #include "../common/CeHelper.h"
 #include "../common/CeLogger.h"
+#include "../common/RuntimeInspector.h"
 
 using namespace wgpu;
 
@@ -15,7 +16,7 @@ bool CeContext::initialize(const CeConfigure& config) {
         return false;
     }
 
-    LOG_INFO("CeContext initialized successfully");
+    LOG_INFO("✅ CeContext initialized successfully");
     LOG_INFO("Resolution :       {} x {}", native_.width, native_.height);
     LOG_INFO("Surface Format :   {}", static_cast<int>(surface_format_));
 
@@ -25,6 +26,7 @@ bool CeContext::initialize(const CeConfigure& config) {
 bool CeContext::initializeWebGPU(const CeConfigure& config) {
     // 创建 Instance
     {
+        LOG_DEBUG("Create Instance ...");
         constexpr InstanceFeatureName requiredFeatures[] = {
             InstanceFeatureName::TimedWaitAny
         };
@@ -37,12 +39,14 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
             LOG_ERROR("Failed to create WebGPU instance");
             return false;
         }
+        LOG_INFO("✅ Instance created");
     }
 
     // 创建 Surface
     {
+        LOG_DEBUG("Create Surface from given window name : {}", config.window_title);
         #if _WIN32
-            native_ = CeHelper::getSurfaceFromWndName(instance_.Get(), config.window_title.c_str());
+            native_ = CeHelper::getSurface(instance_.Get(), config.window_title.c_str(), config.hwnd);
         #endif
 
         if (!native_.surface) {
@@ -50,11 +54,12 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
             return false;
         }
 
-        LOG_INFO("Surface created successfully");
+        LOG_INFO("✅ Surface created successfully");
     }
 
     // 创建 Adapter
     {
+        LOG_DEBUG("Create Adapter ...");
         RequestAdapterOptions opts = {
             .powerPreference = PowerPreference::HighPerformance,
             .compatibleSurface = native_.surface
@@ -67,6 +72,7 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
                         LOG_ERROR("Failed to get adapter: {}", message.data);
                         return;
                     }
+                    LOG_INFO("✅ Adapter created successfully");
                     adapter_ = std::move(adapter);
                 }
             ), UINT64_MAX
@@ -75,10 +81,13 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
             LOG_ERROR("Failed to acquire adapter");
             return false;
         }
+
+        RuntimeInspector::dumpGPUInfo(adapter_);
     }
 
     // 创建 Device
     {
+        LOG_DEBUG("Create Device ...");
         std::vector<const char*> toggles = {
             "allow_unsafe_apis"
         };
@@ -112,6 +121,7 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
                         LOG_ERROR("Failed to get device: {}", message.data);
                         return;
                     }
+                    LOG_INFO("✅ Device created sucessfully");
                     device_ = std::move(device);
                     queue_ = device_.GetQueue();
                 }
@@ -129,15 +139,7 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
         SurfaceCapabilities caps;
         native_.surface.GetCapabilities(adapter_, &caps);
 
-        LOG_INFO("Surface capabilities:");
-        LOG_INFO("  - Format count: {}", caps.formatCount);
-        LOG_INFO("  - Alpha mode count: {}", caps.alphaModeCount);
-        LOG_INFO("  - Present mode count: {}", caps.presentModeCount);
-
-        if (caps.formatCount == 0) {
-            LOG_ERROR("No supported surface formats available");
-            return false;
-        }
+        RuntimeInspector::dumpSurfaceCaps(adapter_, native_.surface);
 
         surface_format_ = caps.formats[0];
         LOG_INFO("  - Selected format: {}", static_cast<int>(surface_format_));
