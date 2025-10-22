@@ -1,19 +1,15 @@
 #pragma once
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
 #include "../core/CeRenderable.h"
-#include <d3d11.h>
-#include <wrl/client.h>
+
 #include <memory>
 
+#if _WIN32
+#include <d3d11.h>
+#include <wrl/client.h>
 using Microsoft::WRL::ComPtr;
-
-// Forward declarations (GPUTimer is in global namespace)
-class GPUProfiler;
-class GPUTimer;
+#elif __APPLE__
+#endif
 
 enum class VideoFormat {
     NV12,
@@ -35,14 +31,6 @@ public:
     bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);
 
     void setVideoFormat(VideoFormat format) { videoFormat_ = format; }
-
-    // 性能分析
-    void setProfiler(std::shared_ptr<GPUProfiler> profiler) { profiler_ = profiler; }
-    std::shared_ptr<GPUProfiler> getProfiler() const { return profiler_; }
-
-    // GPU计时器
-    void setGPUTimer(std::shared_ptr<GPUTimer> timer) { gpuTimer_ = timer; }
-    std::shared_ptr<GPUTimer> getGPUTimer() const { return gpuTimer_; }
 
     enum class FillMode {
         Fit,
@@ -71,7 +59,4 @@ private:
 
     VideoFormat videoFormat_ = VideoFormat::NV12;
     FillMode fillMode_ = FillMode::Fit;
-
-    std::shared_ptr<GPUProfiler> profiler_;
-    std::shared_ptr<GPUTimer> gpuTimer_;
 };

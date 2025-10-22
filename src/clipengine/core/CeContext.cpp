@@ -16,9 +16,7 @@ bool CeContext::initialize(const CeConfigure& config) {
         return false;
     }
 
-    LOG_INFO("✅ CeContext initialized successfully");
-    LOG_INFO("Resolution :       {} x {}", native_.width, native_.height);
-    LOG_INFO("Surface Format :   {}", static_cast<int>(surface_format_));
+    LOG_INFO("✅ CeContext initialized successfully");;
 
     return true;
 }
@@ -45,9 +43,8 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
     // 创建 Surface
     {
         LOG_DEBUG("Create Surface from given window name : {}", config.window_title);
-        #if _WIN32
-            native_ = CeHelper::getSurface(instance_.Get(), config.window_title.c_str(), config.hwnd);
-        #endif
+
+        native_ = CeHelper::getSurface(instance_.Get(), config.window_title.c_str(), config.hwnd);
 
         if (!native_.surface) {
             LOG_ERROR("Failed to create WebGPU surface");
@@ -103,10 +100,10 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
         };
 
         DeviceDescriptor desc = {};
-        desc.nextInChain = &toggles_desc;
+        desc.nextInChain          = &toggles_desc;
         desc.requiredFeatureCount = std::size(features);
-        desc.requiredFeatures = features;
-        desc.defaultQueue.label = "ClipEngine Queue";
+        desc.requiredFeatures     = features;
+        desc.defaultQueue.label   = "ClipEngine Queue";
         desc.SetUncapturedErrorCallback(
             [](const Device&, ErrorType type, StringView message) {
                 LOG_ERROR("WebGPU Uncaptured Error: {}", message.data);
@@ -142,15 +139,14 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
         RuntimeInspector::dumpSurfaceCaps(adapter_, native_.surface);
 
         surface_format_ = caps.formats[0];
-        LOG_INFO("  - Selected format: {}", static_cast<int>(surface_format_));
 
         SurfaceConfiguration surfaceConfig = {
-            .device = device_,
-            .format = surface_format_,
-            .usage = TextureUsage::RenderAttachment,
-            .width = native_.width,
-            .height = native_.height,
-            .alphaMode = CompositeAlphaMode::Opaque,
+            .device      = device_,
+            .format      = surface_format_,
+            .usage       = TextureUsage::RenderAttachment,
+            .width       = native_.width,
+            .height      = native_.height,
+            .alphaMode   = CompositeAlphaMode::Opaque,
             .presentMode = PresentMode::Fifo
         };
 
@@ -179,9 +175,9 @@ void CeContext::shutdown() {
         native_.surface = nullptr;
     }
 
-    queue_ = nullptr;
-    device_ = nullptr;
-    adapter_ = nullptr;
+    queue_    = nullptr;
+    device_   = nullptr;
+    adapter_  = nullptr;
     instance_ = nullptr;
 }
 
@@ -195,12 +191,12 @@ void CeContext::reconfigureSurface(uint32_t width, uint32_t height) {
     }
 
     SurfaceConfiguration surfaceConfig = {
-        .device = device_,
-        .format = surface_format_,
-        .usage = TextureUsage::RenderAttachment,
-        .width = width,
-        .height = height,
-        .alphaMode = CompositeAlphaMode::Opaque,
+        .device      = device_,
+        .format      = surface_format_,
+        .usage       = TextureUsage::RenderAttachment,
+        .width       = width,
+        .height      = height,
+        .alphaMode   = CompositeAlphaMode::Opaque,
         .presentMode = PresentMode::Fifo
     };
     native_.surface.Configure(&surfaceConfig);

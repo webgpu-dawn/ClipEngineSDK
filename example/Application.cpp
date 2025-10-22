@@ -20,8 +20,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void Application::initialize() 
 {
     // 初始化窗口
-    width_ = 640;
-    height_= 480;
+    width_ = 1920;
+    height_= 1080;
     title_ = "ClipEngine - Example";
     if(!glfwInit()) {
         std::cerr << "Could not initialize GLFW!" << std::endl;
