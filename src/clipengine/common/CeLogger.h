@@ -1,5 +1,7 @@
 #pragma once
 
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <memory>
@@ -35,7 +37,7 @@ private:
         logger_ = spdlog::stdout_color_mt("ClipEngine");
 
         // 设置默认日志级别为 info
-        logger_->set_level(spdlog::level::info);
+        logger_->set_level(spdlog::level::trace);
 
         // 设置默认格式：[时间] [级别] 消息
         logger_->set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");

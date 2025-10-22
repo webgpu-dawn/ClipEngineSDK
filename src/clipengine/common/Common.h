@@ -11,9 +11,6 @@
 #include <webgpu/webgpu_cpp.h>
 #include <dawn/webgpu_cpp_print.h>
 
-// Note: CeLogger.h is not included here to avoid exposing spdlog dependency
-// Internal .cpp files should include CeLogger.h directly when needed
-
 #if _WIN32
 #include <Windows.h>
 #elif __APPLE__

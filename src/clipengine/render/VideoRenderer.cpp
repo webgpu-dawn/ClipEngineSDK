@@ -1,7 +1,10 @@
 #include "VideoRenderer.h"
-// #include "../util/GPUProfiler.h"  // Temporarily disabled due to compilation issues
+
+#if _WIN32
 #include <dawn/native/D3D11Backend.h>
 #include <dawn/native/D3D12Backend.h>
+#elif __APPLE__
+#endif
 #include <iostream>
 
 VideoRenderer::VideoRenderer() = default;
@@ -29,13 +32,14 @@ void VideoRenderer::initializeBuffers() {
 }
 
 void VideoRenderer::initializeSampler() {
-    wgpu::SamplerDescriptor samplerDesc = {};
-    samplerDesc.addressModeU = wgpu::AddressMode::ClampToEdge;
-    samplerDesc.addressModeV = wgpu::AddressMode::ClampToEdge;
-    samplerDesc.addressModeW = wgpu::AddressMode::ClampToEdge;
-    samplerDesc.magFilter = wgpu::FilterMode::Linear;
-    samplerDesc.minFilter = wgpu::FilterMode::Linear;
-    samplerDesc.mipmapFilter = wgpu::MipmapFilterMode::Linear;
+    wgpu::SamplerDescriptor samplerDesc = {
+        .addressModeU = wgpu::AddressMode::ClampToEdge,
+        .addressModeV = wgpu::AddressMode::ClampToEdge,
+        .addressModeW = wgpu::AddressMode::ClampToEdge,
+        .magFilter    = wgpu::FilterMode::Linear,
+        .minFilter    = wgpu::FilterMode::Linear,
+        .mipmapFilter = wgpu::MipmapFilterMode::Linear
+    };
     sampler_ = device_.CreateSampler(&samplerDesc);
 }
 
@@ -100,15 +104,17 @@ void VideoRenderer::initializePipeline() {
     entries[2].texture.sampleType = wgpu::TextureSampleType::Float;
     entries[2].texture.viewDimension = wgpu::TextureViewDimension::e2D;
 
-    wgpu::BindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 3;
-    bglDesc.entries = entries;
+    wgpu::BindGroupLayoutDescriptor bglDesc = {
+        .entryCount = 3,
+        .entries = entries
+    };
     bindGroupLayout_ = device_.CreateBindGroupLayout(&bglDesc);
 
     // Pipeline layout
-    wgpu::PipelineLayoutDescriptor layoutDesc = {};
-    layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = &bindGroupLayout_;
+    wgpu::PipelineLayoutDescriptor layoutDesc = {
+        .bindGroupLayoutCount = 1,
+        .bindGroupLayouts = &bindGroupLayout_
+    };
     wgpu::PipelineLayout pipelineLayout = device_.CreatePipelineLayout(&layoutDesc);
 
     // Vertex state
@@ -120,31 +126,39 @@ void VideoRenderer::initializePipeline() {
     attrs[1].offset = sizeof(float) * 2;
     attrs[1].shaderLocation = 1;
 
-    wgpu::VertexBufferLayout vbLayout = {};
-    vbLayout.arrayStride = sizeof(float) * 4;
-    vbLayout.attributeCount = 2;
-    vbLayout.attributes = attrs;
+    wgpu::VertexBufferLayout vbLayout = {
+        .arrayStride = sizeof(float) * 4,
+        .attributeCount = 2,
+        .attributes = attrs
+    };
 
     // Fragment state
-    wgpu::ColorTargetState colorTarget = {};
-    colorTarget.format = surfaceFormat_;
-    colorTarget.writeMask = wgpu::ColorWriteMask::All;
+    wgpu::ColorTargetState colorTarget = {
+        .format = surfaceFormat_,
+        .writeMask = wgpu::ColorWriteMask::All
+    };
 
-    wgpu::FragmentState fragmentState = {};
-    fragmentState.module = shaderModule_;
-    fragmentState.entryPoint = "fs";
-    fragmentState.targetCount = 1;
-    fragmentState.targets = &colorTarget;
+    wgpu::FragmentState fragmentState = {
+        .module = shaderModule_,
+        .entryPoint = "fs",
+        .targetCount = 1,
+        .targets = &colorTarget
+    };
 
     // Pipeline
-    wgpu::RenderPipelineDescriptor pipelineDesc = {};
-    pipelineDesc.layout = pipelineLayout;
-    pipelineDesc.vertex.module = shaderModule_;
-    pipelineDesc.vertex.entryPoint = "vs";
-    pipelineDesc.vertex.bufferCount = 1;
-    pipelineDesc.vertex.buffers = &vbLayout;
-    pipelineDesc.fragment = &fragmentState;
-    pipelineDesc.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
+    wgpu::RenderPipelineDescriptor pipelineDesc = {
+        .layout = pipelineLayout,
+        .vertex = {
+            .module = shaderModule_,
+            .entryPoint = "vs",
+            .bufferCount = 1,
+            .buffers = &vbLayout
+        },
+        .primitive = {
+            .topology = wgpu::PrimitiveTopology::TriangleList
+        },
+        .fragment = &fragmentState
+    };
 
     pipeline_ = device_.CreateRenderPipeline(&pipelineDesc);
 }
@@ -158,18 +172,21 @@ namespace {
     };
 
     bool CreateD3D11SharedTexture(ComPtr<ID3D11Device>& device, const D3D11_TEXTURE2D_DESC& srcDesc, SharedTextureData& outData) {
-        D3D11_TEXTURE2D_DESC desc = {};
-        desc.Width = srcDesc.Width;
-        desc.Height = srcDesc.Height;
-        desc.MipLevels = 1;
-        desc.ArraySize = 1;
-        desc.Format = (srcDesc.Format == DXGI_FORMAT_NV12 || srcDesc.Format == 103) ? DXGI_FORMAT_NV12 : srcDesc.Format;
-        desc.SampleDesc.Count = 1;
-        desc.SampleDesc.Quality = 0;
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = 0;
-        desc.CPUAccessFlags = 0;
-        desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+        D3D11_TEXTURE2D_DESC desc = {
+            .Width       = srcDesc.Width,
+            .Height      = srcDesc.Height,
+            .MipLevels   = 1,
+            .ArraySize   = 1,
+            .Format      = (srcDesc.Format == DXGI_FORMAT_NV12 || srcDesc.Format == 103) ? DXGI_FORMAT_NV12 : srcDesc.Format,
+            .SampleDesc  = {
+                .Count   = 1,
+                .Quality = 0
+            },
+            .Usage       = D3D11_USAGE_DEFAULT,
+            .BindFlags   = 0,
+            .CPUAccessFlags = 0,
+            .MiscFlags   = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+        };
 
         HRESULT hr = device->CreateTexture2D(&desc, nullptr, outData.texture.GetAddressOf());
         if(FAILED(hr)) {
@@ -218,13 +235,14 @@ namespace {
         wgpu::SharedTextureMemoryProperties props = {};
         result.sharedMemory.GetProperties(&props);
 
-        wgpu::TextureDescriptor texDesc = {};
-        texDesc.usage = props.usage;
-        texDesc.dimension = wgpu::TextureDimension::e2D;
-        texDesc.size = props.size;
-        texDesc.format = props.format;
-        texDesc.mipLevelCount = 1;
-        texDesc.sampleCount = 1;
+        wgpu::TextureDescriptor texDesc = {
+            .usage         = props.usage,
+            .dimension     = wgpu::TextureDimension::e2D,
+            .size          = props.size,
+            .format        = props.format,
+            .mipLevelCount = 1,
+            .sampleCount   = 1
+        };
 
         result.texture = result.sharedMemory.CreateTexture(&texDesc);
 
@@ -271,24 +289,26 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
         lastHeight = srcDesc.Height;
     }
 
-    wgpu::TextureViewDescriptor yViewDesc = {};
-    yViewDesc.format = wgpu::TextureFormat::R8Unorm;
-    yViewDesc.dimension = wgpu::TextureViewDimension::e2D;
-    yViewDesc.baseMipLevel = 0;
-    yViewDesc.mipLevelCount = 1;
-    yViewDesc.baseArrayLayer = 0;
-    yViewDesc.arrayLayerCount = 1;
-    yViewDesc.aspect = wgpu::TextureAspect::Plane0Only;
+    wgpu::TextureViewDescriptor yViewDesc = {
+        .format          = wgpu::TextureFormat::R8Unorm,
+        .dimension       = wgpu::TextureViewDimension::e2D,
+        .baseMipLevel    = 0,
+        .mipLevelCount   = 1,
+        .baseArrayLayer  = 0,
+        .arrayLayerCount = 1,
+        .aspect          = wgpu::TextureAspect::Plane0Only
+    };
     yPlaneView_ = dawnData.texture.CreateView(&yViewDesc);
 
-    wgpu::TextureViewDescriptor uvViewDesc = {};
-    uvViewDesc.format = wgpu::TextureFormat::RG8Unorm;
-    uvViewDesc.dimension = wgpu::TextureViewDimension::e2D;
-    uvViewDesc.baseMipLevel = 0;
-    uvViewDesc.mipLevelCount = 1;
-    uvViewDesc.baseArrayLayer = 0;
-    uvViewDesc.arrayLayerCount = 1;
-    uvViewDesc.aspect = wgpu::TextureAspect::Plane1Only;
+    wgpu::TextureViewDescriptor uvViewDesc = {
+        .format          = wgpu::TextureFormat::RG8Unorm,
+        .dimension       = wgpu::TextureViewDimension::e2D,
+        .baseMipLevel    = 0,
+        .mipLevelCount   = 1,
+        .baseArrayLayer  = 0,
+        .arrayLayerCount = 1,
+        .aspect          = wgpu::TextureAspect::Plane1Only
+    };
     uvPlaneView_ = dawnData.texture.CreateView(&uvViewDesc);
 
     updateBindGroup();
@@ -308,10 +328,11 @@ void VideoRenderer::updateBindGroup() {
     entries[2].binding = 2;
     entries[2].textureView = uvPlaneView_;
 
-    wgpu::BindGroupDescriptor bgDesc = {};
-    bgDesc.layout = bindGroupLayout_;
-    bgDesc.entryCount = 3;
-    bgDesc.entries = entries;
+    wgpu::BindGroupDescriptor bgDesc = {
+        .layout = bindGroupLayout_,
+        .entryCount = 3,
+        .entries = entries
+    };
     bindGroup_ = device_.CreateBindGroup(&bgDesc);
 }
 

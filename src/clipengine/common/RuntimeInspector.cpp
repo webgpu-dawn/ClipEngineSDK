@@ -8,14 +8,14 @@ void RuntimeInspector::dumpGPUInfo(const Adapter& adapter) {
     adapter.GetInfo(&info);
 
 
-    LOG_INFO("==========================================");
-    LOG_INFO("   WebGPU Adapter Information");
-    LOG_INFO("==========================================");
+    LOG_DEBUG("==========================================");
+    LOG_DEBUG("   WebGPU Adapter Information");
+    LOG_DEBUG("==========================================");
 
-    LOG_INFO("{:<18} {}", "Vendor:",       info.vendor.data);
-    LOG_INFO("{:<18} {}", "Architecture:", info.architecture.data);
-    LOG_INFO("{:<18} {}", "Device:",       info.device.data);
-    LOG_INFO("{:<18} {}", "Description:",  info.description.data);
+    LOG_DEBUG("{:<18} {}", "Vendor:",       info.vendor.data);
+    LOG_DEBUG("{:<18} {}", "Architecture:", info.architecture.data);
+    LOG_DEBUG("{:<18} {}", "Device:",       info.device.data);
+    LOG_DEBUG("{:<18} {}", "Description:",  info.description.data);
 
     std::string backend;
     switch (info.backendType) {
@@ -35,12 +35,12 @@ void RuntimeInspector::dumpGPUInfo(const Adapter& adapter) {
         default: type = "Unknown"; break;
     }
 
-    LOG_INFO("{:<18} {}", "Backend Type:", backend);
-    LOG_INFO("{:<18} {}", "Adapter Type:", type);
-    LOG_INFO("");
+    LOG_DEBUG("{:<18} {}", "Backend Type:", backend);
+    LOG_DEBUG("{:<18} {}", "Adapter Type:", type);
+    LOG_DEBUG("");
 }
 
 void RuntimeInspector::dumpNativeWindowInfo(const NativeWindow& native)
 {
-    LOG_INFO("{:<18} : {} x {}", " Window Size", native.width, native.height);
+    LOG_DEBUG("{:<18} : {} x {}", " Window Size", native.width, native.height);
 }

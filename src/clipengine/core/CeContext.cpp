@@ -9,6 +9,7 @@ CeContext::~CeContext() {
 }
 
 bool CeContext::initialize(const CeConfigure& config) {
+    LOG_DEBUG("CeContext initialized");
     // 初始化 WebGPU
     if (!initializeWebGPU(config)) {
         return false;
