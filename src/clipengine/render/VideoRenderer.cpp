@@ -7,160 +7,48 @@
 #endif
 #include <iostream>
 
-VideoRenderer::VideoRenderer() = default;
+VideoRenderer::VideoRenderer()
+    : TextureRenderer(ShaderPresets::createNV12VideoShader())
+    , videoFormat_(VideoFormat::NV12) {
+}
+
+VideoRenderer::VideoRenderer(const ShaderConfig& config)
+    : TextureRenderer(config) {
+}
+
+VideoRenderer::VideoRenderer(VideoFormat format)
+    : TextureRenderer(ShaderPresets::createNV12VideoShader())  // Temporary, will be updated
+    , videoFormat_(format) {
+    createShaderForFormat();
+}
+
 VideoRenderer::~VideoRenderer() = default;
 
-bool VideoRenderer::initialize(wgpu::Device device, wgpu::TextureFormat format) {
-    device_ = device;
-    surfaceFormat_ = format;
-
-    initializeBuffers();
-    initializeSampler();
-    initializeShader();
-    initializePipeline();
-
-    return true;
+void VideoRenderer::createShaderForFormat() {
+    switch (videoFormat_) {
+        case VideoFormat::NV12:
+            shaderConfig_ = ShaderPresets::createNV12VideoShader();
+            break;
+        case VideoFormat::I420:
+            shaderConfig_ = ShaderPresets::createI420VideoShader();
+            break;
+        case VideoFormat::RGBA:
+            shaderConfig_ = ShaderPresets::createRGBATextureShader();
+            break;
+    }
 }
 
-void VideoRenderer::initializeBuffers() {
-    wgpu::BufferDescriptor bufferDesc = {};
-    bufferDesc.size = sizeof(float) * 4 * 6;  // 6 vertices, 4 floats each (pos + uv)
-    bufferDesc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-    vertexBuffer_ = device_.CreateBuffer(&bufferDesc);
+void VideoRenderer::setVideoFormat(VideoFormat format) {
+    if (videoFormat_ == format) return;
 
-    updateVertexBuffer();
-}
+    videoFormat_ = format;
+    createShaderForFormat();
 
-void VideoRenderer::initializeSampler() {
-    wgpu::SamplerDescriptor samplerDesc = {
-        .addressModeU = wgpu::AddressMode::ClampToEdge,
-        .addressModeV = wgpu::AddressMode::ClampToEdge,
-        .addressModeW = wgpu::AddressMode::ClampToEdge,
-        .magFilter    = wgpu::FilterMode::Linear,
-        .minFilter    = wgpu::FilterMode::Linear,
-        .mipmapFilter = wgpu::MipmapFilterMode::Linear
-    };
-    sampler_ = device_.CreateSampler(&samplerDesc);
-}
-
-void VideoRenderer::initializeShader() {
-    const char* shaderSource = R"(
-        @group(0) @binding(0) var mySampler : sampler;
-        @group(0) @binding(1) var yTex : texture_2d<f32>;
-        @group(0) @binding(2) var uvTex : texture_2d<f32>;
-
-        struct VertexOutput {
-            @builtin(position) pos : vec4f,
-            @location(0) uv : vec2f
-        };
-
-        @vertex
-        fn vs(@location(0) pos : vec2f, @location(1) uv : vec2f) -> VertexOutput {
-            var out : VertexOutput;
-            out.pos = vec4f(pos, 0.0, 1.0);
-            out.uv = uv;
-            return out;
-        }
-
-        @fragment
-        fn fs(input : VertexOutput) -> @location(0) vec4f {
-            let y = textureSample(yTex, mySampler, input.uv).r;
-            let uv = textureSample(uvTex, mySampler, input.uv).rg;
-
-            let u = uv.r - 0.5;
-            let v = uv.g - 0.5;
-
-            var rgb : vec3f;
-            rgb.r = y + 1.5748 * v;
-            rgb.g = y - 0.1873 * u - 0.4681 * v;
-            rgb.b = y + 1.8556 * u;
-
-            return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), 1.0);
-        }
-    )";
-
-    wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
-    wgslDesc.code = shaderSource;
-
-    wgpu::ShaderModuleDescriptor moduleDesc = {};
-    moduleDesc.nextInChain = &wgslDesc;
-    shaderModule_ = device_.CreateShaderModule(&moduleDesc);
-}
-
-void VideoRenderer::initializePipeline() {
-    // Bind group layout
-    wgpu::BindGroupLayoutEntry entries[3] = {};
-    entries[0].binding = 0;
-    entries[0].visibility = wgpu::ShaderStage::Fragment;
-    entries[0].sampler.type = wgpu::SamplerBindingType::Filtering;
-
-    entries[1].binding = 1;
-    entries[1].visibility = wgpu::ShaderStage::Fragment;
-    entries[1].texture.sampleType = wgpu::TextureSampleType::Float;
-    entries[1].texture.viewDimension = wgpu::TextureViewDimension::e2D;
-
-    entries[2].binding = 2;
-    entries[2].visibility = wgpu::ShaderStage::Fragment;
-    entries[2].texture.sampleType = wgpu::TextureSampleType::Float;
-    entries[2].texture.viewDimension = wgpu::TextureViewDimension::e2D;
-
-    wgpu::BindGroupLayoutDescriptor bglDesc = {
-        .entryCount = 3,
-        .entries = entries
-    };
-    bindGroupLayout_ = device_.CreateBindGroupLayout(&bglDesc);
-
-    // Pipeline layout
-    wgpu::PipelineLayoutDescriptor layoutDesc = {
-        .bindGroupLayoutCount = 1,
-        .bindGroupLayouts = &bindGroupLayout_
-    };
-    wgpu::PipelineLayout pipelineLayout = device_.CreatePipelineLayout(&layoutDesc);
-
-    // Vertex state
-    wgpu::VertexAttribute attrs[2] = {};
-    attrs[0].format = wgpu::VertexFormat::Float32x2;
-    attrs[0].offset = 0;
-    attrs[0].shaderLocation = 0;
-    attrs[1].format = wgpu::VertexFormat::Float32x2;
-    attrs[1].offset = sizeof(float) * 2;
-    attrs[1].shaderLocation = 1;
-
-    wgpu::VertexBufferLayout vbLayout = {
-        .arrayStride = sizeof(float) * 4,
-        .attributeCount = 2,
-        .attributes = attrs
-    };
-
-    // Fragment state
-    wgpu::ColorTargetState colorTarget = {
-        .format = surfaceFormat_,
-        .writeMask = wgpu::ColorWriteMask::All
-    };
-
-    wgpu::FragmentState fragmentState = {
-        .module = shaderModule_,
-        .entryPoint = "fs",
-        .targetCount = 1,
-        .targets = &colorTarget
-    };
-
-    // Pipeline
-    wgpu::RenderPipelineDescriptor pipelineDesc = {
-        .layout = pipelineLayout,
-        .vertex = {
-            .module = shaderModule_,
-            .entryPoint = "vs",
-            .bufferCount = 1,
-            .buffers = &vbLayout
-        },
-        .primitive = {
-            .topology = wgpu::PrimitiveTopology::TriangleList
-        },
-        .fragment = &fragmentState
-    };
-
-    pipeline_ = device_.CreateRenderPipeline(&pipelineDesc);
+    // Reinitialize pipeline with new shader
+    if (device_) {
+        initializeShader();
+        initializePipeline();
+    }
 }
 
 namespace {
@@ -257,9 +145,6 @@ namespace {
 bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
     if(!texture) return false;
 
-    // 性能测量：GPU 拷贝操作
-    // if (profiler_) profiler_->beginEvent("GPU_Copy");  // Temporarily disabled
-
     ComPtr<ID3D11Device> d3d11Device;
     texture->GetDevice(d3d11Device.GetAddressOf());
     ComPtr<ID3D11DeviceContext> ctx;
@@ -289,97 +174,58 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
         lastHeight = srcDesc.Height;
     }
 
-    wgpu::TextureViewDescriptor yViewDesc = {
-        .format          = wgpu::TextureFormat::R8Unorm,
-        .dimension       = wgpu::TextureViewDimension::e2D,
-        .baseMipLevel    = 0,
-        .mipLevelCount   = 1,
-        .baseArrayLayer  = 0,
-        .arrayLayerCount = 1,
-        .aspect          = wgpu::TextureAspect::Plane0Only
-    };
-    yPlaneView_ = dawnData.texture.CreateView(&yViewDesc);
+    // Create texture views based on video format
+    std::vector<wgpu::TextureView> views;
 
-    wgpu::TextureViewDescriptor uvViewDesc = {
-        .format          = wgpu::TextureFormat::RG8Unorm,
-        .dimension       = wgpu::TextureViewDimension::e2D,
-        .baseMipLevel    = 0,
-        .mipLevelCount   = 1,
-        .baseArrayLayer  = 0,
-        .arrayLayerCount = 1,
-        .aspect          = wgpu::TextureAspect::Plane1Only
-    };
-    uvPlaneView_ = dawnData.texture.CreateView(&uvViewDesc);
+    switch (videoFormat_) {
+        case VideoFormat::NV12: {
+            wgpu::TextureViewDescriptor yViewDesc = {
+                .format          = wgpu::TextureFormat::R8Unorm,
+                .dimension       = wgpu::TextureViewDimension::e2D,
+                .baseMipLevel    = 0,
+                .mipLevelCount   = 1,
+                .baseArrayLayer  = 0,
+                .arrayLayerCount = 1,
+                .aspect          = wgpu::TextureAspect::Plane0Only
+            };
+            yPlaneView_ = dawnData.texture.CreateView(&yViewDesc);
 
-    updateBindGroup();
+            wgpu::TextureViewDescriptor uvViewDesc = {
+                .format          = wgpu::TextureFormat::RG8Unorm,
+                .dimension       = wgpu::TextureViewDimension::e2D,
+                .baseMipLevel    = 0,
+                .mipLevelCount   = 1,
+                .baseArrayLayer  = 0,
+                .arrayLayerCount = 1,
+                .aspect          = wgpu::TextureAspect::Plane1Only
+            };
+            uvPlaneView_ = dawnData.texture.CreateView(&uvViewDesc);
 
-    // if (profiler_) profiler_->endEvent();  // End GPU_Copy  // Temporarily disabled
+            views = {yPlaneView_, uvPlaneView_};
+            break;
+        }
+        case VideoFormat::I420: {
+            // TODO: Implement I420 texture view creation
+            // This would require 3 separate planes (Y, U, V)
+            break;
+        }
+        case VideoFormat::RGBA: {
+            wgpu::TextureViewDescriptor rgbaViewDesc = {
+                .format          = wgpu::TextureFormat::RGBA8Unorm,
+                .dimension       = wgpu::TextureViewDimension::e2D,
+                .baseMipLevel    = 0,
+                .mipLevelCount   = 1,
+                .baseArrayLayer  = 0,
+                .arrayLayerCount = 1
+            };
+            yPlaneView_ = dawnData.texture.CreateView(&rgbaViewDesc);
+            views = {yPlaneView_};
+            break;
+        }
+    }
+
+    // Update textures using base class method
+    updateTextures(views);
 
     return true;
-}
-
-
-void VideoRenderer::updateBindGroup() {
-    wgpu::BindGroupEntry entries[3] = {};
-    entries[0].binding = 0;
-    entries[0].sampler = sampler_;
-    entries[1].binding = 1;
-    entries[1].textureView = yPlaneView_;
-    entries[2].binding = 2;
-    entries[2].textureView = uvPlaneView_;
-
-    wgpu::BindGroupDescriptor bgDesc = {
-        .layout = bindGroupLayout_,
-        .entryCount = 3,
-        .entries = entries
-    };
-    bindGroup_ = device_.CreateBindGroup(&bgDesc);
-}
-
-void VideoRenderer::render(wgpu::RenderPassEncoder& pass) {
-    if(!enabled_ || !bindGroup_) return;
-
-    // 性能测量：渲染操作
-    // if (profiler_) profiler_->beginEvent("Render");  // Temporarily disabled
-
-    pass.SetPipeline(pipeline_);
-    pass.SetVertexBuffer(0, vertexBuffer_);
-    pass.SetBindGroup(0, bindGroup_);
-    pass.Draw(6);
-
-    // if (profiler_) profiler_->endEvent();  // End Render  // Temporarily disabled
-}
-
-void VideoRenderer::update(float deltaTime) {
-}
-
-void VideoRenderer::updateVertexBuffer() {
-    // Convert viewport (0-1 normalized) to NDC (-1 to 1)
-    float x1 = viewport_.x * 2.0f - 1.0f;
-    float y1 = viewport_.y * 2.0f - 1.0f;
-    float x2 = (viewport_.x + viewport_.w) * 2.0f - 1.0f;
-    float y2 = (viewport_.y + viewport_.h) * 2.0f - 1.0f;
-
-    float vertices[] = {
-        // pos.x, pos.y, uv.x, uv.y
-        x1, y1, 0.0f, 1.0f,  // bottom-left
-        x2, y1, 1.0f, 1.0f,  // bottom-right
-        x1, y2, 0.0f, 0.0f,  // top-left
-        x1, y2, 0.0f, 0.0f,  // top-left
-        x2, y1, 1.0f, 1.0f,  // bottom-right
-        x2, y2, 1.0f, 0.0f   // top-right
-    };
-
-    device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
-}
-
-void VideoRenderer::setViewport(float x, float y, float width, float height) {
-    viewport_.x = x;
-    viewport_.y = y;
-    viewport_.w = width;
-    viewport_.h = height;
-
-    if (vertexBuffer_) {
-        updateVertexBuffer();
-    }
 }

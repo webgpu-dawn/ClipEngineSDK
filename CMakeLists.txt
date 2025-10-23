@@ -45,6 +45,8 @@ add_library(clipengine STATIC
     src/clipengine/core/ClipEngine.cpp
     src/clipengine/common/CeHelper.cpp
     src/clipengine/common/RuntimeInspector.cpp
+    src/clipengine/render/ShaderConfig.cpp
+    src/clipengine/render/TextureRenderer.cpp
     src/clipengine/render/VideoRenderer.cpp
     # src/clipengine/core/WebGPUHelper.cpp
     src/clipengine/util/GPUTimer.cpp
@@ -57,6 +59,8 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/core/CeRenderable.h
     src/clipengine/core/ClipEngine.h
     src/clipengine/core/CeContext.h
+    src/clipengine/render/ShaderConfig.h
+    src/clipengine/render/TextureRenderer.h
     src/clipengine/render/VideoRenderer.h
     src/clipengine/core/WebGPUHelper.h
 )

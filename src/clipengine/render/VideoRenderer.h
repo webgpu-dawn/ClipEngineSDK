@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../core/CeRenderable.h"
+#include "TextureRenderer.h"
+#include "ShaderConfig.h"
 
 #include <memory>
 
@@ -17,20 +18,48 @@ enum class VideoFormat {
     RGBA
 };
 
-class VideoRenderer : public CeRenderable {
+/**
+ * @brief Video renderer that supports various video formats
+ *
+ * This renderer extends TextureRenderer to handle D3D11 texture import
+ * and multi-plane video formats (NV12, I420).
+ */
+class VideoRenderer : public TextureRenderer {
 public:
+    /**
+     * @brief Construct a new Video Renderer with default NV12 format
+     */
     VideoRenderer();
+
+    /**
+     * @brief Construct a new Video Renderer with custom shader config
+     * @param config Custom shader configuration
+     */
+    explicit VideoRenderer(const ShaderConfig& config);
+
+    /**
+     * @brief Construct a new Video Renderer with specific video format
+     * @param format Video format (NV12, I420, RGBA)
+     */
+    explicit VideoRenderer(VideoFormat format);
+
     ~VideoRenderer() override;
 
-    bool initialize(wgpu::Device device, wgpu::TextureFormat format) override;
-    void render(wgpu::RenderPassEncoder& pass) override;
-    void update(float deltaTime) override;
-    CeRendererType getType() const override { return CeRendererType::Video; }
-    void setViewport(float x, float y, float width, float height) override;
-
+    /**
+     * @brief Update the video frame from D3D11 texture
+     * @param texture D3D11 texture containing video frame
+     * @param arrayIndex Array index for texture arrays
+     * @return true if successful, false otherwise
+     */
     bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);
 
-    void setVideoFormat(VideoFormat format) { videoFormat_ = format; }
+    /**
+     * @brief Set the video format (will recreate shader pipeline)
+     * @param format Video format to use
+     */
+    void setVideoFormat(VideoFormat format);
+
+    VideoFormat getVideoFormat() const { return videoFormat_; }
 
     enum class FillMode {
         Fit,
@@ -40,23 +69,14 @@ public:
     void setFillMode(FillMode mode) { fillMode_ = mode; }
 
 private:
-    void initializeBuffers();
-    void initializeSampler();
-    void initializeShader();
-    void initializePipeline();
-    void updateBindGroup();
-    void updateVertexBuffer();
-
-    wgpu::Buffer vertexBuffer_;
-    wgpu::Sampler sampler_;
-    wgpu::ShaderModule shaderModule_;
-    wgpu::RenderPipeline pipeline_;
-    wgpu::BindGroup bindGroup_;
-    wgpu::BindGroupLayout bindGroupLayout_;
-
-    wgpu::TextureView yPlaneView_;
-    wgpu::TextureView uvPlaneView_;
+    void createShaderForFormat();
 
     VideoFormat videoFormat_ = VideoFormat::NV12;
     FillMode fillMode_ = FillMode::Fit;
+
+    // Cached texture views
+    wgpu::TextureView yPlaneView_;
+    wgpu::TextureView uvPlaneView_;
+    wgpu::TextureView uPlaneView_;
+    wgpu::TextureView vPlaneView_;
 };
