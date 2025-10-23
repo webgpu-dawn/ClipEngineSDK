@@ -229,3 +229,245 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
 
     return true;
 }
+
+// ============================================================================
+// Panorama Mode Support
+// ============================================================================
+
+namespace {
+    // Create panorama shader for single-plane texture (RGBA)
+    ShaderConfig createPanoramaShaderRGBA() {
+        ShaderConfig cfg;
+        cfg.name = "Panorama RGBA Shader";
+
+        cfg.vertexShaderSource = R"(
+            struct VertexOutput {
+                @builtin(position) pos : vec4f,
+                @location(0) uv : vec2f
+            };
+
+            @vertex
+            fn vs(@location(0) pos : vec2f, @location(1) uv : vec2f) -> VertexOutput {
+                var out : VertexOutput;
+                out.pos = vec4f(pos, 0.0, 1.0);
+                out.uv = uv;
+                return out;
+            }
+        )";
+
+        cfg.fragmentShaderSource = R"(
+            @group(0) @binding(0) var mySampler : sampler;
+            @group(0) @binding(1) var myTexture : texture_2d<f32>;
+            @group(0) @binding(2) var<uniform> u : vec4f; // yaw, pitch, zoom, aspect
+
+            struct VertexOutput {
+                @builtin(position) pos : vec4f,
+                @location(0) uv : vec2f
+            };
+
+            fn toSpherical(uv: vec2f, yaw: f32, pitch: f32, zoom: f32, aspect: f32) -> vec2f {
+                var x = (uv.x - 0.5) * aspect;
+                var y = (uv.y - 0.5);
+                x = x / zoom;
+                y = y / zoom;
+                var dir = vec3f(x, y, -1.0);
+                dir = normalize(dir);
+                let cy = cos(yaw);
+                let sy = sin(yaw);
+                let cx = cos(pitch);
+                let sx = sin(pitch);
+                var rx = vec3f(dir.x, dir.y * cx - dir.z * sx, dir.y * sx + dir.z * cx);
+                var r = vec3f(rx.x * cy + rx.z * sy, rx.y, -rx.x * sy + rx.z * cy);
+                let lon = atan2(r.x, -r.z);
+                let lat = asin(clamp(r.y, -1.0, 1.0));
+                var uout = lon / (2.0 * 3.14159265) + 0.5;
+                var vout = 0.5 - lat / 3.14159265;
+                return vec2f(fract(uout), clamp(1.0 - vout, 0.0, 1.0));
+            }
+
+            @fragment
+            fn fs(input : VertexOutput) -> @location(0) vec4f {
+                let yaw = u.x;
+                let pitch = u.y;
+                let zoom = max(u.z, 0.01);
+                let aspect = max(u.w, 1.0);
+                let sphUV = toSpherical(input.uv, yaw, pitch, zoom, aspect);
+                return textureSample(myTexture, mySampler, sphUV);
+            }
+        )";
+
+        cfg.bindings = {
+            ShaderBindingDesc{.binding = 0, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Sampler},
+            ShaderBindingDesc{.binding = 1, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Texture, .textureSampleType = wgpu::TextureSampleType::Float, .textureViewDimension = wgpu::TextureViewDimension::e2D},
+            ShaderBindingDesc{.binding = 2, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Buffer, .bufferType = wgpu::BufferBindingType::Uniform, .hasDynamicOffset = false, .minBindingSize = 16}
+        };
+
+        cfg.vertexAttributes = {
+            ShaderConfig::VertexAttribute{.format = wgpu::VertexFormat::Float32x2, .offset = 0, .shaderLocation = 0},
+            ShaderConfig::VertexAttribute{.format = wgpu::VertexFormat::Float32x2, .offset = sizeof(float)*2, .shaderLocation = 1}
+        };
+        cfg.vertexStride = sizeof(float) * 4;
+
+        return cfg;
+    }
+
+    // Create panorama shader for NV12 format
+    ShaderConfig createPanoramaShaderNV12() {
+        ShaderConfig cfg;
+        cfg.name = "Panorama NV12 Shader";
+
+        cfg.vertexShaderSource = R"(
+            struct VertexOutput {
+                @builtin(position) pos : vec4f,
+                @location(0) uv : vec2f
+            };
+
+            @vertex
+            fn vs(@location(0) pos : vec2f, @location(1) uv : vec2f) -> VertexOutput {
+                var out : VertexOutput;
+                out.pos = vec4f(pos, 0.0, 1.0);
+                out.uv = uv;
+                return out;
+            }
+        )";
+
+        cfg.fragmentShaderSource = R"(
+            @group(0) @binding(0) var mySampler : sampler;
+            @group(0) @binding(1) var yTex : texture_2d<f32>;
+            @group(0) @binding(2) var uvTex : texture_2d<f32>;
+            @group(0) @binding(3) var<uniform> u : vec4f; // yaw, pitch, zoom, aspect
+
+            struct VertexOutput {
+                @builtin(position) pos : vec4f,
+                @location(0) uv : vec2f
+            };
+
+            fn toSpherical(uv: vec2f, yaw: f32, pitch: f32, zoom: f32, aspect: f32) -> vec2f {
+                var x = (uv.x - 0.5) * aspect;
+                var y = (uv.y - 0.5);
+                x = x / zoom;
+                y = y / zoom;
+                var dir = vec3f(x, y, -1.0);
+                dir = normalize(dir);
+                let cy = cos(yaw);
+                let sy = sin(yaw);
+                let cx = cos(pitch);
+                let sx = sin(pitch);
+                var rx = vec3f(dir.x, dir.y * cx - dir.z * sx, dir.y * sx + dir.z * cx);
+                var r = vec3f(rx.x * cy + rx.z * sy, rx.y, -rx.x * sy + rx.z * cy);
+                let lon = atan2(r.x, -r.z);
+                let lat = asin(clamp(r.y, -1.0, 1.0));
+                var uout = lon / (2.0 * 3.14159265) + 0.5;
+                var vout = 0.5 - lat / 3.14159265;
+                return vec2f(fract(uout), clamp(1.0 - vout, 0.0, 1.0));
+            }
+
+            @fragment
+            fn fs(input : VertexOutput) -> @location(0) vec4f {
+                let yaw = u.x;
+                let pitch = u.y;
+                let zoom = max(u.z, 0.01);
+                let aspect = max(u.w, 1.0);
+                let sphUV = toSpherical(input.uv, yaw, pitch, zoom, aspect);
+
+                let y = textureSample(yTex, mySampler, sphUV).r;
+                let uv = textureSample(uvTex, mySampler, sphUV).rg;
+                let uval = uv.r - 0.5;
+                let vval = uv.g - 0.5;
+                var rgb : vec3f;
+                rgb.r = y + 1.5748 * vval;
+                rgb.g = y - 0.1873 * uval - 0.4681 * vval;
+                rgb.b = y + 1.8556 * uval;
+                return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), 1.0);
+            }
+        )";
+
+        cfg.bindings = {
+            ShaderBindingDesc{.binding = 0, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Sampler},
+            ShaderBindingDesc{.binding = 1, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Texture, .textureSampleType = wgpu::TextureSampleType::Float, .textureViewDimension = wgpu::TextureViewDimension::e2D},
+            ShaderBindingDesc{.binding = 2, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Texture, .textureSampleType = wgpu::TextureSampleType::Float, .textureViewDimension = wgpu::TextureViewDimension::e2D},
+            ShaderBindingDesc{.binding = 3, .visibility = wgpu::ShaderStage::Fragment, .type = ShaderBindingDesc::Type::Buffer, .bufferType = wgpu::BufferBindingType::Uniform, .hasDynamicOffset = false, .minBindingSize = 16}
+        };
+
+        cfg.vertexAttributes = {
+            ShaderConfig::VertexAttribute{.format = wgpu::VertexFormat::Float32x2, .offset = 0, .shaderLocation = 0},
+            ShaderConfig::VertexAttribute{.format = wgpu::VertexFormat::Float32x2, .offset = sizeof(float)*2, .shaderLocation = 1}
+        };
+        cfg.vertexStride = sizeof(float) * 4;
+
+        return cfg;
+    }
+}
+
+void VideoRenderer::createShaderForMode() {
+    if (renderMode_ == RenderMode::Panorama) {
+        // Panorama mode: use panorama shaders
+        switch (videoFormat_) {
+            case VideoFormat::NV12:
+                shaderConfig_ = createPanoramaShaderNV12();
+                break;
+            case VideoFormat::RGBA:
+                shaderConfig_ = createPanoramaShaderRGBA();
+                break;
+            case VideoFormat::I420:
+                // TODO: Implement I420 panorama shader
+                shaderConfig_ = createPanoramaShaderNV12();
+                break;
+        }
+    } else {
+        // Planar mode: use standard video shaders
+        createShaderForFormat();
+    }
+}
+
+void VideoRenderer::setRenderMode(RenderMode mode) {
+    if (renderMode_ == mode) return;
+
+    renderMode_ = mode;
+    createShaderForMode();
+
+    // Recreate pipeline with new shader
+    if (device_) {
+        initializeShader();
+        initializePipeline();
+    }
+
+    panoramaUniformsDirty_ = true;
+}
+
+void VideoRenderer::setRotation(float yawRadians, float pitchRadians) {
+    panoramaParams_.yaw = yawRadians;
+    panoramaParams_.pitch = pitchRadians;
+    panoramaUniformsDirty_ = true;
+}
+
+void VideoRenderer::setZoom(float zoom) {
+    panoramaParams_.zoom = zoom;
+    panoramaUniformsDirty_ = true;
+}
+
+void VideoRenderer::setAspect(float aspect) {
+    panoramaParams_.aspect = aspect;
+    panoramaUniformsDirty_ = true;
+}
+
+void VideoRenderer::updatePanoramaUniforms() {
+    if (!panoramaUniformsDirty_) return;
+
+    // Pack panorama parameters into uniform buffer
+    float uniforms[4] = {
+        panoramaParams_.yaw,
+        panoramaParams_.pitch,
+        panoramaParams_.zoom,
+        panoramaParams_.aspect
+    };
+
+    updateUniformData(uniforms, sizeof(uniforms));
+    panoramaUniformsDirty_ = false;
+}
+
+void VideoRenderer::update(float deltaTime) {
+    if (renderMode_ == RenderMode::Panorama) {
+        updatePanoramaUniforms();
+    }
+}

@@ -2,6 +2,7 @@
 
 #include "../core/CeRenderable.h"
 #include "ShaderConfig.h"
+#include "FilterChain.h"
 
 #include <memory>
 #include <vector>
@@ -12,6 +13,8 @@
  * This renderer accepts a ShaderConfig and creates a rendering pipeline
  * based on that configuration. It's flexible enough to handle various
  * texture formats and shader types.
+ *
+ * Now supports filter chains for applying post-processing effects.
  */
 class TextureRenderer : public CeRenderable {
 public:
@@ -44,6 +47,12 @@ public:
      */
     const ShaderConfig& getShaderConfig() const { return shaderConfig_; }
 
+    /**
+     * @brief Get the filter chain for adding/managing filters
+     */
+    FilterChain& getFilterChain() { return filterChain_; }
+    const FilterChain& getFilterChain() const { return filterChain_; }
+
 protected:
     void initializeBuffers();
     void initializeSampler();
@@ -73,4 +82,7 @@ protected:
      * @param size Size in bytes (must be <= uniform buffer size)
      */
     void updateUniformData(const void* data, size_t size);
+
+    // Filter chain support
+    FilterChain filterChain_;
 };

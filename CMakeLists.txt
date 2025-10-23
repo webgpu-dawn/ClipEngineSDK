@@ -48,9 +48,11 @@ add_library(clipengine STATIC
     src/clipengine/render/ShaderConfig.cpp
     src/clipengine/render/TextureRenderer.cpp
     src/clipengine/render/VideoRenderer.cpp
-    # src/clipengine/core/WebGPUHelper.cpp
+    src/clipengine/render/Filter.cpp
+    src/clipengine/render/FilterChain.cpp
+    src/clipengine/render/ShaderEffect.cpp
+    src/clipengine/render/VideoRenderEngine.cpp
     src/clipengine/util/GPUTimer.cpp
-    # src/clipengine/util/GPUProfiler.cpp  # Temporarily disabled
 )
 
 # Set public headers for installation
@@ -62,7 +64,11 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/render/ShaderConfig.h
     src/clipengine/render/TextureRenderer.h
     src/clipengine/render/VideoRenderer.h
-    src/clipengine/core/WebGPUHelper.h
+    src/clipengine/render/Filter.h
+    src/clipengine/render/FilterChain.h
+    src/clipengine/render/ShaderEffect.h
+    src/clipengine/render/VideoRenderEngine.h
+    src/clipengine/render/InputState.h
 )
 
 # Configure library properties

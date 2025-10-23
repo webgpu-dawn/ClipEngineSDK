@@ -1,38 +1,27 @@
-#include "TextureRenderer.h"
+#include "Filter.h"
 #include <iostream>
 
-TextureRenderer::TextureRenderer(const ShaderConfig& config)
-    : shaderConfig_(config) {
-}
+void Filter::createFullScreenQuad() {
+    // Full-screen quad in NDC (-1 to 1)
+    float vertices[] = {
+        // pos.x, pos.y, uv.x, uv.y
+        -1.0f, -1.0f, 0.0f, 1.0f,  // bottom-left
+         1.0f, -1.0f, 1.0f, 1.0f,  // bottom-right
+        -1.0f,  1.0f, 0.0f, 0.0f,  // top-left
+        -1.0f,  1.0f, 0.0f, 0.0f,  // top-left
+         1.0f, -1.0f, 1.0f, 1.0f,  // bottom-right
+         1.0f,  1.0f, 1.0f, 0.0f   // top-right
+    };
 
-TextureRenderer::~TextureRenderer() = default;
-
-bool TextureRenderer::initialize(wgpu::Device device, wgpu::TextureFormat format) {
-    device_ = device;
-    surfaceFormat_ = format;
-
-    initializeBuffers();
-    initializeSampler();
-    initializeShader();
-    initializePipeline();
-
-    // Initialize filter chain (will be used if filters are added)
-    // We'll create filter output texture when needed (in setViewport or first render)
-    filterChain_.initialize(device_, format, 1920, 1080);  // Default size, will be resized
-
-    return true;
-}
-
-void TextureRenderer::initializeBuffers() {
-    wgpu::BufferDescriptor bufferDesc = {};
-    bufferDesc.size = sizeof(float) * shaderConfig_.vertexStride / sizeof(float) * 6;  // 6 vertices
-    bufferDesc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
+    wgpu::BufferDescriptor bufferDesc = {
+        .usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst,
+        .size = sizeof(vertices)
+    };
     vertexBuffer_ = device_.CreateBuffer(&bufferDesc);
-
-    updateVertexBuffer();
+    device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
 }
 
-void TextureRenderer::initializeSampler() {
+void Filter::createSampler() {
     wgpu::SamplerDescriptor samplerDesc = {
         .addressModeU = wgpu::AddressMode::ClampToEdge,
         .addressModeV = wgpu::AddressMode::ClampToEdge,
@@ -44,7 +33,42 @@ void TextureRenderer::initializeSampler() {
     sampler_ = device_.CreateSampler(&samplerDesc);
 }
 
-void TextureRenderer::initializeShader() {
+void Filter::updateUniformBuffer(const void* data, size_t size) {
+    if (size == 0 || !data) return;
+
+    if (!uniformBuffer_ || size > uniformBufferSize_) {
+        uniformBufferSize_ = (uint64_t)size;
+        wgpu::BufferDescriptor bufDesc = {
+            .usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+            .size = uniformBufferSize_
+        };
+        uniformBuffer_ = device_.CreateBuffer(&bufDesc);
+    }
+
+    device_.GetQueue().WriteBuffer(uniformBuffer_, 0, data, size);
+}
+
+// ============================================================================
+// ShaderFilter Implementation
+// ============================================================================
+
+ShaderFilter::ShaderFilter(const std::string& name, const ShaderConfig& config)
+    : name_(name), shaderConfig_(config) {
+}
+
+bool ShaderFilter::initialize(wgpu::Device device, wgpu::TextureFormat format) {
+    device_ = device;
+    outputFormat_ = format;
+
+    createFullScreenQuad();
+    createSampler();
+    initializeShader();
+    initializePipeline();
+
+    return true;
+}
+
+void ShaderFilter::initializeShader() {
     // Create vertex shader module
     wgpu::ShaderModuleWGSLDescriptor vertexWgslDesc = {};
     vertexWgslDesc.code = shaderConfig_.vertexShaderSource.c_str();
@@ -62,7 +86,7 @@ void TextureRenderer::initializeShader() {
     fragmentShaderModule_ = device_.CreateShaderModule(&fragmentModuleDesc);
 }
 
-void TextureRenderer::initializePipeline() {
+void ShaderFilter::initializePipeline() {
     // Create bind group layout from shader config
     std::vector<wgpu::BindGroupLayoutEntry> entries;
     for (const auto& binding : shaderConfig_.bindings) {
@@ -101,7 +125,7 @@ void TextureRenderer::initializePipeline() {
     };
     wgpu::PipelineLayout pipelineLayout = device_.CreatePipelineLayout(&layoutDesc);
 
-    // Vertex state - convert shader config to WebGPU format
+    // Vertex state
     std::vector<wgpu::VertexAttribute> attrs;
     for (const auto& attr : shaderConfig_.vertexAttributes) {
         wgpu::VertexAttribute wgpuAttr = {};
@@ -119,7 +143,7 @@ void TextureRenderer::initializePipeline() {
 
     // Fragment state
     wgpu::ColorTargetState colorTarget = {
-        .format = surfaceFormat_,
+        .format = outputFormat_,
         .writeMask = wgpu::ColorWriteMask::All
     };
 
@@ -148,17 +172,7 @@ void TextureRenderer::initializePipeline() {
     pipeline_ = device_.CreateRenderPipeline(&pipelineDesc);
 }
 
-void TextureRenderer::updateTextures(const std::vector<wgpu::TextureView>& textureViews) {
-    textureViews_ = textureViews;
-    updateBindGroup();
-}
-
-void TextureRenderer::updateBindGroup() {
-    if (textureViews_.empty() && !shaderConfig_.bindings.empty()) {
-        // No textures yet, but shader expects them
-        return;
-    }
-
+void ShaderFilter::updateBindGroup() {
     std::vector<wgpu::BindGroupEntry> entries;
 
     size_t textureIndex = 0;
@@ -171,34 +185,26 @@ void TextureRenderer::updateBindGroup() {
                 entry.sampler = sampler_;
                 break;
             case ShaderBindingDesc::Type::Texture:
-                if (textureIndex < textureViews_.size()) {
-                    entry.textureView = textureViews_[textureIndex++];
+                if (textureIndex < currentInputs_.size()) {
+                    entry.textureView = currentInputs_[textureIndex++];
                 } else {
-                    // Not enough textures provided
-                    return;
+                    return; // Not enough textures
                 }
                 break;
-                case ShaderBindingDesc::Type::Buffer: {
-                    // Ensure we have a uniform buffer to bind
-                    if (!uniformBuffer_) {
-                        uint64_t size = binding.minBindingSize ? binding.minBindingSize : 16;
-                        wgpu::BufferDescriptor bufDesc = {};
-                        bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-                        bufDesc.size = size;
-                        uniformBufferSize_ = size;
-                        uniformBuffer_ = device_.CreateBuffer(&bufDesc);
-                    }
-
-                    if (!uniformBuffer_) {
-                        // Could not create buffer — fail bind group creation
-                        return;
-                    }
-
-                    entry.buffer = uniformBuffer_;
-                    entry.offset = 0;
-                    entry.size = uniformBufferSize_;
-                    break;
+            case ShaderBindingDesc::Type::Buffer:
+                if (!uniformBuffer_) {
+                    uint64_t size = binding.minBindingSize ? binding.minBindingSize : 16;
+                    wgpu::BufferDescriptor bufDesc = {
+                        .usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+                        .size = size
+                    };
+                    uniformBufferSize_ = size;
+                    uniformBuffer_ = device_.CreateBuffer(&bufDesc);
                 }
+                entry.buffer = uniformBuffer_;
+                entry.offset = 0;
+                entry.size = uniformBufferSize_;
+                break;
         }
 
         entries.push_back(entry);
@@ -212,64 +218,17 @@ void TextureRenderer::updateBindGroup() {
     bindGroup_ = device_.CreateBindGroup(&bgDesc);
 }
 
-void TextureRenderer::updateUniformData(const void* data, size_t size) {
-    if (size == 0 || !data) return;
-    if (!uniformBuffer_ || size > uniformBufferSize_) {
-        // (re)create uniform buffer
-        if (uniformBuffer_) uniformBuffer_ = nullptr;
-        uniformBufferSize_ = (uint64_t)size;
-        wgpu::BufferDescriptor bufDesc = {};
-        bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        bufDesc.size = uniformBufferSize_;
-        uniformBuffer_ = device_.CreateBuffer(&bufDesc);
-    }
+void ShaderFilter::apply(wgpu::RenderPassEncoder& pass, const std::vector<wgpu::TextureView>& inputTextures) {
+    if (!enabled_) return;
 
-    device_.GetQueue().WriteBuffer(uniformBuffer_, 0, data, size);
-
-    // Recreate bind group so buffer binding is included if shader expects it
+    // Update input textures and bind group
+    currentInputs_ = inputTextures;
     updateBindGroup();
-}
 
-void TextureRenderer::render(wgpu::RenderPassEncoder& pass) {
-    if (!enabled_ || !bindGroup_) return;
+    if (!bindGroup_) return;
 
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertexBuffer_);
     pass.SetBindGroup(0, bindGroup_);
     pass.Draw(6);
-}
-
-void TextureRenderer::update(float deltaTime) {
-    // Can be overridden by subclasses for animations
-}
-
-void TextureRenderer::updateVertexBuffer() {
-    // Convert viewport (0-1 normalized) to NDC (-1 to 1)
-    float x1 = viewport_.x * 2.0f - 1.0f;
-    float y1 = viewport_.y * 2.0f - 1.0f;
-    float x2 = (viewport_.x + viewport_.w) * 2.0f - 1.0f;
-    float y2 = (viewport_.y + viewport_.h) * 2.0f - 1.0f;
-
-    float vertices[] = {
-        // pos.x, pos.y, uv.x, uv.y
-        x1, y1, 0.0f, 1.0f,  // bottom-left
-        x2, y1, 1.0f, 1.0f,  // bottom-right
-        x1, y2, 0.0f, 0.0f,  // top-left
-        x1, y2, 0.0f, 0.0f,  // top-left
-        x2, y1, 1.0f, 1.0f,  // bottom-right
-        x2, y2, 1.0f, 0.0f   // top-right
-    };
-
-    device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
-}
-
-void TextureRenderer::setViewport(float x, float y, float width, float height) {
-    viewport_.x = x;
-    viewport_.y = y;
-    viewport_.w = width;
-    viewport_.h = height;
-
-    if (vertexBuffer_) {
-        updateVertexBuffer();
-    }
 }

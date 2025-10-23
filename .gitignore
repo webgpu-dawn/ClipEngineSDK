@@ -6,6 +6,10 @@ build/
 output/
 build-debug/
 build-release/
+build_example/
+
+# Claude Code settings
+.claude/
 # Compiled Object files
 *.slo
 *.lo

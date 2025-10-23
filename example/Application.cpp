@@ -2,19 +2,19 @@
 #include "Decoder.h"
 
 #include <iostream>
+#include <chrono>
+#include <thread>
+
+#include <clipengine/render/ShaderEffect.h>
+
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 using namespace std;
 
-#include <clipengine/render/PanoramaRenderer.h>
-#include <clipengine/render/VideoRenderer.h>
-#include <clipengine/render/TextureRenderer.h>
-
-void Application::initialize() 
+void Application::initialize()
 {
-    // 初始化窗口
-    width_ = 1920;
-    height_= 1080;
-    title_ = "ClipEngine - Example";
+    // 初始化 GLFW 窗口
     if(!glfwInit()) {
         std::cerr << "Could not initialize GLFW!" << std::endl;
         return;
@@ -29,124 +29,233 @@ void Application::initialize()
         return;
     }
 
-    // 初始化 ce
+    // 初始化 WebGPU 上下文
     CeConfigure config = {
-        .width  = width_,
+        .width = width_,
         .height = height_,
-        .window_title = title_
+        .window_title = title_,
+        .hwnd = glfwGetWin32Window(window_)
     };
-    if(!ce_.initialize(config)) {
-        std::cerr << "Failed to initialize clip engine" << std::endl;
+
+    if (!context_.initialize(config)) {
+        std::cerr << "Failed to initialize WebGPU context" << std::endl;
         return;
     }
 
-    // 示例1: 使用默认的 NV12 video renderer (全屏)
-    auto mainVideoRenderer = std::make_unique<VideoRenderer>();
-    mainVideoRenderer->setName("main_video");
-    mainVideoRenderer->setViewport(0, 0, 1, 1);
-    mainVideoRenderer->setLayer(0);
-    ce_.addRenderer(std::move(mainVideoRenderer));
+    // 初始化 VideoRenderEngine
+    engine_.initialize(context_.getDevice(), context_.getSurfaceFormat(), width_, height_);
 
-    // Panorama renderer (disabled by default) - will sample the same video texture
-    auto pano = std::make_unique<PanoramaRenderer>();
-    pano->setName("panorama");
-    pano->setViewport(0, 0, 1, 1);
-    pano->setLayer(0);
-    pano->setEnabled(false);
-    panoramaRenderer_ = pano.get();
-    // set aspect ratio for correct perspective mapping
-    panoramaRenderer_->setAspect((float)width_ / (float)height_);
-    ce_.addRenderer(std::move(pano));
+    // 设置场景（添加渲染器和特效）
+    setupScene();
 
-    // 示例2: 使用自定义 shader 的 TextureRenderer (右上角小窗口)
-    // 这展示了如何创建一个使用自定义 shader 的 renderer
-    auto customShaderConfig = ShaderPresets::createColorShader();
-    auto customRenderer = std::make_unique<TextureRenderer>(customShaderConfig);
-    customRenderer->setName("custom_overlay");
-    customRenderer->setViewport(0.7f, 0.0f, 0.3f, 0.3f);  // 右上角 30%x30%
-    customRenderer->setLayer(1);  // 在主视频之上
-    customRenderer->setEnabled(false);  // 暂时禁用，可以动态启用
-    ce_.addRenderer(std::move(customRenderer));
+    // 设置 GLFW 输入回调
+    setupInputCallbacks();
 
-    // 示例3: 可以添加更多 renderer，比如字幕、特效等
-    // auto subtitleRenderer = std::make_unique<TextureRenderer>(ShaderPresets::createRGBATextureShader());
-    // subtitleRenderer->setName("subtitle");
-    // subtitleRenderer->setViewport(0, 0.8f, 1, 0.2f);  // 底部字幕区域
-    // subtitleRenderer->setLayer(2);
-    // ce_.addRenderer(std::move(subtitleRenderer));
+    std::cout << "Application initialized successfully" << std::endl;
+    std::cout << "Controls:" << std::endl;
+    std::cout << "  - Move mouse to see spotlight effect" << std::endl;
+    std::cout << "  - Press P to toggle panorama view" << std::endl;
+    std::cout << "  - Left click drag to rotate panorama view" << std::endl;
+    std::cout << "  - Mouse wheel to zoom panorama" << std::endl;
+    std::cout << "  - +/- keys to adjust zoom" << std::endl;
+    std::cout << "  - ESC to exit" << std::endl;
+}
+
+void Application::setupScene()
+{
+    // 创建统一的视频渲染器（全屏）
+    auto video = std::make_unique<VideoRenderer>();
+    video->setViewport(0.0f, 0.0f, 1.0f, 1.0f);
+    video->setLayer(0);
+    video->setAspect((float)width_ / (float)height_);  // 设置宽高比用于全景模式
+    size_t videoIdx = engine_.addRenderable(std::move(video));
+
+    // 保存视频渲染器指针用于后续更新
+    videoRenderer_ = static_cast<VideoRenderer*>(engine_.getRenderable(videoIdx));
+
+    // 添加全局交互特效
+    // 1. 鼠标聚光灯效果（跟随鼠标）
+    auto spotlight = ShaderEffect::createMouseSpotlight();
+    spotlight->setParam("radius", 0.25f);      // 聚光灯半径
+    spotlight->setParam("intensity", 0.6f);    // 暗部强度
+    engine_.getGlobalFilterChain().addFilter(std::move(spotlight));
+
+    // 2. 色彩调整（可选，默认禁用）
+    // auto colorAdjust = ShaderEffect::createColorAdjust();
+    // colorAdjust->setParam("brightness", 0.0f);
+    // colorAdjust->setParam("contrast", 1.0f);
+    // colorAdjust->setParam("saturation", 1.0f);
+    // engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
+}
+
+void Application::setupInputCallbacks()
+{
+    // 设置窗口用户指针，用于在静态回调中访问 Application 实例
+    glfwSetWindowUserPointer(window_, this);
+
+    // 设置 GLFW 输入回调
+    glfwSetCursorPosCallback(window_, cursorPosCallback);
+    glfwSetMouseButtonCallback(window_, mouseButtonCallback);
+    glfwSetScrollCallback(window_, scrollCallback);
+    glfwSetKeyCallback(window_, keyCallback);
 }
 
 void Application::run()
 {
     Decoder decoder;
-    decoder.open_video("D:/video/Q360_19700103_032841_000001_Output(11).mp4", [&](AVFrame* frame) {
+    decoder.open_video("D:/video/8K.mp4", [&](AVFrame* frame) {
         if(frame->format == AV_PIX_FMT_D3D11) {
             ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
             int subIndex = (int)(intptr_t)frame->data[1];
 
-            // 更新主视频 renderer（保持主视频渲染器更新）
-            CeRenderable* mainRenderer = ce_.getRendererByName("main_video");
-            if (mainRenderer) {
-                ((VideoRenderer*)mainRenderer)->updateFrame(srcTex, subIndex);
+            // 在解码线程中只保存帧数据，不调用 WebGPU 函数
+            {
+                std::lock_guard<std::mutex> lock(frameMutex_);
+                frameData_.texture = srcTex;
+                frameData_.subIndex = subIndex;
+                frameData_.hasNewFrame = true;
             }
 
-            // 将主渲染器的 texture views 转发给 panorama renderer
-            CeRenderable* panoR = ce_.getRendererByName("panorama");
-            if (mainRenderer && panoR) {
-                TextureRenderer* texMain = static_cast<TextureRenderer*>(mainRenderer);
-                const auto& views = texMain->getTextureViews();
-                if (!views.empty()) {
-                    // 启用 panorama 并把 views 传递过去
-                    panoR->setEnabled(true);
-                    PanoramaRenderer* pano = static_cast<PanoramaRenderer*>(panoR);
-                    pano->applyTextureViews(views);
-                }
-            }
-
-            // 可以在运行时启用/禁用其他 renderer
-            // CeRenderable* customRenderer = ce_.getRendererByName("custom_overlay");
-            // if (customRenderer) {
-            //     customRenderer->setEnabled(true);  // 动态启用叠加层
-            // }
-
-            ce_.renderFrame();
+            // 等待渲染线程处理完这一帧
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
     });
 
+    auto lastTime = std::chrono::high_resolution_clock::now();
+
     while(!glfwWindowShouldClose(window_)) {
-        // Poll events and handle input
+        // 计算帧间隔时间
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+        // 在主渲染线程中处理新帧（线程安全）
+        {
+            std::lock_guard<std::mutex> lock(frameMutex_);
+            if (frameData_.hasNewFrame && videoRenderer_) {
+                // 更新视频帧
+                videoRenderer_->updateFrame(frameData_.texture, frameData_.subIndex);
+                frameData_.hasNewFrame = false;
+            }
+        }
+
+        // 处理输入事件
         glfwPollEvents();
 
-        // Mouse handling: left drag to rotate, scroll to zoom
-        if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-            double mx, my;
-            glfwGetCursorPos(window_, &mx, &my);
-            if (!dragging_) {
-                dragging_ = true;
+        // 手动处理 panorama 旋转（使用拖拽）- 仅在全景模式时
+        if (videoRenderer_ && videoRenderer_->getRenderMode() == VideoRenderer::RenderMode::Panorama) {
+            if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+                double mx, my;
+                glfwGetCursorPos(window_, &mx, &my);
+                if (!dragging_) {
+                    dragging_ = true;
+                } else {
+                    double dx = mx - lastMouseX_;
+                    double dy = my - lastMouseY_;
+                    yaw_ += (float)(dx * 0.005);
+                    pitch_ += (float)(dy * 0.005);
+                    if (pitch_ > 1.5f) pitch_ = 1.5f;
+                    if (pitch_ < -1.5f) pitch_ = -1.5f;
+                    videoRenderer_->setRotation(yaw_, pitch_);
+                }
+                lastMouseX_ = mx;
+                lastMouseY_ = my;
             } else {
-                double dx = mx - lastMouseX_;
-                double dy = my - lastMouseY_;
-                // sensitivity
-                yaw_ += (float)(dx * 0.005);
-                pitch_ += (float)(dy * 0.005);
-                if (pitch_ > 1.5f) pitch_ = 1.5f;
-                if (pitch_ < -1.5f) pitch_ = -1.5f;
-                if (panoramaRenderer_) panoramaRenderer_->setRotation(yaw_, pitch_);
+                dragging_ = false;
             }
-            lastMouseX_ = mx; lastMouseY_ = my;
-        } else {
-            dragging_ = false;
+
+            // 键盘控制缩放
+            if (glfwGetKey(window_, GLFW_KEY_KP_ADD) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+                zoom_ *= 1.01f;
+                videoRenderer_->setZoom(zoom_);
+            }
+            if (glfwGetKey(window_, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS) {
+                zoom_ *= 0.99f;
+                videoRenderer_->setZoom(zoom_);
+            }
+
+            // 鼠标滚轮控制缩放
+            const InputState& input = engine_.getInputState();
+            if (input.mouse.wheelDelta != 0.0f) {
+                zoom_ += input.mouse.wheelDelta * 0.1f;
+                // 限制缩放范围
+                if (zoom_ < 0.1f) zoom_ = 0.1f;
+                if (zoom_ > 5.0f) zoom_ = 5.0f;
+                videoRenderer_->setZoom(zoom_);
+            }
         }
 
-        // scroll callback via polling (GLFW doesn't provide polling scroll, so use a callback - simplified here)
-        // For brevity, we use glfwGetKey for +/- to control zoom
-        if (glfwGetKey(window_, GLFW_KEY_KP_ADD) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-            zoom_ *= 1.01f;
-            if (panoramaRenderer_) panoramaRenderer_->setZoom(zoom_);
+        // 更新引擎（自动更新时间信息）
+        engine_.update(deltaTime);
+
+        // 获取当前 surface texture 并渲染
+        wgpu::Surface surface = context_.getSurface();
+        if (surface) {
+            wgpu::SurfaceTexture surfaceTexture;
+            surface.GetCurrentTexture(&surfaceTexture);
+
+            if (surfaceTexture.texture) {
+                wgpu::TextureView outputView = surfaceTexture.texture.CreateView();
+                engine_.render(outputView);
+                surface.Present();
+            }
         }
-        if (glfwGetKey(window_, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS) {
-            zoom_ *= 0.99f;
-            if (panoramaRenderer_) panoramaRenderer_->setZoom(zoom_);
+    }
+
+    glfwTerminate();
+}
+
+// ============================================================================
+// GLFW Input Callbacks
+// ============================================================================
+
+void Application::cursorPosCallback(GLFWwindow* window, double x, double y)
+{
+    auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+
+    // 将鼠标位置传递给引擎（引擎会自动归一化到 0-1 范围）
+    app->engine_.setMousePosition(static_cast<float>(x), static_cast<float>(y));
+}
+
+void Application::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+
+    // 将鼠标按钮状态传递给引擎
+    app->engine_.setMouseButton(button, action == GLFW_PRESS);
+}
+
+void Application::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+
+    // 将滚轮增量传递给引擎
+    app->engine_.setMouseWheel(static_cast<float>(yoffset));
+}
+
+void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+
+    // 将键盘状态传递给引擎
+    app->engine_.setKeyState(key, action == GLFW_PRESS || action == GLFW_REPEAT);
+
+    // ESC 键退出
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+
+    // P 键切换普通视图和全景视图
+    if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+        if (app->videoRenderer_) {
+            auto currentMode = app->videoRenderer_->getRenderMode();
+            if (currentMode == VideoRenderer::RenderMode::Planar) {
+                app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
+                std::cout << "Switched to panorama view" << std::endl;
+            } else {
+                app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Planar);
+                std::cout << "Switched to normal view" << std::endl;
+            }
         }
     }
 }

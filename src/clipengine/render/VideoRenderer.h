@@ -19,13 +19,29 @@ enum class VideoFormat {
 };
 
 /**
- * @brief Video renderer that supports various video formats
+ * @brief Unified video renderer supporting both planar and panoramic modes
  *
- * This renderer extends TextureRenderer to handle D3D11 texture import
- * and multi-plane video formats (NV12, I420).
+ * This renderer extends TextureRenderer to handle:
+ * - D3D11 texture import
+ * - Multi-plane video formats (NV12, I420, RGBA)
+ * - Planar rendering (normal video)
+ * - Panoramic rendering (360° equirectangular video)
  */
 class VideoRenderer : public TextureRenderer {
 public:
+    /**
+     * @brief Render mode for video display
+     */
+    enum class RenderMode {
+        Planar,      // Normal flat video
+        Panorama     // 360° panoramic video
+    };
+
+    enum class FillMode {
+        Fit,
+        Fill,
+        Stretch
+    };
     /**
      * @brief Construct a new Video Renderer with default NV12 format
      */
@@ -61,18 +77,54 @@ public:
 
     VideoFormat getVideoFormat() const { return videoFormat_; }
 
-    enum class FillMode {
-        Fit,
-        Fill,
-        Stretch
-    };
+    /**
+     * @brief Set render mode (planar or panorama)
+     * This will switch the shader pipeline accordingly
+     * @param mode Render mode to use
+     */
+    void setRenderMode(RenderMode mode);
+    RenderMode getRenderMode() const { return renderMode_; }
+
+    /**
+     * @brief Set rotation for panorama mode (radians)
+     * @param yawRadians Horizontal rotation
+     * @param pitchRadians Vertical rotation
+     */
+    void setRotation(float yawRadians, float pitchRadians);
+
+    /**
+     * @brief Set zoom level for panorama mode
+     * @param zoom Zoom factor (1.0 = default, >1.0 = zoom in, <1.0 = zoom out)
+     */
+    void setZoom(float zoom);
+
+    /**
+     * @brief Set aspect ratio for panorama mode
+     * @param aspect Aspect ratio (width/height)
+     */
+    void setAspect(float aspect);
+
     void setFillMode(FillMode mode) { fillMode_ = mode; }
+
+    void update(float deltaTime) override;
 
 private:
     void createShaderForFormat();
+    void createShaderForMode();
+    void updatePanoramaUniforms();
 
     VideoFormat videoFormat_ = VideoFormat::NV12;
     FillMode fillMode_ = FillMode::Fit;
+    RenderMode renderMode_ = RenderMode::Planar;
+
+    // Panorama parameters
+    struct PanoramaParams {
+        float yaw = 0.0f;
+        float pitch = 0.0f;
+        float zoom = 1.0f;
+        float aspect = 16.0f / 9.0f;
+    } panoramaParams_;
+    bool panoramaUniformsDirty_ = true;
 
     // Cached texture views
     wgpu::TextureView yPlaneView_;
