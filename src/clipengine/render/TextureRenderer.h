@@ -35,6 +35,11 @@ public:
     void updateTextures(const std::vector<wgpu::TextureView>& textureViews);
 
     /**
+     * @brief Get current texture views used by this renderer
+     */
+    const std::vector<wgpu::TextureView>& getTextureViews() const { return textureViews_; }
+
+    /**
      * @brief Get the shader configuration used by this renderer
      */
     const ShaderConfig& getShaderConfig() const { return shaderConfig_; }
@@ -58,4 +63,14 @@ protected:
     wgpu::BindGroupLayout bindGroupLayout_;
 
     std::vector<wgpu::TextureView> textureViews_;
+    // Optional uniform buffer (used by shaders that declare a uniform / storage buffer)
+    wgpu::Buffer uniformBuffer_;
+    uint64_t uniformBufferSize_ = 0;
+
+    /**
+     * @brief Update uniform buffer contents
+     * @param data Pointer to data to upload
+     * @param size Size in bytes (must be <= uniform buffer size)
+     */
+    void updateUniformData(const void* data, size_t size);
 };

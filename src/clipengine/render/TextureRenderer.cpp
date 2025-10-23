@@ -174,9 +174,27 @@ void TextureRenderer::updateBindGroup() {
                     return;
                 }
                 break;
-            case ShaderBindingDesc::Type::Buffer:
-                // TODO: Support buffer bindings if needed
-                break;
+                case ShaderBindingDesc::Type::Buffer: {
+                    // Ensure we have a uniform buffer to bind
+                    if (!uniformBuffer_) {
+                        uint64_t size = binding.minBindingSize ? binding.minBindingSize : 16;
+                        wgpu::BufferDescriptor bufDesc = {};
+                        bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
+                        bufDesc.size = size;
+                        uniformBufferSize_ = size;
+                        uniformBuffer_ = device_.CreateBuffer(&bufDesc);
+                    }
+
+                    if (!uniformBuffer_) {
+                        // Could not create buffer — fail bind group creation
+                        return;
+                    }
+
+                    entry.buffer = uniformBuffer_;
+                    entry.offset = 0;
+                    entry.size = uniformBufferSize_;
+                    break;
+                }
         }
 
         entries.push_back(entry);
@@ -188,6 +206,24 @@ void TextureRenderer::updateBindGroup() {
         .entries = entries.data()
     };
     bindGroup_ = device_.CreateBindGroup(&bgDesc);
+}
+
+void TextureRenderer::updateUniformData(const void* data, size_t size) {
+    if (size == 0 || !data) return;
+    if (!uniformBuffer_ || size > uniformBufferSize_) {
+        // (re)create uniform buffer
+        if (uniformBuffer_) uniformBuffer_ = nullptr;
+        uniformBufferSize_ = (uint64_t)size;
+        wgpu::BufferDescriptor bufDesc = {};
+        bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
+        bufDesc.size = uniformBufferSize_;
+        uniformBuffer_ = device_.CreateBuffer(&bufDesc);
+    }
+
+    device_.GetQueue().WriteBuffer(uniformBuffer_, 0, data, size);
+
+    // Recreate bind group so buffer binding is included if shader expects it
+    updateBindGroup();
 }
 
 void TextureRenderer::render(wgpu::RenderPassEncoder& pass) {

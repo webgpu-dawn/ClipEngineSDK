@@ -30,6 +30,7 @@ add_executable(
     main.cpp
     Decoder.cpp
     Application.cpp
+    ../src/clipengine/render/PanoramaRenderer.cpp
 )
 
 # Link against ClipEngine SDK and other dependencies

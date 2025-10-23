@@ -5,17 +5,9 @@
 
 using namespace std;
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg)
-    {
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
-}
+#include <clipengine/render/PanoramaRenderer.h>
+#include <clipengine/render/VideoRenderer.h>
+#include <clipengine/render/TextureRenderer.h>
 
 void Application::initialize() 
 {
@@ -55,6 +47,17 @@ void Application::initialize()
     mainVideoRenderer->setLayer(0);
     ce_.addRenderer(std::move(mainVideoRenderer));
 
+    // Panorama renderer (disabled by default) - will sample the same video texture
+    auto pano = std::make_unique<PanoramaRenderer>();
+    pano->setName("panorama");
+    pano->setViewport(0, 0, 1, 1);
+    pano->setLayer(0);
+    pano->setEnabled(false);
+    panoramaRenderer_ = pano.get();
+    // set aspect ratio for correct perspective mapping
+    panoramaRenderer_->setAspect((float)width_ / (float)height_);
+    ce_.addRenderer(std::move(pano));
+
     // 示例2: 使用自定义 shader 的 TextureRenderer (右上角小窗口)
     // 这展示了如何创建一个使用自定义 shader 的 renderer
     auto customShaderConfig = ShaderPresets::createColorShader();
@@ -76,15 +79,28 @@ void Application::initialize()
 void Application::run()
 {
     Decoder decoder;
-    decoder.open_video("D:/video/8K.mp4", [&](AVFrame* frame) {
+    decoder.open_video("D:/video/Q360_19700103_032841_000001_Output(11).mp4", [&](AVFrame* frame) {
         if(frame->format == AV_PIX_FMT_D3D11) {
             ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
             int subIndex = (int)(intptr_t)frame->data[1];
 
-            // 更新主视频 renderer
+            // 更新主视频 renderer（保持主视频渲染器更新）
             CeRenderable* mainRenderer = ce_.getRendererByName("main_video");
-            if(mainRenderer) {
+            if (mainRenderer) {
                 ((VideoRenderer*)mainRenderer)->updateFrame(srcTex, subIndex);
+            }
+
+            // 将主渲染器的 texture views 转发给 panorama renderer
+            CeRenderable* panoR = ce_.getRendererByName("panorama");
+            if (mainRenderer && panoR) {
+                TextureRenderer* texMain = static_cast<TextureRenderer*>(mainRenderer);
+                const auto& views = texMain->getTextureViews();
+                if (!views.empty()) {
+                    // 启用 panorama 并把 views 传递过去
+                    panoR->setEnabled(true);
+                    PanoramaRenderer* pano = static_cast<PanoramaRenderer*>(panoR);
+                    pano->applyTextureViews(views);
+                }
             }
 
             // 可以在运行时启用/禁用其他 renderer
@@ -98,6 +114,39 @@ void Application::run()
     });
 
     while(!glfwWindowShouldClose(window_)) {
+        // Poll events and handle input
         glfwPollEvents();
+
+        // Mouse handling: left drag to rotate, scroll to zoom
+        if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            double mx, my;
+            glfwGetCursorPos(window_, &mx, &my);
+            if (!dragging_) {
+                dragging_ = true;
+            } else {
+                double dx = mx - lastMouseX_;
+                double dy = my - lastMouseY_;
+                // sensitivity
+                yaw_ += (float)(dx * 0.005);
+                pitch_ += (float)(dy * 0.005);
+                if (pitch_ > 1.5f) pitch_ = 1.5f;
+                if (pitch_ < -1.5f) pitch_ = -1.5f;
+                if (panoramaRenderer_) panoramaRenderer_->setRotation(yaw_, pitch_);
+            }
+            lastMouseX_ = mx; lastMouseY_ = my;
+        } else {
+            dragging_ = false;
+        }
+
+        // scroll callback via polling (GLFW doesn't provide polling scroll, so use a callback - simplified here)
+        // For brevity, we use glfwGetKey for +/- to control zoom
+        if (glfwGetKey(window_, GLFW_KEY_KP_ADD) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+            zoom_ *= 1.01f;
+            if (panoramaRenderer_) panoramaRenderer_->setZoom(zoom_);
+        }
+        if (glfwGetKey(window_, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS) {
+            zoom_ *= 0.99f;
+            if (panoramaRenderer_) panoramaRenderer_->setZoom(zoom_);
+        }
     }
 }
