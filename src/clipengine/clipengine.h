@@ -3,7 +3,7 @@
 #include "utils/Common.h"
 #include "core/CompositionLayer.h"
 #include "core/CompositionEngine.h"
-#include "core/CeContext.h"
+#include "core/RenderDevice.h"
 #include "layers/TextureRenderer.h"
 #include "layers/VideoRenderer.h"
 #include "effects/Filter.h"

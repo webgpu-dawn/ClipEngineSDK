@@ -1,27 +1,27 @@
-#include "CeContext.h"
-#include "../utils/CeHelper.h"
+#include "RenderDevice.h"
+#include "../utils/RenderUtils.h"
 #include "../utils/CeLogger.h"
 #include "../utils/RuntimeInspector.h"
 
 using namespace wgpu;
 
-CeContext::~CeContext() {
+RenderDevice::~RenderDevice() {
     shutdown();
 }
 
-bool CeContext::initialize(const CeConfigure& config) {
-    LOG_DEBUG("CeContext initialized");
+bool RenderDevice::initialize(const DeviceConfig& config) {
+    LOG_DEBUG("RenderDevice initialized");
     // 初始化 WebGPU
     if (!initializeWebGPU(config)) {
         return false;
     }
 
-    LOG_INFO("✅ CeContext initialized successfully");;
+    LOG_INFO("✅ RenderDevice initialized successfully");;
 
     return true;
 }
 
-bool CeContext::initializeWebGPU(const CeConfigure& config) {
+bool RenderDevice::initializeWebGPU(const DeviceConfig& config) {
     // 创建 Instance
     {
         LOG_DEBUG("Create Instance ...");
@@ -44,7 +44,7 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
     {
         LOG_DEBUG("Create Surface from given window name : {}", config.window_title);
 
-        native_ = CeHelper::getSurface(instance_.Get(), config.window_title.c_str(), config.hwnd);
+        native_ = RenderUtils::getSurface(instance_.Get(), config.window_title.c_str(), config.hwnd);
 
         if (!native_.surface) {
             LOG_ERROR("Failed to create WebGPU surface");
@@ -169,7 +169,7 @@ bool CeContext::initializeWebGPU(const CeConfigure& config) {
     return true;
 }
 
-void CeContext::shutdown() {
+void RenderDevice::shutdown() {
     if (native_.surface) {
         native_.surface.Unconfigure();
         native_.surface = nullptr;
@@ -181,7 +181,7 @@ void CeContext::shutdown() {
     instance_ = nullptr;
 }
 
-void CeContext::reconfigureSurface(uint32_t width, uint32_t height) {
+void RenderDevice::reconfigureSurface(uint32_t width, uint32_t height) {
     native_.width = width;
     native_.height = height;
 

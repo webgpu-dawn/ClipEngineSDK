@@ -4,7 +4,7 @@
 #include "CompositionLayer.h"
 #include "../effects/FilterChain.h"
 #include "InputState.h"
-#include "CeContext.h"
+#include "RenderDevice.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -91,11 +91,11 @@ public:
 
     /**
      * @brief Initialize the composition engine with window configuration
-     * Creates and manages internal CeContext
+     * Creates and manages internal RenderDevice
      * @param config Window configuration
      * @return true if initialization succeeded
      */
-    bool initialize(const CeConfigure& config);
+    bool initialize(const DeviceConfig& config);
 
     /**
      * @brief Add a layer to the composition
@@ -211,13 +211,13 @@ public:
     }
 
     /**
-     * @brief Get WebGPU surface (when using internal CeContext)
+     * @brief Get WebGPU surface (when using internal RenderDevice)
      * @return Surface, or null if using external device
      */
     wgpu::Surface getSurface() const;
 
     /**
-     * @brief Present the rendered frame (when using internal CeContext)
+     * @brief Present the rendered frame (when using internal RenderDevice)
      */
     void present();
 
@@ -232,7 +232,7 @@ public:
      * - Updates debug window (if attached)
      * - Presents the result
      *
-     * Only works when using internal CeContext (initialized via CeConfigure).
+     * Only works when using internal RenderDevice (initialized via DeviceConfig).
      * For external device usage, use update(deltaTime) + render(outputView) instead.
      *
      * Example usage:
@@ -294,7 +294,7 @@ private:
     };
 
     // WebGPU context (managed internally or externally)
-    CeContext context_;
+    RenderDevice context_;
     bool ownsContext_ = false;  // True if we created context internally
 
     wgpu::Device device_;

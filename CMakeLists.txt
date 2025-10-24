@@ -51,7 +51,7 @@ include_directories(
 
 add_library(clipengine STATIC
     # Core
-    src/clipengine/core/CeContext.cpp
+    src/clipengine/core/RenderDevice.cpp
     src/clipengine/core/CompositionEngine.cpp
 
     # Layers
@@ -62,13 +62,14 @@ add_library(clipengine STATIC
     src/clipengine/effects/Filter.cpp
     src/clipengine/effects/FilterChain.cpp
     src/clipengine/effects/ShaderEffect.cpp
+    src/clipengine/effects/EffectLoader.cpp
 
     # Shaders
     src/clipengine/shaders/ShaderLibrary.cpp
     src/clipengine/shaders/ShaderConfig.cpp
 
     # Utilities
-    src/clipengine/utils/CeHelper.cpp
+    src/clipengine/utils/RenderUtils.cpp
     src/clipengine/utils/RuntimeInspector.cpp
     src/clipengine/utils/GPUTimer.cpp
 
@@ -84,7 +85,7 @@ set(CLIPENGINE_PUBLIC_HEADERS
     # Core
     src/clipengine/core/CompositionLayer.h
     src/clipengine/core/CompositionEngine.h
-    src/clipengine/core/CeContext.h
+    src/clipengine/core/RenderDevice.h
     src/clipengine/core/InputState.h
 
     # Layers
@@ -95,6 +96,7 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/effects/Filter.h
     src/clipengine/effects/FilterChain.h
     src/clipengine/effects/ShaderEffect.h
+    src/clipengine/effects/EffectLoader.h
 
     # Shaders
     src/clipengine/shaders/ShaderLibrary.h

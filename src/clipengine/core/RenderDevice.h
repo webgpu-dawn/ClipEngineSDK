@@ -1,15 +1,15 @@
 #pragma once
 
 #include "../utils/Common.h"
-#include "../utils/CeHelper.h"
+#include "../utils/RenderUtils.h"
 
-class CeContext
+class RenderDevice
 {
 public:
-    CeContext() = default;
-    ~CeContext();
+    RenderDevice() = default;
+    ~RenderDevice();
 
-    bool initialize(const CeConfigure& config);
+    bool initialize(const DeviceConfig& config);
     void shutdown();
 
     // Getters
@@ -25,7 +25,7 @@ public:
     void reconfigureSurface(uint32_t width, uint32_t height);
 
 private:
-    bool initializeWebGPU(const CeConfigure& config);
+    bool initializeWebGPU(const DeviceConfig& config);
 
 private:
     wgpu::Instance instance_;

@@ -21,8 +21,8 @@ bool CompositionEngine::initialize(wgpu::Device device, wgpu::TextureFormat form
     return true;
 }
 
-bool CompositionEngine::initialize(const CeConfigure& config) {
-    // Initialize internal CeContext
+bool CompositionEngine::initialize(const DeviceConfig& config) {
+    // Initialize internal RenderDevice
     if (!context_.initialize(config)) {
         return false;
     }
@@ -231,7 +231,7 @@ void CompositionEngine::present() {
 
 void CompositionEngine::render() {
     if (!ownsContext_) {
-        // This method only works with internal CeContext
+        // This method only works with internal RenderDevice
         // For external device usage, use update(deltaTime) + render(outputView) instead
         return;
     }

@@ -1,4 +1,5 @@
 #include "ShaderEffect.h"
+#include "EffectLoader.h"
 #include <algorithm>
 #include <cstring>
 
@@ -142,6 +143,10 @@ void ShaderEffect::updateParameters() {
 // ============================================================================
 // Factory Methods
 // ============================================================================
+
+std::unique_ptr<ShaderEffect> ShaderEffect::loadFromFile(const std::string& configPath) {
+    return clipengine::EffectLoader::loadFromFile(configPath);
+}
 
 std::unique_ptr<ShaderEffect> ShaderEffect::createColorAdjust() {
     std::vector<ShaderParam> params = {

@@ -1,9 +1,9 @@
-#include "CeHelper.h"
+#include "RenderUtils.h"
 #include "CeLogger.h"
 
 using namespace wgpu;
 
-NativeWindow CeHelper::getSurface(WGPUInstance instance, const char* name, HWND h)
+NativeWindow RenderUtils::getSurface(WGPUInstance instance, const char* name, HWND h)
 {
     NativeWindow native {};
 #if _WIN32

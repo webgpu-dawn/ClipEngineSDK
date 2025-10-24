@@ -29,8 +29,8 @@ void Application::initialize()
         return;
     }
 
-    // Initialize CompositionEngine (manages CeContext internally)
-    CeConfigure config = {
+    // Initialize CompositionEngine (manages RenderDevice internally)
+    DeviceConfig config = {
         .width = width_,
         .height = height_,
         .window_title = title_,
@@ -79,13 +79,22 @@ void Application::setupScene()
         videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
     }
 
-    // Add color adjustment effect
-    auto colorAdjust = ShaderEffect::createColorAdjust();
-    colorAdjust->setParam("brightness", 0.0f);
-    colorAdjust->setParam("contrast", 1.0f);
-    colorAdjust->setParam("saturation", 1.0f);
-    colorAdjustEffect_ = colorAdjust.get();
-    engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
+    // Load vintage film effect from configuration file
+    // Default parameter values are automatically applied from the config file
+    auto vintageFilm = ShaderEffect::loadFromFile("effects/vintage_film.effect");
+    if (vintageFilm) {
+        // Parameters are already set to defaults from config file
+        // You can still override them if needed:
+        // vintageFilm->setParam("sepiaIntensity", 0.9f);
+        colorAdjustEffect_ = vintageFilm.get();
+        engine_.getGlobalFilterChain().addFilter(std::move(vintageFilm));
+    } else {
+        std::cerr << "Failed to load vintage film effect, falling back to color adjust" << std::endl;
+        // Fallback to built-in effect
+        auto colorAdjust = ShaderEffect::createColorAdjust();
+        colorAdjustEffect_ = colorAdjust.get();
+        engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
+    }
 }
 
 void Application::setupInputCallbacks()

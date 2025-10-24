@@ -1,11 +1,11 @@
 #pragma once
 #include "Common.h"
 
-class CeHelper
+class RenderUtils
 {
 public:
-    CeHelper() = default;
-    ~CeHelper() = default;
+    RenderUtils() = default;
+    ~RenderUtils() = default;
 
     static NativeWindow getSurface(WGPUInstance instance, const char* name, HWND hwnd = NULL);
 

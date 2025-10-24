@@ -23,7 +23,7 @@ struct NativeWindow {
     uint32_t height = 0;
 };
 
-struct CeConfigure
+struct DeviceConfig
 {
     uint32_t width;
     uint32_t height;

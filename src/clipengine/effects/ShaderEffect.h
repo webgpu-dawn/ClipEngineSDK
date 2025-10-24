@@ -97,6 +97,19 @@ public:
     // ========================================================================
 
     /**
+     * @brief Load a shader effect from a configuration file
+     * @param configPath Path to .effect configuration file
+     * @return Unique pointer to loaded effect, or nullptr on error
+     *
+     * Example:
+     * @code
+     * auto effect = ShaderEffect::loadFromFile("effects/vintage_film.effect");
+     * effect->setParam("sepiaIntensity", 0.8f);
+     * @endcode
+     */
+    static std::unique_ptr<ShaderEffect> loadFromFile(const std::string& configPath);
+
+    /**
      * @brief Create a brightness/contrast/saturation/hue adjustment effect
      */
     static std::unique_ptr<ShaderEffect> createColorAdjust();
