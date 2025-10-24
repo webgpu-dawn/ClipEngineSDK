@@ -2,12 +2,14 @@
 
 #include <clipengine/core/CompositionEngine.h>
 #include <clipengine/layers/VideoRenderer.h>
+#include "DebugWindow.h"
 
 #include <GLFW/glfw3.h>
 #include <string>
 #include <mutex>
 
 struct ID3D11Texture2D;
+class ShaderEffect;
 
 class Application
 {
@@ -31,10 +33,13 @@ private:
     uint32_t    height_ = 1080;
     std::string title_ = "ClipEngine Video Example";
 
-    CompositionEngine engine_;  // CompositionEngine now manages CeContext internally
+    CompositionEngine engine_;
     VideoRenderer* videoRenderer_ = nullptr;
 
-    // 视频帧数据（线程安全传递）
+    DebugWindow debugWindow_;
+    ShaderEffect* colorAdjustEffect_ = nullptr;
+
+    // Video frame data (thread-safe transfer)
     struct FrameData {
         ID3D11Texture2D* texture = nullptr;
         int subIndex = 0;
@@ -43,7 +48,7 @@ private:
     FrameData frameData_;
     std::mutex frameMutex_;
 
-    // 交互状态
+    // Interaction state
     bool dragging_ = false;
     double lastMouseX_ = 0.0, lastMouseY_ = 0.0;
     float yaw_ = 0.0f, pitch_ = 0.0f, zoom_ = 1.0f;

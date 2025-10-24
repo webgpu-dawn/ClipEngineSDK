@@ -217,6 +217,18 @@ public:
      */
     void present();
 
+    /**
+     * @brief Get WebGPU device
+     * @return WebGPU device
+     */
+    wgpu::Device getDevice() const { return device_; }
+
+    /**
+     * @brief Get texture format
+     * @return Texture format
+     */
+    wgpu::TextureFormat getFormat() const { return format_; }
+
 private:
     struct LayerEntry {
         std::unique_ptr<CompositionLayer> layer;

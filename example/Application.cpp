@@ -45,11 +45,17 @@ void Application::initialize()
     setupScene();
     setupInputCallbacks();
 
+    // Initialize Debug Window (standalone window)
+    if (!debugWindow_.initialize(&engine_, "ClipEngine Debug")) {
+        std::cerr << "Failed to initialize Debug Window" << std::endl;
+        return;
+    }
+
     std::cout << "Application initialized successfully" << std::endl;
     std::cout << "Controls:" << std::endl;
-    std::cout << "  - Move mouse to see spotlight effect" << std::endl;
     std::cout << "  - Left click drag to rotate panorama view" << std::endl;
     std::cout << "  - Mouse wheel to zoom panorama" << std::endl;
+    std::cout << "  - Debug window opened in separate window" << std::endl;
     std::cout << "  - ESC to exit" << std::endl;
 }
 
@@ -70,11 +76,13 @@ void Application::setupScene()
         videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
     }
 
-    // Add global effects
-    // auto spotlight = ShaderEffect::createMouseSpotlight();
-    // spotlight->setParam("radius", 0.25f);
-    // spotlight->setParam("intensity", 0.6f);
-    // engine_.getGlobalFilterChain().addFilter(std::move(spotlight));
+    // Add color adjustment effect
+    auto colorAdjust = ShaderEffect::createColorAdjust();
+    colorAdjust->setParam("brightness", 0.0f);
+    colorAdjust->setParam("contrast", 1.0f);
+    colorAdjust->setParam("saturation", 1.0f);
+    colorAdjustEffect_ = colorAdjust.get();
+    engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
 }
 
 void Application::setupInputCallbacks()
@@ -107,7 +115,7 @@ void Application::run()
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
-    while(!glfwWindowShouldClose(window_)) {
+    while(!glfwWindowShouldClose(window_) && !debugWindow_.shouldClose()) {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
@@ -168,6 +176,9 @@ void Application::run()
 
         engine_.update(deltaTime);
 
+        // Update debug window (in separate window)
+        debugWindow_.update();
+
         // Render frame
         wgpu::Surface surface = engine_.getSurface();
         if (surface) {
@@ -176,7 +187,28 @@ void Application::run()
 
             if (surfaceTexture.texture) {
                 wgpu::TextureView outputView = surfaceTexture.texture.CreateView();
+
+                // Render composition engine
                 engine_.render(outputView);
+
+                // Render UI overlay
+                wgpu::RenderPassColorAttachment colorAttachment = {};
+                colorAttachment.view = outputView;
+                colorAttachment.loadOp = wgpu::LoadOp::Load;  // Don't clear, we want to render on top
+                colorAttachment.storeOp = wgpu::StoreOp::Store;
+
+                wgpu::RenderPassDescriptor renderPassDesc = {};
+                renderPassDesc.colorAttachmentCount = 1;
+                renderPassDesc.colorAttachments = &colorAttachment;
+
+                wgpu::CommandEncoder encoder = engine_.getDevice().CreateCommandEncoder();
+                wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&renderPassDesc);
+                // No UI rendering in main window anymore
+                renderPass.End();
+
+                wgpu::CommandBuffer commands = encoder.Finish();
+                engine_.getDevice().GetQueue().Submit(1, &commands);
+
                 engine_.present();
             }
         }
