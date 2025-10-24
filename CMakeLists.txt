@@ -23,13 +23,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_PREFIX_PATH 
+list(APPEND CMAKE_PREFIX_PATH
     ${CMAKE_SOURCE_DIR}/deps/dawn/lib/cmake
     ${CMAKE_SOURCE_DIR}/deps/spdlog/shard/spdlog
 )
 find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+
+# Optional: ImGui for debug module (using FetchContent)
+include(FetchContent)
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG docking
+)
+FetchContent_MakeAvailable(imgui)
 
 include_directories(
     deps/dawn/include
@@ -62,6 +71,9 @@ add_library(clipengine STATIC
     src/clipengine/utils/CeHelper.cpp
     src/clipengine/utils/RuntimeInspector.cpp
     src/clipengine/utils/GPUTimer.cpp
+
+    # Note: Debug module (DebugWindow) is provided as source code in debug/
+    # Applications can optionally include and compile it with ImGui/GLFW support
 )
 
 # Set public headers for installation
@@ -87,6 +99,9 @@ set(CLIPENGINE_PUBLIC_HEADERS
     # Shaders
     src/clipengine/shaders/ShaderLibrary.h
     src/clipengine/shaders/ShaderConfig.h
+
+    # Debug
+    src/clipengine/debug/DebugWindow.h
 )
 
 # Configure library properties
@@ -117,14 +132,75 @@ target_link_libraries(clipengine
 add_library(ClipEngine::clipengine ALIAS clipengine)
 
 # ============================================================================
+# ClipEngine Debug Library (Optional)
+# ============================================================================
+# Separate library for debug features to avoid forcing ImGui dependency on all users
+
+# Find GLFW from example deps (or system)
+set(GLFW_SOURCE_DIR "${CMAKE_SOURCE_DIR}/example/deps/glfw")
+if(EXISTS "${GLFW_SOURCE_DIR}/CMakeLists.txt")
+    add_subdirectory(${GLFW_SOURCE_DIR} ${CMAKE_BINARY_DIR}/glfw EXCLUDE_FROM_ALL)
+else()
+    find_package(glfw3 REQUIRED)
+endif()
+
+# Create ImGui core library
+add_library(imgui_core STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+)
+target_include_directories(imgui_core PUBLIC ${imgui_SOURCE_DIR})
+
+# Create ImGui backends library
+add_library(imgui_backends STATIC
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_wgpu.cpp
+)
+target_include_directories(imgui_backends PUBLIC
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+target_compile_definitions(imgui_backends PUBLIC
+    IMGUI_IMPL_WEBGPU_BACKEND_DAWN
+)
+target_link_libraries(imgui_backends PUBLIC
+    imgui_core
+    glfw
+    dawn::webgpu_dawn
+)
+
+# ClipEngine Debug library
+add_library(clipengine_debug STATIC
+    src/clipengine/debug/DebugWindow.cpp
+)
+
+target_include_directories(clipengine_debug
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(clipengine_debug
+    PUBLIC
+        clipengine
+        imgui_backends
+        glfw
+)
+
+# Alias for consistent naming
+add_library(ClipEngine::clipengine_debug ALIAS clipengine_debug)
+
+# ============================================================================
 # Installation Rules
 # ============================================================================
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Install library (without EXPORT to avoid exporting PRIVATE dependencies)
-install(TARGETS clipengine
+# Install libraries (without EXPORT to avoid exporting PRIVATE dependencies)
+install(TARGETS clipengine clipengine_debug imgui_core imgui_backends
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -224,12 +300,12 @@ add_library(clipengine_lib ALIAS clipengine)
 # Each configuration will install to its own directory
 add_custom_target(install_sdk ALL
     COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --config $<CONFIG> --prefix ${CMAKE_SOURCE_DIR}/output/ClipEngineSDK-$<CONFIG>
-    DEPENDS clipengine
+    DEPENDS clipengine clipengine_debug
     COMMENT "Installing ClipEngine SDK to output/ClipEngineSDK-$<CONFIG>"
 )
 
-# Make sure clipengine is built before installing
-add_dependencies(install_sdk clipengine)
+# Make sure libraries are built before installing
+add_dependencies(install_sdk clipengine clipengine_debug)
 
 # ============================================================================
 # Examples

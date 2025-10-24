@@ -51,6 +51,9 @@ void Application::initialize()
         return;
     }
 
+    // Attach debug window to engine for automatic updates
+    engine_.setDebugWindow(&debugWindow_);
+
     std::cout << "Application initialized successfully" << std::endl;
     std::cout << "Controls:" << std::endl;
     std::cout << "  - Left click drag to rotate panorama view" << std::endl;
@@ -113,13 +116,7 @@ void Application::run()
         }
     });
 
-    auto lastTime = std::chrono::high_resolution_clock::now();
-
-    while(!glfwWindowShouldClose(window_) && !debugWindow_.shouldClose()) {
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
-        lastTime = currentTime;
-
+    while(!glfwWindowShouldClose(window_)) {
         // Update video frame (thread-safe) - minimize lock scope
         ID3D11Texture2D* currentTexture = nullptr;
         int currentSubIndex = 0;
@@ -174,44 +171,8 @@ void Application::run()
             }
         }
 
-        engine_.update(deltaTime);
-
-        // Update debug window (in separate window)
-        debugWindow_.update();
-
-        // Render frame
-        wgpu::Surface surface = engine_.getSurface();
-        if (surface) {
-            wgpu::SurfaceTexture surfaceTexture;
-            surface.GetCurrentTexture(&surfaceTexture);
-
-            if (surfaceTexture.texture) {
-                wgpu::TextureView outputView = surfaceTexture.texture.CreateView();
-
-                // Render composition engine
-                engine_.render(outputView);
-
-                // Render UI overlay
-                wgpu::RenderPassColorAttachment colorAttachment = {};
-                colorAttachment.view = outputView;
-                colorAttachment.loadOp = wgpu::LoadOp::Load;  // Don't clear, we want to render on top
-                colorAttachment.storeOp = wgpu::StoreOp::Store;
-
-                wgpu::RenderPassDescriptor renderPassDesc = {};
-                renderPassDesc.colorAttachmentCount = 1;
-                renderPassDesc.colorAttachments = &colorAttachment;
-
-                wgpu::CommandEncoder encoder = engine_.getDevice().CreateCommandEncoder();
-                wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&renderPassDesc);
-                // No UI rendering in main window anymore
-                renderPass.End();
-
-                wgpu::CommandBuffer commands = encoder.Finish();
-                engine_.getDevice().GetQueue().Submit(1, &commands);
-
-                engine_.present();
-            }
-        }
+        // Render frame (all-in-one: updates, renders, presents)
+        engine_.render();
     }
 
     glfwTerminate();

@@ -8,6 +8,10 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <chrono>
+
+// Forward declaration
+class DebugWindow;
 
 /**
  * @brief Multi-layer composition engine for video editing
@@ -218,6 +222,30 @@ public:
     void present();
 
     /**
+     * @brief Render a complete frame (all-in-one convenience method)
+     *
+     * This method handles everything needed to render a frame:
+     * - Automatically calculates deltaTime since last frame
+     * - Updates all layers and animations
+     * - Acquires the surface texture
+     * - Renders all layers to the surface
+     * - Updates debug window (if attached)
+     * - Presents the result
+     *
+     * Only works when using internal CeContext (initialized via CeConfigure).
+     * For external device usage, use update(deltaTime) + render(outputView) instead.
+     *
+     * Example usage:
+     * @code
+     * while (!shouldClose) {
+     *     glfwPollEvents();
+     *     engine.render();  // That's it!
+     * }
+     * @endcode
+     */
+    void render();
+
+    /**
      * @brief Get WebGPU device
      * @return WebGPU device
      */
@@ -228,6 +256,25 @@ public:
      * @return Texture format
      */
     wgpu::TextureFormat getFormat() const { return format_; }
+
+    /**
+     * @brief Attach a debug window to the engine
+     *
+     * When attached, the debug window will be automatically updated
+     * during render() calls. This is optional - if no debug window
+     * is attached, rendering continues normally.
+     *
+     * @param debugWindow Pointer to DebugWindow, or nullptr to detach
+     */
+    void setDebugWindow(DebugWindow* debugWindow) {
+        debugWindow_ = debugWindow;
+    }
+
+    /**
+     * @brief Get the attached debug window
+     * @return Pointer to DebugWindow, or nullptr if none attached
+     */
+    DebugWindow* getDebugWindow() const { return debugWindow_; }
 
 private:
     struct LayerEntry {
@@ -266,6 +313,13 @@ private:
 
     // Input state for interactive effects
     InputState inputState_;
+
+    // Optional debug window (not owned)
+    DebugWindow* debugWindow_ = nullptr;
+
+    // Time tracking for automatic deltaTime calculation
+    std::chrono::high_resolution_clock::time_point lastFrameTime_;
+    bool firstFrame_ = true;
 
     void createIntermediateTextures();
     void sortLayersByOrder();

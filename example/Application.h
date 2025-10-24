@@ -2,7 +2,7 @@
 
 #include <clipengine/core/CompositionEngine.h>
 #include <clipengine/layers/VideoRenderer.h>
-#include "DebugWindow.h"
+#include <clipengine/debug/DebugWindow.h>
 
 #include <GLFW/glfw3.h>
 #include <string>

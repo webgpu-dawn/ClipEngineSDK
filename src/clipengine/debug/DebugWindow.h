@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../utils/Common.h"
-#include "../core/CompositionEngine.h"
+#include <clipengine/utils/Common.h>
+#include <clipengine/core/CompositionEngine.h>
+#include <clipengine/effects/ShaderEffect.h>
+#include <clipengine/layers/VideoRenderer.h>
 
 struct GLFWwindow;
 struct ImGuiContext;
-
-namespace ClipEngine {
 
 /**
  * @brief Standalone debug window for ClipEngine
@@ -126,4 +126,3 @@ private:
     int height_ = 800;
 };
 
-} // namespace ClipEngine

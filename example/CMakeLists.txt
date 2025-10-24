@@ -17,43 +17,8 @@ list(APPEND CMAKE_PREFIX_PATH
 find_package(ClipEngine REQUIRED)
 find_package(FFMPEG REQUIRED)
 
-add_subdirectory(deps/glfw)
-
-# Fetch ImGui from GitHub
-include(FetchContent)
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking  # Use docking branch for latest WebGPU compatibility
-)
-FetchContent_MakeAvailable(imgui)
-
-# Create ImGui core library
-add_library(imgui_core STATIC
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-)
-target_include_directories(imgui_core PUBLIC ${imgui_SOURCE_DIR})
-
-# Create ImGui backends library
-add_library(imgui_backends STATIC
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_wgpu.cpp
-)
-target_include_directories(imgui_backends PUBLIC
-    ${imgui_SOURCE_DIR}
-    ${imgui_SOURCE_DIR}/backends
-)
-target_compile_definitions(imgui_backends PUBLIC
-    IMGUI_IMPL_WEBGPU_BACKEND_DAWN
-)
-target_link_libraries(imgui_backends PUBLIC
-    imgui_core
-    glfw
-    ClipEngine::clipengine
-)
+# Note: GLFW and ImGui are now provided by ClipEngine::clipengine_debug
+# No need to build them again in example
 
 message(STATUS "Building video example as standalone test project")
 message(STATUS "  ClipEngine version: ${ClipEngine_VERSION}")
@@ -66,9 +31,6 @@ add_executable(
     main.cpp
     Decoder.cpp
     Application.cpp
-    UIPanel.cpp
-    DebugPanel.cpp
-    DebugWindow.cpp
 )
 
 # Link against ClipEngine SDK and other dependencies
@@ -76,12 +38,11 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
     ClipEngine::clipengine
+    ClipEngine::clipengine_debug  # Debug window support
     ${FFMPEG_LIBRARIES}
     d3d11
     dxgi
     d3dcompiler
-    glfw
-    imgui_backends
 )
 
 target_include_directories(

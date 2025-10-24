@@ -1,5 +1,6 @@
 #include "CompositionEngine.h"
 #include "../layers/TextureRenderer.h"
+#include "../debug/DebugWindow.h"
 #include <iostream>
 
 bool CompositionEngine::initialize(wgpu::Device device, wgpu::TextureFormat format, uint32_t width, uint32_t height) {
@@ -226,4 +227,50 @@ void CompositionEngine::present() {
             surface.Present();
         }
     }
+}
+
+void CompositionEngine::render() {
+    if (!ownsContext_) {
+        // This method only works with internal CeContext
+        // For external device usage, use update(deltaTime) + render(outputView) instead
+        return;
+    }
+
+    // Calculate deltaTime automatically
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float deltaTime = 0.0f;
+
+    if (!firstFrame_) {
+        deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime_).count();
+    } else {
+        firstFrame_ = false;
+    }
+
+    lastFrameTime_ = currentTime;
+
+    // Update all layers and animations
+    update(deltaTime);
+
+    wgpu::Surface surface = context_.getSurface();
+    if (!surface) return;
+
+    // Acquire surface texture
+    wgpu::SurfaceTexture surfaceTexture;
+    surface.GetCurrentTexture(&surfaceTexture);
+
+    if (!surfaceTexture.texture) return;
+
+    // Create texture view
+    wgpu::TextureView outputView = surfaceTexture.texture.CreateView();
+
+    // Render all layers to the surface
+    render(outputView);
+
+    // Update debug window if attached
+    if (debugWindow_) {
+        debugWindow_->update();
+    }
+
+    // Present the frame
+    surface.Present();
 }

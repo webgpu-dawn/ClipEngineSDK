@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-namespace ClipEngine {
+
 
 DebugWindow::DebugWindow() = default;
 
@@ -66,22 +66,19 @@ bool DebugWindow::initialize(CompositionEngine* engine, const char* title, int w
     device_ = engine_->getDevice();
     format_ = engine_->getFormat();
 
-    // Create surface for debug window
-    wgpu::SurfaceDescriptor surfaceDesc = {};
-
+    // Create surface for debug window using Dawn
 #if defined(_WIN32)
     wgpu::SurfaceDescriptorFromWindowsHWND windowsDesc = {};
     windowsDesc.hwnd = glfwGetWin32Window(window_);
     windowsDesc.hinstance = GetModuleHandle(nullptr);
-    surfaceDesc.nextInChain = &windowsDesc;
-#elif defined(__APPLE__)
-    // macOS surface creation
-#else
-    // Linux surface creation
-#endif
 
-    wgpu::Instance instance = wgpu::Instance(dawn::native::GetProcs().getInstance());
+    wgpu::SurfaceDescriptor surfaceDesc = {};
+    surfaceDesc.nextInChain = &windowsDesc;
+
+    // Get instance from device
+    wgpu::Instance instance = device_.GetAdapter().GetInstance();
     surface_ = instance.CreateSurface(&surfaceDesc);
+#endif
 
     if (!surface_) {
         std::cerr << "Failed to create surface for debug window" << std::endl;
@@ -201,7 +198,7 @@ void DebugWindow::update()
     wgpu::SurfaceTexture surfaceTexture;
     surface_.GetCurrentTexture(&surfaceTexture);
 
-    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) {
+    if (!surfaceTexture.texture) {
         std::cerr << "Failed to get current texture for debug window" << std::endl;
         return;
     }
@@ -638,4 +635,4 @@ const char* DebugWindow::getRenderModeName(VideoRenderer::RenderMode mode)
     }
 }
 
-} // namespace ClipEngine
+
