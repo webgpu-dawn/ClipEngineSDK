@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../common/Common.h"
-#include "ShaderConfig.h"
-#include "InputState.h"
+#include "../utils/Common.h"
+#include "../shaders/ShaderConfig.h"
+#include "../core/InputState.h"
 #include <memory>
 #include <string>
 #include <vector>

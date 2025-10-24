@@ -1,12 +1,13 @@
-#include "VideoRenderEngine.h"
-#include "TextureRenderer.h"
+#include "CompositionEngine.h"
+#include "../layers/TextureRenderer.h"
 #include <iostream>
 
-bool VideoRenderEngine::initialize(wgpu::Device device, wgpu::TextureFormat format, uint32_t width, uint32_t height) {
+bool CompositionEngine::initialize(wgpu::Device device, wgpu::TextureFormat format, uint32_t width, uint32_t height) {
     device_ = device;
     format_ = format;
     width_ = width;
     height_ = height;
+    ownsContext_ = false;  // Using external device
 
     // Initialize input state
     inputState_.setResolution(width_, height_);
@@ -19,7 +20,30 @@ bool VideoRenderEngine::initialize(wgpu::Device device, wgpu::TextureFormat form
     return true;
 }
 
-void VideoRenderEngine::createIntermediateTextures() {
+bool CompositionEngine::initialize(const CeConfigure& config) {
+    // Initialize internal CeContext
+    if (!context_.initialize(config)) {
+        return false;
+    }
+
+    ownsContext_ = true;
+    device_ = context_.getDevice();
+    format_ = context_.getSurfaceFormat();
+    width_ = config.width;
+    height_ = config.height;
+
+    // Initialize input state
+    inputState_.setResolution(width_, height_);
+
+    // Initialize global filter chain
+    globalFilterChain_.initialize(device_, format_, width_, height_);
+
+    createIntermediateTextures();
+
+    return true;
+}
+
+void CompositionEngine::createIntermediateTextures() {
     if (width_ == 0 || height_ == 0 || !device_) return;
 
     // Create intermediate texture for global post-processing
@@ -35,8 +59,8 @@ void VideoRenderEngine::createIntermediateTextures() {
     globalIntermediateTexture_ = device_.CreateTexture(&texDesc);
     globalIntermediateView_ = globalIntermediateTexture_.CreateView();
 
-    // Create intermediate textures for renderables that have filters
-    for (auto& entry : renderables_) {
+    // Create intermediate textures for layers that have filters
+    for (auto& entry : layers_) {
         if (!entry.filterChain.isEmpty()) {
             entry.needsIntermediateTexture = true;
             entry.intermediateTexture = device_.CreateTexture(&texDesc);
@@ -45,56 +69,56 @@ void VideoRenderEngine::createIntermediateTextures() {
     }
 }
 
-size_t VideoRenderEngine::addRenderable(std::unique_ptr<CeRenderable> renderable) {
-    RenderableEntry entry;
-    entry.renderable = std::move(renderable);
+size_t CompositionEngine::addLayer(std::unique_ptr<CompositionLayer> layer) {
+    LayerEntry entry;
+    entry.layer = std::move(layer);
     entry.filterChain.initialize(device_, format_, width_, height_);
 
-    // Initialize the renderable
+    // Initialize the layer
     if (device_) {
-        entry.renderable->initialize(device_, format_);
+        entry.layer->initialize(device_, format_);
     }
 
-    renderables_.push_back(std::move(entry));
-    return renderables_.size() - 1;
+    layers_.push_back(std::move(entry));
+    return layers_.size() - 1;
 }
 
-void VideoRenderEngine::removeRenderable(size_t index) {
-    if (index < renderables_.size()) {
-        renderables_.erase(renderables_.begin() + index);
+void CompositionEngine::removeLayer(size_t index) {
+    if (index < layers_.size()) {
+        layers_.erase(layers_.begin() + index);
     }
 }
 
-void VideoRenderEngine::clearRenderables() {
-    renderables_.clear();
+void CompositionEngine::clearLayers() {
+    layers_.clear();
 }
 
-CeRenderable* VideoRenderEngine::getRenderable(size_t index) {
-    if (index < renderables_.size()) {
-        return renderables_[index].renderable.get();
-    }
-    return nullptr;
-}
-
-FilterChain* VideoRenderEngine::getRenderableFilterChain(size_t index) {
-    if (index < renderables_.size()) {
-        return &renderables_[index].filterChain;
+CompositionLayer* CompositionEngine::getLayer(size_t index) {
+    if (index < layers_.size()) {
+        return layers_[index].layer.get();
     }
     return nullptr;
 }
 
-void VideoRenderEngine::sortRenderablesByLayer() {
-    std::sort(renderables_.begin(), renderables_.end(),
-        [](const RenderableEntry& a, const RenderableEntry& b) {
-            return a.renderable->getLayer() < b.renderable->getLayer();
+FilterChain* CompositionEngine::getLayerFilterChain(size_t index) {
+    if (index < layers_.size()) {
+        return &layers_[index].filterChain;
+    }
+    return nullptr;
+}
+
+void CompositionEngine::sortLayersByOrder() {
+    std::sort(layers_.begin(), layers_.end(),
+        [](const LayerEntry& a, const LayerEntry& b) {
+            return a.layer->getLayer() < b.layer->getLayer();
         });
 }
 
-void VideoRenderEngine::render(wgpu::TextureView outputView) {
+void CompositionEngine::render(wgpu::TextureView outputView) {
     if (!device_) return;
 
-    // Sort by layer
-    sortRenderablesByLayer();
+    // Sort layers by z-order
+    sortLayersByOrder();
 
     // Create command encoder
     wgpu::CommandEncoder encoder = device_.CreateCommandEncoder();
@@ -120,20 +144,20 @@ void VideoRenderEngine::render(wgpu::TextureView outputView) {
 
     wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
 
-    // Render each object
-    for (auto& entry : renderables_) {
-        if (!entry.renderable->isEnabled()) continue;
+    // Render each layer
+    for (auto& entry : layers_) {
+        if (!entry.layer->isEnabled()) continue;
 
-        // If this renderable has filters, we need to render to intermediate texture first
+        // If this layer has filters, we need to render to intermediate texture first
         if (!entry.filterChain.isEmpty()) {
-            // TODO: Implement per-object filter support
+            // TODO: Implement per-layer filter support
             // This requires rendering to intermediate texture, applying filters,
             // then compositing to the main render target
             // For now, just render directly
-            entry.renderable->render(pass);
+            entry.layer->render(pass);
         } else {
             // No filters, render directly
-            entry.renderable->render(pass);
+            entry.layer->render(pass);
         }
     }
 
@@ -152,22 +176,22 @@ void VideoRenderEngine::render(wgpu::TextureView outputView) {
     device_.GetQueue().Submit(1, &commands);
 }
 
-void VideoRenderEngine::update(float deltaTime) {
+void CompositionEngine::update(float deltaTime) {
     // Update time information
     inputState_.time.delta = deltaTime;
     inputState_.time.elapsed += deltaTime;
     inputState_.time.frameCount++;
 
-    // Update renderables
-    for (auto& entry : renderables_) {
-        entry.renderable->update(deltaTime);
+    // Update all layers
+    for (auto& entry : layers_) {
+        entry.layer->update(deltaTime);
     }
 
     // Reset per-frame input state at the end
     inputState_.resetPerFrameState();
 }
 
-void VideoRenderEngine::resize(uint32_t width, uint32_t height) {
+void CompositionEngine::resize(uint32_t width, uint32_t height) {
     if (width_ == width && height_ == height) return;
 
     width_ = width;
@@ -182,8 +206,24 @@ void VideoRenderEngine::resize(uint32_t width, uint32_t height) {
     // Recreate intermediate textures
     createIntermediateTextures();
 
-    // Resize per-renderable filter chains
-    for (auto& entry : renderables_) {
+    // Resize per-layer filter chains
+    for (auto& entry : layers_) {
         entry.filterChain.resize(width_, height_);
+    }
+}
+
+wgpu::Surface CompositionEngine::getSurface() const {
+    if (ownsContext_) {
+        return context_.getSurface();
+    }
+    return nullptr;
+}
+
+void CompositionEngine::present() {
+    if (ownsContext_) {
+        wgpu::Surface surface = context_.getSurface();
+        if (surface) {
+            surface.Present();
+        }
     }
 }

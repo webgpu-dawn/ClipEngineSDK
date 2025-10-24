@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/Common.h"
+#include "../utils/Common.h"
 #include <string>
 #include <vector>
 
@@ -53,7 +53,18 @@ struct ShaderConfig {
     // Pipeline settings
     wgpu::PrimitiveTopology topology = wgpu::PrimitiveTopology::TriangleList;
     bool hasDepthStencil = false;
+
+    /**
+     * @brief Load shader source from file
+     * @param filepath Path to shader file (.wgsl)
+     * @return Shader source code as string
+     */
+    static std::string loadShaderFromFile(const std::string& filepath);
 };
+
+// NOTE: ShaderType enum and ShaderFactory/ShaderBindingBuilder classes
+// have been moved to shader/ShaderLibrary.h for better organization.
+// Please use clipengine::ShaderLibrary instead.
 
 /**
  * @brief Predefined shader configurations
@@ -79,4 +90,14 @@ public:
      * @brief Simple color shader (for testing)
      */
     static ShaderConfig createColorShader();
+
+    /**
+     * @brief Panorama shader for RGBA texture (360° equirectangular)
+     */
+    static ShaderConfig createPanoramaRGBAShader();
+
+    /**
+     * @brief Panorama shader for NV12 format (360° equirectangular)
+     */
+    static ShaderConfig createPanoramaNV12Shader();
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TextureRenderer.h"
-#include "ShaderConfig.h"
+#include "../shaders/ShaderConfig.h"
 
 #include <memory>
 
@@ -109,7 +109,6 @@ public:
     void update(float deltaTime) override;
 
 private:
-    void createShaderForFormat();
     void createShaderForMode();
     void updatePanoramaUniforms();
 

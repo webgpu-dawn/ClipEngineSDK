@@ -1,0 +1,10 @@
+{
+  "name": "Color Adjustment Effect",
+  "shader": "color_adjust.wgsl",
+  "uniforms": [
+    {
+      "binding": 2,
+      "size": 16
+    }
+  ]
+}

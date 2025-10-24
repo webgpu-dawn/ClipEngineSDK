@@ -1,7 +1,7 @@
 #include "CeContext.h"
-#include "../common/CeHelper.h"
-#include "../common/CeLogger.h"
-#include "../common/RuntimeInspector.h"
+#include "../utils/CeHelper.h"
+#include "../utils/CeLogger.h"
+#include "../utils/RuntimeInspector.h"
 
 using namespace wgpu;
 

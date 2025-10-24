@@ -1,0 +1,96 @@
+{
+  "shaders": {
+    "planar_nv12": {
+      "name": "Planar NV12 Video Shader",
+      "file": "planar_nv12.wgsl",
+      "bindings": [
+        {
+          "binding": 0,
+          "visibility": "fragment",
+          "type": "sampler"
+        },
+        {
+          "binding": 1,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "r8unorm"
+        },
+        {
+          "binding": 2,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "rg8unorm"
+        }
+      ]
+    },
+    "planar_rgba": {
+      "name": "Planar RGBA Texture Shader",
+      "file": "planar_rgba.wgsl",
+      "bindings": [
+        {
+          "binding": 0,
+          "visibility": "fragment",
+          "type": "sampler"
+        },
+        {
+          "binding": 1,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "rgba8unorm"
+        }
+      ]
+    },
+    "panorama_nv12": {
+      "name": "Panorama NV12 Shader",
+      "file": "panorama_nv12.wgsl",
+      "bindings": [
+        {
+          "binding": 0,
+          "visibility": "fragment",
+          "type": "sampler"
+        },
+        {
+          "binding": 1,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "r8unorm"
+        },
+        {
+          "binding": 2,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "rg8unorm"
+        },
+        {
+          "binding": 3,
+          "visibility": "fragment",
+          "type": "uniform_buffer",
+          "size": 16
+        }
+      ]
+    },
+    "panorama_rgba": {
+      "name": "Panorama RGBA Shader",
+      "file": "panorama_rgba.wgsl",
+      "bindings": [
+        {
+          "binding": 0,
+          "visibility": "fragment",
+          "type": "sampler"
+        },
+        {
+          "binding": 1,
+          "visibility": "fragment",
+          "type": "texture",
+          "format": "rgba8unorm"
+        },
+        {
+          "binding": 2,
+          "visibility": "fragment",
+          "type": "uniform_buffer",
+          "size": 16
+        }
+      ]
+    }
+  }
+}

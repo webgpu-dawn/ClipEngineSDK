@@ -109,7 +109,6 @@ public:
     void update(float deltaTime) override;
 
 private:
-    void createShaderForFormat();
     void createShaderForMode();
     void updatePanoramaUniforms();
 

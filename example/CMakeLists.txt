@@ -87,4 +87,14 @@ foreach(DLL ${CLIPENGINE_DLLS})
     endif()
 endforeach()
 
+# Copy shader files to output directory
+if(ClipEngine_SHADER_DIR AND EXISTS "${ClipEngine_SHADER_DIR}")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ClipEngine_SHADER_DIR}"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        COMMENT "Copying ClipEngine shader files"
+    )
+endif()
+
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT ${PROJECT_NAME})

@@ -41,34 +41,52 @@ include_directories(
 # ============================================================================
 
 add_library(clipengine STATIC
+    # Core
     src/clipengine/core/CeContext.cpp
-    src/clipengine/core/ClipEngine.cpp
-    src/clipengine/common/CeHelper.cpp
-    src/clipengine/common/RuntimeInspector.cpp
-    src/clipengine/render/ShaderConfig.cpp
-    src/clipengine/render/TextureRenderer.cpp
-    src/clipengine/render/VideoRenderer.cpp
-    src/clipengine/render/Filter.cpp
-    src/clipengine/render/FilterChain.cpp
-    src/clipengine/render/ShaderEffect.cpp
-    src/clipengine/render/VideoRenderEngine.cpp
-    src/clipengine/util/GPUTimer.cpp
+    src/clipengine/core/CompositionEngine.cpp
+
+    # Layers
+    src/clipengine/layers/TextureRenderer.cpp
+    src/clipengine/layers/VideoRenderer.cpp
+
+    # Effects
+    src/clipengine/effects/Filter.cpp
+    src/clipengine/effects/FilterChain.cpp
+    src/clipengine/effects/ShaderEffect.cpp
+
+    # Shaders
+    src/clipengine/shaders/ShaderLibrary.cpp
+    src/clipengine/shaders/ShaderConfig.cpp
+
+    # Utilities
+    src/clipengine/utils/CeHelper.cpp
+    src/clipengine/utils/RuntimeInspector.cpp
+    src/clipengine/utils/GPUTimer.cpp
 )
 
 # Set public headers for installation
 set(CLIPENGINE_PUBLIC_HEADERS
+    # Main header
     src/clipengine/clipengine.h
-    src/clipengine/core/CeRenderable.h
-    src/clipengine/core/ClipEngine.h
+
+    # Core
+    src/clipengine/core/CompositionLayer.h
+    src/clipengine/core/CompositionEngine.h
     src/clipengine/core/CeContext.h
-    src/clipengine/render/ShaderConfig.h
-    src/clipengine/render/TextureRenderer.h
-    src/clipengine/render/VideoRenderer.h
-    src/clipengine/render/Filter.h
-    src/clipengine/render/FilterChain.h
-    src/clipengine/render/ShaderEffect.h
-    src/clipengine/render/VideoRenderEngine.h
-    src/clipengine/render/InputState.h
+    src/clipengine/core/InputState.h
+
+    # Layers
+    src/clipengine/layers/TextureRenderer.h
+    src/clipengine/layers/VideoRenderer.h
+
+    # Effects
+    src/clipengine/effects/Filter.h
+    src/clipengine/effects/FilterChain.h
+    src/clipengine/effects/ShaderEffect.h
+
+    # Shaders
+    src/clipengine/shaders/ShaderLibrary.h
+    src/clipengine/shaders/ShaderConfig.h
 )
 
 # Configure library properties
@@ -129,7 +147,7 @@ install(DIRECTORY deps/dawn/include/
 )
 
 # Install shaders
-install(DIRECTORY src/clipengine/shader/
+install(DIRECTORY src/clipengine/shaders/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/clipengine/shaders
     FILES_MATCHING PATTERN "*.wgsl"
 )

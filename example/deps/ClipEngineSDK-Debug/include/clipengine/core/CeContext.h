@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common/Common.h"
-#include "../common/CeHelper.h"
+#include "../utils/Common.h"
+#include "../utils/CeHelper.h"
 
 class CeContext
 {

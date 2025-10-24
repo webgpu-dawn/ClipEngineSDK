@@ -1,8 +1,7 @@
 #pragma once
 
-#include <clipengine/core/CeContext.h>
-#include <clipengine/render/VideoRenderEngine.h>
-#include <clipengine/render/VideoRenderer.h>
+#include <clipengine/core/CompositionEngine.h>
+#include <clipengine/layers/VideoRenderer.h>
 
 #include <GLFW/glfw3.h>
 #include <string>
@@ -32,8 +31,7 @@ private:
     uint32_t    height_ = 1080;
     std::string title_ = "ClipEngine Video Example";
 
-    CeContext context_;
-    VideoRenderEngine engine_;
+    CompositionEngine engine_;  // CompositionEngine now manages CeContext internally
     VideoRenderer* videoRenderer_ = nullptr;
 
     // 视频帧数据（线程安全传递）

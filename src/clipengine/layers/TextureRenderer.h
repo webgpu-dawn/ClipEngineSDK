@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../core/CeRenderable.h"
-#include "ShaderConfig.h"
-#include "FilterChain.h"
+#include "../core/CompositionLayer.h"
+#include "../shaders/ShaderConfig.h"
+#include "../effects/FilterChain.h"
 
 #include <memory>
 #include <vector>
@@ -16,7 +16,7 @@
  *
  * Now supports filter chains for applying post-processing effects.
  */
-class TextureRenderer : public CeRenderable {
+class TextureRenderer : public CompositionLayer {
 public:
     /**
      * @brief Construct a new Texture Renderer object
@@ -28,8 +28,8 @@ public:
     bool initialize(wgpu::Device device, wgpu::TextureFormat format) override;
     void render(wgpu::RenderPassEncoder& pass) override;
     void update(float deltaTime) override;
-    CeRendererType getType() const override { return CeRendererType::Video; }
-    void setViewport(float x, float y, float width, float height) override;
+    LayerType getType() const override { return LayerType::Video; }
+    void setTransform(float x, float y, float width, float height) override;
 
     /**
      * @brief Update texture bindings for rendering

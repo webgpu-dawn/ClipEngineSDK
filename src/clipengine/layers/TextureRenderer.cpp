@@ -231,7 +231,7 @@ void TextureRenderer::updateUniformData(const void* data, size_t size) {
 }
 
 void TextureRenderer::render(wgpu::RenderPassEncoder& pass) {
-    if (!enabled_ || !bindGroup_) return;
+    if (!enabled_ || !bindGroup_ || !pipeline_) return;
 
     pass.SetPipeline(pipeline_);
     pass.SetVertexBuffer(0, vertexBuffer_);
@@ -244,11 +244,11 @@ void TextureRenderer::update(float deltaTime) {
 }
 
 void TextureRenderer::updateVertexBuffer() {
-    // Convert viewport (0-1 normalized) to NDC (-1 to 1)
-    float x1 = viewport_.x * 2.0f - 1.0f;
-    float y1 = viewport_.y * 2.0f - 1.0f;
-    float x2 = (viewport_.x + viewport_.w) * 2.0f - 1.0f;
-    float y2 = (viewport_.y + viewport_.h) * 2.0f - 1.0f;
+    // Convert transform (0-1 normalized) to NDC (-1 to 1)
+    float x1 = transform_.x * 2.0f - 1.0f;
+    float y1 = transform_.y * 2.0f - 1.0f;
+    float x2 = (transform_.x + transform_.width) * 2.0f - 1.0f;
+    float y2 = (transform_.y + transform_.height) * 2.0f - 1.0f;
 
     float vertices[] = {
         // pos.x, pos.y, uv.x, uv.y
@@ -263,11 +263,11 @@ void TextureRenderer::updateVertexBuffer() {
     device_.GetQueue().WriteBuffer(vertexBuffer_, 0, vertices, sizeof(vertices));
 }
 
-void TextureRenderer::setViewport(float x, float y, float width, float height) {
-    viewport_.x = x;
-    viewport_.y = y;
-    viewport_.w = width;
-    viewport_.h = height;
+void TextureRenderer::setTransform(float x, float y, float width, float height) {
+    transform_.x = x;
+    transform_.y = y;
+    transform_.width = width;
+    transform_.height = height;
 
     if (vertexBuffer_) {
         updateVertexBuffer();
