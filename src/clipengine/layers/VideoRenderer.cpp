@@ -237,6 +237,36 @@ void VideoRenderer::createShaderForMode() {
                 break;
         }
     }
+    // Little Planet mode - stereographic projection
+    else if (renderMode_ == RenderMode::LittlePlanet) {
+        switch (videoFormat_) {
+            case VideoFormat::NV12:
+                shaderConfig_ = ShaderLibrary::create(ShaderType::LittlePlanetNV12);
+                break;
+            case VideoFormat::RGBA:
+                shaderConfig_ = ShaderLibrary::create(ShaderType::LittlePlanetRGBA);
+                break;
+            case VideoFormat::I420:
+                // TODO: Implement I420 little planet shader, use NV12 as fallback
+                shaderConfig_ = ShaderLibrary::create(ShaderType::LittlePlanetNV12);
+                break;
+        }
+    }
+    // Crystal Ball mode - inverse stereographic/fisheye
+    else if (renderMode_ == RenderMode::CrystalBall) {
+        switch (videoFormat_) {
+            case VideoFormat::NV12:
+                shaderConfig_ = ShaderLibrary::create(ShaderType::CrystalBallNV12);
+                break;
+            case VideoFormat::RGBA:
+                shaderConfig_ = ShaderLibrary::create(ShaderType::CrystalBallRGBA);
+                break;
+            case VideoFormat::I420:
+                // TODO: Implement I420 crystal ball shader, use NV12 as fallback
+                shaderConfig_ = ShaderLibrary::create(ShaderType::CrystalBallNV12);
+                break;
+        }
+    }
     // Planar mode - standard 2D rendering
     else {
         switch (videoFormat_) {
@@ -265,10 +295,12 @@ void VideoRenderer::setRenderMode(RenderMode mode) {
         initializeShader();
         initializePipeline();
 
-        // IMPORTANT: For panorama mode, we need uniform buffer with data before creating bindGroup
+        // IMPORTANT: For panorama/little planet/crystal ball modes, we need uniform buffer with data before creating bindGroup
         // But we must not call updatePanoramaUniforms() because it calls updateBindGroup() internally
         // Instead, directly prepare the uniform data
-        if (renderMode_ == RenderMode::Panorama) {
+        if (renderMode_ == RenderMode::Panorama ||
+            renderMode_ == RenderMode::LittlePlanet ||
+            renderMode_ == RenderMode::CrystalBall) {
             // Prepare uniform data without calling updateBindGroup
             float uniforms[4] = {
                 panoramaParams_.yaw,
@@ -328,7 +360,9 @@ void VideoRenderer::updatePanoramaUniforms() {
 }
 
 void VideoRenderer::update(float deltaTime) {
-    if (renderMode_ == RenderMode::Panorama) {
+    if (renderMode_ == RenderMode::Panorama ||
+        renderMode_ == RenderMode::LittlePlanet ||
+        renderMode_ == RenderMode::CrystalBall) {
         updatePanoramaUniforms();
     }
 }

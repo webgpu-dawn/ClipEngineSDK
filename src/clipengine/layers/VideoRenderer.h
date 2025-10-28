@@ -33,8 +33,10 @@ public:
      * @brief Render mode for video display
      */
     enum class RenderMode {
-        Planar,      // Normal flat video
-        Panorama     // 360° panoramic video
+        Planar,        // Normal flat video
+        Panorama,      // 360° panoramic video (equirectangular projection)
+        LittlePlanet,  // Little planet effect (stereographic projection)
+        CrystalBall    // Crystal ball effect (fisheye/inverse stereographic)
     };
 
     enum class FillMode {

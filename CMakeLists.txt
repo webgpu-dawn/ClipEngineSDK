@@ -53,6 +53,7 @@ add_library(clipengine STATIC
     # Core
     src/clipengine/core/RenderDevice.cpp
     src/clipengine/core/CompositionEngine.cpp
+    src/clipengine/core/OffscreenRenderer.cpp
 
     # Layers
     src/clipengine/layers/TextureRenderer.cpp
@@ -86,6 +87,7 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/core/CompositionLayer.h
     src/clipengine/core/CompositionEngine.h
     src/clipengine/core/RenderDevice.h
+    src/clipengine/core/OffscreenRenderer.h
     src/clipengine/core/InputState.h
 
     # Layers

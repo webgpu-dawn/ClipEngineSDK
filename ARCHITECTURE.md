@@ -1,7 +1,7 @@
 # ClipEngine SDK - 架构设计文档
 
-> **版本**: 1.0
-> **更新日期**: 2025-10-24
+> **版本**: 1.1
+> **更新日期**: 2025-10-27
 > **作者**: ClipEngine Team
 
 ---
@@ -95,7 +95,7 @@ ClipEngine 是一个基于 **WebGPU (Dawn)** 的高性能视频渲染引擎 SDK�
     ┌────────▼────────────────────────────────────┐
     │      WebGPU Abstraction Layer                │
     │      (WebGPU 抽象层)                         │
-    │   • CeContext (上下文管理)                  │
+    │   • RenderDevice (上下文管理)                  │
     │   • Device/Queue/Surface                    │
     └────────┬────────────────────────────────────┘
              │
@@ -111,7 +111,7 @@ ClipEngine 是一个基于 **WebGPU (Dawn)** 的高性能视频渲染引擎 SDK�
 
 ```
 CompositionEngine
-    ├─ depends on → CeContext
+    ├─ depends on → RenderDevice
     ├─ depends on → FilterChain
     ├─ depends on → CompositionLayer
     │   ├─ TextureRenderer
@@ -151,7 +151,7 @@ ShaderLibrary
 CompositionEngine engine;
 
 // 方式1: 内部管理窗口 (适合独立应用)
-CeConfigure config = {.width = 1920, .height = 1080, .hwnd = hwnd};
+DeviceConfig config = {.width = 1920, .height = 1080, .hwnd = hwnd};
 engine.initialize(config);
 
 // 方式2: 使用外部 device (适合集成到其他引擎)
@@ -586,7 +586,7 @@ auto effect = std::make_unique<ShaderEffect>("MyEffect", myConfig, params);
 
 // 1. 初始化引擎
 CompositionEngine engine;
-CeConfigure config = {.width = 1920, .height = 1080, .hwnd = hwnd};
+DeviceConfig config = {.width = 1920, .height = 1080, .hwnd = hwnd};
 engine.initialize(config);
 
 // 2. 添加背景视频 (Layer 0)
@@ -845,3 +845,51 @@ ClipEngine SDK 采用**现代化的图形 API (WebGPU)** 和**模块化的架构
 ---
 
 **Remember**: 99% 的效果都可以用 `ShaderEffect` 实现，无需编写额外的 C++ 类！
+
+---
+
+## 更新日志
+
+### v1.1 (2025-10-27) - 专业化命名重构
+
+**重大更新**: 将核心API命名升级为更专业的视频编辑行业标准
+
+**重命名列表:**
+
+| 旧名称 | 新名称 | 类型 | 理由 |
+|--------|--------|------|------|
+| `CeContext` | `RenderDevice` | 类 + 文件 | 对应 WebGPU Device 概念，更清晰专业 |
+| `CeConfigure` | `DeviceConfig` | 结构体 | 配套命名，简洁易懂 |
+| `CeHelper` | `RenderUtils` | 类 + 文件 | 明确工具类性质，更专业 |
+
+**优势:**
+- ✅ 符合图形编程行业标准（RenderDevice 是通用术语）
+- ✅ 与 Adobe / DaVinci Resolve 等专业软件命名风格一致
+- ✅ 提升 SDK 专业度和可读性
+- ✅ 为未来 Codec Engine 等模块留出清晰的命名空间
+
+**迁移指南:**
+
+```cpp
+// 旧代码 (v1.0)
+CeConfigure config = {.width = 1920, .height = 1080};
+CeContext context;
+context.initialize(config);
+
+// 新代码 (v1.1+)
+DeviceConfig config = {.width = 1920, .height = 1080};
+RenderDevice device;
+device.initialize(config);
+```
+
+**注意:** 此为破坏性更新，需要修改现有代码中的类型引用。但由于是 SDK 早期阶段，影响范围有限。
+
+---
+
+### v1.0 (2025-10-24) - 初始版本
+
+- 完整的多层合成系统
+- 基于配置文件的效果加载系统
+- 360° 全景视频支持
+- WebGPU 渲染后端
+- 硬件加速视频解码集成

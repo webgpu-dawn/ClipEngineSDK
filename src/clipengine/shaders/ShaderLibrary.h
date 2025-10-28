@@ -25,6 +25,14 @@ enum class ShaderType {
     PanoramaNV12,    ///< 360° panorama with NV12 format
     PanoramaRGBA,    ///< 360° panorama with RGBA format
 
+    // Little Planet rendering (stereographic projection)
+    LittlePlanetNV12,  ///< Little planet effect with NV12 format
+    LittlePlanetRGBA,  ///< Little planet effect with RGBA format
+
+    // Crystal Ball rendering (inverse stereographic/fisheye)
+    CrystalBallNV12,   ///< Crystal ball effect with NV12 format
+    CrystalBallRGBA,   ///< Crystal ball effect with RGBA format
+
     // Custom shader (user-defined)
     Custom           ///< Custom shader loaded from file
 };

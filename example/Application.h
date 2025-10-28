@@ -9,7 +9,6 @@
 #include <mutex>
 
 struct ID3D11Texture2D;
-class ShaderEffect;
 
 class Application
 {
@@ -37,7 +36,6 @@ private:
     VideoRenderer* videoRenderer_ = nullptr;
 
     DebugWindow debugWindow_;
-    ShaderEffect* colorAdjustEffect_ = nullptr;
 
     // Video frame data (thread-safe transfer)
     struct FrameData {

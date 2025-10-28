@@ -5,8 +5,6 @@
 #include <chrono>
 #include <thread>
 
-#include <clipengine/effects/ShaderEffect.h>
-
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
@@ -56,8 +54,12 @@ void Application::initialize()
 
     std::cout << "Application initialized successfully" << std::endl;
     std::cout << "Controls:" << std::endl;
-    std::cout << "  - Left click drag to rotate panorama view" << std::endl;
-    std::cout << "  - Mouse wheel to zoom panorama" << std::endl;
+    std::cout << "  - Left click drag to rotate view" << std::endl;
+    std::cout << "  - Mouse wheel to zoom" << std::endl;
+    std::cout << "  - Press 1: Planar mode" << std::endl;
+    std::cout << "  - Press 2: Panorama mode (360 degrees)" << std::endl;
+    std::cout << "  - Press 3: Little Planet mode" << std::endl;
+    std::cout << "  - Press 4: Crystal Ball mode" << std::endl;
     std::cout << "  - Debug window opened in separate window" << std::endl;
     std::cout << "  - ESC to exit" << std::endl;
 }
@@ -79,22 +81,7 @@ void Application::setupScene()
         videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
     }
 
-    // Load vintage film effect from configuration file
-    // Default parameter values are automatically applied from the config file
-    auto vintageFilm = ShaderEffect::loadFromFile("effects/vintage_film.effect");
-    if (vintageFilm) {
-        // Parameters are already set to defaults from config file
-        // You can still override them if needed:
-        // vintageFilm->setParam("sepiaIntensity", 0.9f);
-        colorAdjustEffect_ = vintageFilm.get();
-        engine_.getGlobalFilterChain().addFilter(std::move(vintageFilm));
-    } else {
-        std::cerr << "Failed to load vintage film effect, falling back to color adjust" << std::endl;
-        // Fallback to built-in effect
-        auto colorAdjust = ShaderEffect::createColorAdjust();
-        colorAdjustEffect_ = colorAdjust.get();
-        engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
-    }
+    // No post-processing effects - show raw video output
 }
 
 void Application::setupInputCallbacks()
@@ -210,7 +197,46 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
     auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     app->engine_.setKeyState(key, action == GLFW_PRESS || action == GLFW_REPEAT);
 
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_ESCAPE) {
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
+        // Projection mode switching
+        else if (key == GLFW_KEY_1 && app->videoRenderer_) {
+            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Planar);
+            app->yaw_ = 0.0f;
+            app->pitch_ = 0.0f;
+            app->zoom_ = 1.0f;
+            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
+            app->videoRenderer_->setZoom(app->zoom_);
+            std::cout << "Switched to Planar mode" << std::endl;
+        }
+        else if (key == GLFW_KEY_2 && app->videoRenderer_) {
+            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
+            app->yaw_ = 0.0f;
+            app->pitch_ = 0.0f;
+            app->zoom_ = 1.0f;
+            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
+            app->videoRenderer_->setZoom(app->zoom_);
+            std::cout << "Switched to Panorama mode" << std::endl;
+        }
+        else if (key == GLFW_KEY_3 && app->videoRenderer_) {
+            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::LittlePlanet);
+            app->yaw_ = 0.0f;
+            app->pitch_ = -1.57f;  // Looking down (south pole view)
+            app->zoom_ = 0.8f;
+            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
+            app->videoRenderer_->setZoom(app->zoom_);
+            std::cout << "Switched to Little Planet mode (view from below)" << std::endl;
+        }
+        else if (key == GLFW_KEY_4 && app->videoRenderer_) {
+            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::CrystalBall);
+            app->yaw_ = 0.0f;
+            app->pitch_ = 1.57f;  // Looking up (north pole view)
+            app->zoom_ = 0.8f;
+            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
+            app->videoRenderer_->setZoom(app->zoom_);
+            std::cout << "Switched to Crystal Ball mode (view from above)" << std::endl;
+        }
     }
 }

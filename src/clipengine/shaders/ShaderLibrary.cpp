@@ -145,23 +145,31 @@ std::string ShaderLibrary::loadShaderFile(const std::string& filename) {
 
 std::string ShaderLibrary::getFilename(ShaderType type) {
     switch (type) {
-        case ShaderType::PlanarNV12:    return "planar_nv12.wgsl";
-        case ShaderType::PlanarRGBA:    return "planar_rgba.wgsl";
-        case ShaderType::PlanarI420:    return "planar_i420.wgsl";
-        case ShaderType::PanoramaNV12:  return "panorama_nv12.wgsl";
-        case ShaderType::PanoramaRGBA:  return "panorama_rgba.wgsl";
-        default:                        return "";
+        case ShaderType::PlanarNV12:       return "planar_nv12.wgsl";
+        case ShaderType::PlanarRGBA:       return "planar_rgba.wgsl";
+        case ShaderType::PlanarI420:       return "planar_i420.wgsl";
+        case ShaderType::PanoramaNV12:     return "panorama_nv12.wgsl";
+        case ShaderType::PanoramaRGBA:     return "panorama_rgba.wgsl";
+        case ShaderType::LittlePlanetNV12: return "little_planet_nv12.wgsl";
+        case ShaderType::LittlePlanetRGBA: return "little_planet_rgba.wgsl";
+        case ShaderType::CrystalBallNV12:  return "crystal_ball_nv12.wgsl";
+        case ShaderType::CrystalBallRGBA:  return "crystal_ball_rgba.wgsl";
+        default:                           return "";
     }
 }
 
 std::string ShaderLibrary::getName(ShaderType type) {
     switch (type) {
-        case ShaderType::PlanarNV12:    return "Planar NV12 Video Shader";
-        case ShaderType::PlanarRGBA:    return "Planar RGBA Texture Shader";
-        case ShaderType::PlanarI420:    return "Planar I420 Video Shader";
-        case ShaderType::PanoramaNV12:  return "Panorama NV12 Shader (360°)";
-        case ShaderType::PanoramaRGBA:  return "Panorama RGBA Shader (360°)";
-        default:                        return "Custom Shader";
+        case ShaderType::PlanarNV12:       return "Planar NV12 Video Shader";
+        case ShaderType::PlanarRGBA:       return "Planar RGBA Texture Shader";
+        case ShaderType::PlanarI420:       return "Planar I420 Video Shader";
+        case ShaderType::PanoramaNV12:     return "Panorama NV12 Shader (360°)";
+        case ShaderType::PanoramaRGBA:     return "Panorama RGBA Shader (360°)";
+        case ShaderType::LittlePlanetNV12: return "Little Planet NV12 Shader";
+        case ShaderType::LittlePlanetRGBA: return "Little Planet RGBA Shader";
+        case ShaderType::CrystalBallNV12:  return "Crystal Ball NV12 Shader";
+        case ShaderType::CrystalBallRGBA:  return "Crystal Ball RGBA Shader";
+        default:                           return "Custom Shader";
     }
 }
 
@@ -171,11 +179,15 @@ std::string ShaderLibrary::getName(ShaderType type) {
 
 std::vector<ShaderBindingDesc> ShaderLibrary::getBindings(ShaderType type) {
     switch (type) {
-        case ShaderType::PlanarNV12:    return createPlanarNV12Bindings();
-        case ShaderType::PlanarRGBA:    return createPlanarRGBABindings();
-        case ShaderType::PanoramaNV12:  return createPanoramaNV12Bindings();
-        case ShaderType::PanoramaRGBA:  return createPanoramaRGBABindings();
-        default:                        return {};
+        case ShaderType::PlanarNV12:       return createPlanarNV12Bindings();
+        case ShaderType::PlanarRGBA:       return createPlanarRGBABindings();
+        case ShaderType::PanoramaNV12:     return createPanoramaNV12Bindings();
+        case ShaderType::PanoramaRGBA:     return createPanoramaRGBABindings();
+        case ShaderType::LittlePlanetNV12: return createPanoramaNV12Bindings();
+        case ShaderType::LittlePlanetRGBA: return createPanoramaRGBABindings();
+        case ShaderType::CrystalBallNV12:  return createPanoramaNV12Bindings();
+        case ShaderType::CrystalBallRGBA:  return createPanoramaRGBABindings();
+        default:                           return {};
     }
 }
 
