@@ -38,6 +38,7 @@ add_executable(
     ${PROJECT_NAME}
     main.cpp
     Decoder.cpp
+    VideoSource.cpp
     Application.cpp
 )
 

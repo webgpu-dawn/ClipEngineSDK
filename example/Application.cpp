@@ -1,10 +1,7 @@
 #include "Application.h"
-#include "Decoder.h"
+#include "VideoSource.h"
 
 #include <iostream>
-#include <chrono>
-#include <thread>
-#include <atomic>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -68,6 +65,10 @@ void Application::initialize()
     colorAdjust_ = colorAdjust.get();
     engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
 
+    // Setup video source
+    videoSource_ = std::make_unique<VideoSource>();
+    videoSource_->open("D:/video/8K.mp4");
+
     std::cout << "ClipEngine initialized\nControls:\n"
               << "  1-4: Switch render modes | E: Export video | ESC: Exit\n"
               << "  Mouse: Drag to rotate, wheel to zoom\n"
@@ -104,68 +105,17 @@ void Application::setupInputCallbacks()
     glfwSetKeyCallback(window_, keyCallback);
 }
 
-bool Application::updateVideoFrame()
+void Application::updateVideoFrame()
 {
-    ID3D11Texture2D* currentTexture = nullptr;
-    int currentSubIndex = 0;
-    bool hasFrame = false;
-
-    {
-        std::lock_guard<std::mutex> lock(frameMutex_);
-        if (frameData_.hasNewFrame) {
-            currentTexture = frameData_.texture;
-            currentSubIndex = frameData_.subIndex;
-            hasFrame = true;
-            frameData_.hasNewFrame = false;
-        }
+    if (videoSource_->hasNewFrame() && videoRenderer_) {
+        auto frame = videoSource_->getLatestFrame();
+        videoRenderer_->updateFrame(frame.texture, frame.subIndex);
     }
-
-    if (hasFrame && videoRenderer_) {
-        videoRenderer_->updateFrame(currentTexture, currentSubIndex);
-    }
-
-    return hasFrame;
 }
 
-void Application::setupExportDecoder()
-{
-    if (exportDecoder_) return;
-
-    exportDecoder_ = std::make_shared<Decoder>();
-    exportDecoder_->open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
-        if (!allowExportDecoderUpdates_ || frame->format != AV_PIX_FMT_D3D11) return;
-
-        std::lock_guard<std::mutex> lock(frameMutex_);
-        frameData_.texture = (ID3D11Texture2D*)frame->data[0];
-        frameData_.subIndex = (int)(intptr_t)frame->data[1];
-        frameData_.hasNewFrame = true;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    });
-}
-
-void Application::waitForFrames(int milliseconds)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-}
 
 void Application::run()
 {
-    Decoder decoder;
-    decoder.open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
-        if (!allowPlaybackDecoderUpdates_ || frame->format != AV_PIX_FMT_D3D11) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            return;
-        }
-
-        std::lock_guard<std::mutex> lock(frameMutex_);
-        frameData_.texture = (ID3D11Texture2D*)frame->data[0];
-        frameData_.subIndex = (int)(intptr_t)frame->data[1];
-        frameData_.hasNewFrame = true;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    });
-
     while(!glfwWindowShouldClose(window_)) {
         updateVideoFrame();
         glfwPollEvents();
@@ -268,14 +218,10 @@ void Application::exportVideo()
         return;
     }
 
-    allowPlaybackDecoderUpdates_ = false;
-    waitForFrames(100);
+    // Switch video source to export mode
+    videoSource_->beginExportMode();
 
-    allowExportDecoderUpdates_ = true;
-    setupExportDecoder();
-    waitForFrames(200);
-
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = std::chrono::steady_clock::now();
 
     while (!exporter.isFinished() && !exporter.isCancelled()) {
         updateVideoFrame();
@@ -292,20 +238,12 @@ void Application::exportVideo()
         }
     }
 
-    allowExportDecoderUpdates_ = false;
-    waitForFrames(200);
-
-    {
-        std::lock_guard<std::mutex> lock(frameMutex_);
-        frameData_ = {};
-    }
-
-    allowPlaybackDecoderUpdates_ = true;
-    waitForFrames(100);
+    // Switch back to playback mode
+    videoSource_->endExportMode();
 
     if (!exporter.isCancelled() && exporter.finalize()) {
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::high_resolution_clock::now() - startTime).count();
+            std::chrono::steady_clock::now() - startTime).count();
         std::cout << "Export done: " << exporter.getCurrentFrame()
                   << " frames in " << duration << "s" << std::endl;
     } else if (!exporter.isCancelled()) {

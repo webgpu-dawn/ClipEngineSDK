@@ -8,11 +8,9 @@
 
 #include <GLFW/glfw3.h>
 #include <string>
-#include <mutex>
 #include <memory>
 
-struct ID3D11Texture2D;
-class Decoder;
+#include "VideoSource.h"
 
 class Application
 {
@@ -26,10 +24,7 @@ private:
     void setupInputCallbacks();
     void exportVideo();
     void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
-
-    bool updateVideoFrame();
-    void setupExportDecoder();
-    void waitForFrames(int milliseconds);
+    void updateVideoFrame();
 
     // GLFW input callbacks
     static void cursorPosCallback(GLFWwindow* window, double x, double y);
@@ -44,18 +39,10 @@ private:
 
     CompositionEngine engine_;
     VideoRenderer* videoRenderer_ = nullptr;
-
     DebugWindow debugWindow_;
 
-    // Video frame data (thread-safe transfer)
-    struct FrameData {
-        ID3D11Texture2D* texture = nullptr;
-        int subIndex = 0;
-        bool hasNewFrame = false;
-    };
-    FrameData frameData_;
-    std::mutex frameMutex_;
-    std::atomic<bool> allowPlaybackDecoderUpdates_{true};  // Control playback decoder
+    // Video source management (encapsulates decoder and frame handling)
+    std::unique_ptr<VideoSource> videoSource_;
 
     // Interaction state
     bool dragging_ = false;
@@ -64,8 +51,6 @@ private:
 
     // Export state
     bool isExporting_ = false;
-    bool allowExportDecoderUpdates_ = false;
-    std::shared_ptr<Decoder> exportDecoder_;
 
     // Color adjustment filter
     ShaderEffect* colorAdjust_ = nullptr;
