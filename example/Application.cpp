@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <atomic>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -52,16 +53,10 @@ void Application::initialize()
     // Attach debug window to engine for automatic updates
     engine_.setDebugWindow(&debugWindow_);
 
-    std::cout << "Application initialized successfully" << std::endl;
-    std::cout << "Controls:" << std::endl;
-    std::cout << "  - Left click drag to rotate view" << std::endl;
-    std::cout << "  - Mouse wheel to zoom" << std::endl;
-    std::cout << "  - Press 1: Planar mode" << std::endl;
-    std::cout << "  - Press 2: Panorama mode (360 degrees)" << std::endl;
-    std::cout << "  - Press 3: Little Planet mode" << std::endl;
-    std::cout << "  - Press 4: Crystal Ball mode" << std::endl;
-    std::cout << "  - Debug window opened in separate window" << std::endl;
-    std::cout << "  - ESC to exit" << std::endl;
+    std::cout << "ClipEngine initialized\nControls:\n"
+              << "  1-4: Switch render modes (Planar/Panorama/Little Planet/Crystal Ball)\n"
+              << "  E: Export video (10s) | ESC: Exit\n"
+              << "  Mouse: Drag to rotate, wheel to zoom\n" << std::endl;
 }
 
 void Application::setupScene()
@@ -96,7 +91,13 @@ void Application::setupInputCallbacks()
 void Application::run()
 {
     Decoder decoder;
-    decoder.open_video("D:/video/8K.mp4", [&](AVFrame* frame) {
+    decoder.open_video("D:/video/8K.mp4", [&, this](AVFrame* frame) {
+        // Only update frames when playback is active (not during export)
+        if (!allowPlaybackDecoderUpdates_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            return;
+        }
+
         if(frame->format == AV_PIX_FMT_D3D11) {
             ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
             int subIndex = (int)(intptr_t)frame->data[1];
@@ -192,51 +193,205 @@ void Application::scrollCallback(GLFWwindow* window, double xoffset, double yoff
     app->engine_.setMouseWheel(static_cast<float>(yoffset));
 }
 
+void Application::exportVideo()
+{
+    if (isExporting_) {
+        std::cout << "Export already in progress" << std::endl;
+        return;
+    }
+
+    isExporting_ = true;
+
+    // Configure export settings
+    VideoExportConfig config;
+    config.outputPath = "exported_video.mp4";
+    config.width = width_;
+    config.height = height_;
+    config.fps = 60;
+    config.bitrate = 20000000;  // 20 Mbps for high quality
+    config.codec = VideoCodec::H264;
+    config.preset = VideoQualityPreset::Fast;
+    config.hardwareAcceleration = true;
+
+    // Create and initialize exporter
+    VideoExporter exporter;
+    if (!exporter.initialize(config, engine_.getDevice())) {
+        std::cerr << "Failed to initialize video exporter" << std::endl;
+        isExporting_ = false;
+        return;
+    }
+
+    // Set progress callback
+    exporter.setProgressCallback([](float progress) {
+        static int lastPercent = -1;
+        int percent = static_cast<int>(progress * 100);
+        if (percent != lastPercent && percent % 5 == 0) {
+            std::cout << "Export progress: " << percent << "%" << std::endl;
+            lastPercent = percent;
+        }
+    });
+
+    // Begin export (10 seconds)
+    std::cout << "Exporting to: " << config.outputPath
+              << " (" << config.width << "x" << config.height << " @ " << config.fps << " fps)" << std::endl;
+
+    if (!exporter.beginExport(&engine_, 0.0f, 10.0f)) {
+        std::cerr << "Failed to begin export" << std::endl;
+        isExporting_ = false;
+        return;
+    }
+
+    // Pause playback decoder and enable export decoder
+    allowPlaybackDecoderUpdates_ = false;  // Pause normal playback
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Let playback decoder stop
+
+    allowExportDecoderUpdates_ = true;  // Enable export decoder
+
+    // Create or reuse export decoder
+    if (!exportDecoder_) {
+        exportDecoder_ = std::make_shared<Decoder>();
+        exportDecoder_->open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
+            // Only update frames when export is active
+            if (!allowExportDecoderUpdates_) {
+                return;
+            }
+
+            if(frame->format == AV_PIX_FMT_D3D11) {
+                ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
+                int subIndex = (int)(intptr_t)frame->data[1];
+
+                {
+                    std::lock_guard<std::mutex> lock(frameMutex_);
+                    frameData_.texture = srcTex;
+                    frameData_.subIndex = subIndex;
+                    frameData_.hasNewFrame = true;
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            }
+        });
+    }
+
+    // Wait for decoder to start
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    // Export all frames
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    while (!exporter.isFinished() && !exporter.isCancelled()) {
+        // Update video frame from decoder
+        ID3D11Texture2D* currentTexture = nullptr;
+        int currentSubIndex = 0;
+        bool hasFrame = false;
+
+        {
+            std::lock_guard<std::mutex> lock(frameMutex_);
+            if (frameData_.hasNewFrame) {
+                currentTexture = frameData_.texture;
+                currentSubIndex = frameData_.subIndex;
+                hasFrame = true;
+                frameData_.hasNewFrame = false;
+            }
+        }
+
+        // Update frame in renderer
+        if (hasFrame && videoRenderer_) {
+            videoRenderer_->updateFrame(currentTexture, currentSubIndex);
+        }
+
+        // Export frame
+        if (!exporter.exportFrame()) {
+            std::cerr << "Failed to export frame " << exporter.getCurrentFrame() << std::endl;
+            break;
+        }
+
+        // Poll events to keep the window responsive
+        glfwPollEvents();
+
+        // Check if user wants to cancel
+        if (glfwWindowShouldClose(window_)) {
+            std::cout << "Export cancelled by user" << std::endl;
+            exporter.cancel();
+            break;
+        }
+    }
+
+    // Stop export decoder and resume playback
+    allowExportDecoderUpdates_ = false;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    {
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        frameData_.texture = nullptr;
+        frameData_.subIndex = 0;
+        frameData_.hasNewFrame = false;
+    }
+
+    allowPlaybackDecoderUpdates_ = true;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Finalize export
+    if (!exporter.isCancelled() && exporter.finalize()) {
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
+        std::cout << "Export completed: " << exporter.getCurrentFrame() << " frames in "
+                  << duration << "s -> " << config.outputPath << std::endl;
+    } else if (!exporter.isCancelled()) {
+        std::cerr << "Failed to finalize export" << std::endl;
+    }
+
+    isExporting_ = false;
+}
+
+void Application::switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom)
+{
+    if (!videoRenderer_) return;
+
+    videoRenderer_->setRenderMode(mode);
+    yaw_ = yaw;
+    pitch_ = pitch;
+    zoom_ = zoom;
+    videoRenderer_->setRotation(yaw_, pitch_);
+    videoRenderer_->setZoom(zoom_);
+}
+
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     auto* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
     app->engine_.setKeyState(key, action == GLFW_PRESS || action == GLFW_REPEAT);
 
     if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_ESCAPE) {
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
-        }
-        // Projection mode switching
-        else if (key == GLFW_KEY_1 && app->videoRenderer_) {
-            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Planar);
-            app->yaw_ = 0.0f;
-            app->pitch_ = 0.0f;
-            app->zoom_ = 1.0f;
-            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
-            app->videoRenderer_->setZoom(app->zoom_);
-            std::cout << "Switched to Planar mode" << std::endl;
-        }
-        else if (key == GLFW_KEY_2 && app->videoRenderer_) {
-            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
-            app->yaw_ = 0.0f;
-            app->pitch_ = 0.0f;
-            app->zoom_ = 1.0f;
-            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
-            app->videoRenderer_->setZoom(app->zoom_);
-            std::cout << "Switched to Panorama mode" << std::endl;
-        }
-        else if (key == GLFW_KEY_3 && app->videoRenderer_) {
-            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::LittlePlanet);
-            app->yaw_ = 0.0f;
-            app->pitch_ = -1.57f;  // Looking down (south pole view)
-            app->zoom_ = 0.8f;
-            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
-            app->videoRenderer_->setZoom(app->zoom_);
-            std::cout << "Switched to Little Planet mode (view from below)" << std::endl;
-        }
-        else if (key == GLFW_KEY_4 && app->videoRenderer_) {
-            app->videoRenderer_->setRenderMode(VideoRenderer::RenderMode::CrystalBall);
-            app->yaw_ = 0.0f;
-            app->pitch_ = 1.57f;  // Looking up (north pole view)
-            app->zoom_ = 0.8f;
-            app->videoRenderer_->setRotation(app->yaw_, app->pitch_);
-            app->videoRenderer_->setZoom(app->zoom_);
-            std::cout << "Switched to Crystal Ball mode (view from above)" << std::endl;
+        switch (key) {
+            case GLFW_KEY_ESCAPE:
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+                break;
+
+            case GLFW_KEY_E:
+                if (!app->isExporting_) {
+                    std::cout << "Starting video export..." << std::endl;
+                    app->exportVideo();
+                }
+                break;
+
+            case GLFW_KEY_1:
+                app->switchRenderMode(VideoRenderer::RenderMode::Planar, 0.0f, 0.0f, 1.0f);
+                std::cout << "Switched to Planar mode" << std::endl;
+                break;
+
+            case GLFW_KEY_2:
+                app->switchRenderMode(VideoRenderer::RenderMode::Panorama, 0.0f, 0.0f, 1.0f);
+                std::cout << "Switched to Panorama mode" << std::endl;
+                break;
+
+            case GLFW_KEY_3:
+                app->switchRenderMode(VideoRenderer::RenderMode::LittlePlanet, 0.0f, -1.57f, 0.8f);
+                std::cout << "Switched to Little Planet mode" << std::endl;
+                break;
+
+            case GLFW_KEY_4:
+                app->switchRenderMode(VideoRenderer::RenderMode::CrystalBall, 0.0f, 1.57f, 0.8f);
+                std::cout << "Switched to Crystal Ball mode" << std::endl;
+                break;
         }
     }
 }

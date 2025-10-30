@@ -287,45 +287,13 @@ void VideoRenderer::createShaderForMode() {
 void VideoRenderer::setRenderMode(RenderMode mode) {
     if (renderMode_ == mode) return;
 
-    renderMode_ = mode;
-    createShaderForMode();
+    // Instead of rebuilding immediately, defer it to the next update() call
+    // This ensures we don't invalidate the pipeline while GPU is still using it
+    pendingRenderMode_ = mode;
+    pipelineNeedsRebuild_ = true;
 
-    // Recreate pipeline with new shader
-    if (device_) {
-        initializeShader();
-        initializePipeline();
-
-        // IMPORTANT: For panorama/little planet/crystal ball modes, we need uniform buffer with data before creating bindGroup
-        // But we must not call updatePanoramaUniforms() because it calls updateBindGroup() internally
-        // Instead, directly prepare the uniform data
-        if (renderMode_ == RenderMode::Panorama ||
-            renderMode_ == RenderMode::LittlePlanet ||
-            renderMode_ == RenderMode::CrystalBall) {
-            // Prepare uniform data without calling updateBindGroup
-            float uniforms[4] = {
-                panoramaParams_.yaw,
-                panoramaParams_.pitch,
-                panoramaParams_.zoom,
-                panoramaParams_.aspect
-            };
-
-            // Create or update uniform buffer manually
-            if (!uniformBuffer_ || uniformBufferSize_ < sizeof(uniforms)) {
-                uniformBufferSize_ = sizeof(uniforms);
-                wgpu::BufferDescriptor bufDesc = {};
-                bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-                bufDesc.size = uniformBufferSize_;
-                uniformBuffer_ = device_.CreateBuffer(&bufDesc);
-            }
-            device_.GetQueue().WriteBuffer(uniformBuffer_, 0, uniforms, sizeof(uniforms));
-            panoramaUniformsDirty_ = false;
-        }
-
-        // Now rebuild bindGroup with all resources ready
-        if (!textureViews_.empty()) {
-            updateBindGroup();
-        }
-    }
+    std::cout << "[VideoRenderer] Mode switch requested: " << (int)renderMode_
+              << " -> " << (int)mode << std::endl;
 }
 
 void VideoRenderer::setRotation(float yawRadians, float pitchRadians) {
@@ -360,6 +328,50 @@ void VideoRenderer::updatePanoramaUniforms() {
 }
 
 void VideoRenderer::update(float deltaTime) {
+    // Handle deferred pipeline rebuild at the start of the frame
+    // This ensures we don't invalidate the pipeline while GPU is still using it
+    if (pipelineNeedsRebuild_ && device_) {
+        std::cout << "[VideoRenderer] Rebuilding pipeline for mode: " << (int)pendingRenderMode_ << std::endl;
+        pipelineNeedsRebuild_ = false;
+        renderMode_ = pendingRenderMode_;
+
+        // Recreate shader and pipeline for the new mode
+        createShaderForMode();
+        initializeShader();
+        initializePipeline();
+        std::cout << "[VideoRenderer] Pipeline rebuild complete" << std::endl;
+
+        // For panorama/little planet/crystal ball modes, setup uniform buffer
+        if (renderMode_ == RenderMode::Panorama ||
+            renderMode_ == RenderMode::LittlePlanet ||
+            renderMode_ == RenderMode::CrystalBall) {
+            // Prepare uniform data
+            float uniforms[4] = {
+                panoramaParams_.yaw,
+                panoramaParams_.pitch,
+                panoramaParams_.zoom,
+                panoramaParams_.aspect
+            };
+
+            // Create or update uniform buffer
+            if (!uniformBuffer_ || uniformBufferSize_ < sizeof(uniforms)) {
+                uniformBufferSize_ = sizeof(uniforms);
+                wgpu::BufferDescriptor bufDesc = {};
+                bufDesc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
+                bufDesc.size = uniformBufferSize_;
+                uniformBuffer_ = device_.CreateBuffer(&bufDesc);
+            }
+            device_.GetQueue().WriteBuffer(uniformBuffer_, 0, uniforms, sizeof(uniforms));
+            panoramaUniformsDirty_ = false;
+        }
+
+        // Rebuild bindGroup with all resources ready
+        if (!textureViews_.empty()) {
+            updateBindGroup();
+        }
+    }
+
+    // Update panorama uniforms if they changed (rotation, zoom, etc.)
     if (renderMode_ == RenderMode::Panorama ||
         renderMode_ == RenderMode::LittlePlanet ||
         renderMode_ == RenderMode::CrystalBall) {

@@ -127,6 +127,10 @@ private:
     } panoramaParams_;
     bool panoramaUniformsDirty_ = true;
 
+    // Pipeline rebuild state
+    bool pipelineNeedsRebuild_ = false;
+    RenderMode pendingRenderMode_ = RenderMode::Planar;
+
     // Cached texture views
     wgpu::TextureView yPlaneView_;
     wgpu::TextureView uvPlaneView_;

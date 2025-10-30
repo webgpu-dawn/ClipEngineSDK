@@ -12,3 +12,4 @@
 #include "effects/ShaderEffect.h"
 #include "shaders/ShaderLibrary.h"
 #include "shaders/ShaderConfig.h"
+#include "export/VideoExporter.h"

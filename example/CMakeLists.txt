@@ -15,7 +15,15 @@ list(APPEND CMAKE_PREFIX_PATH
 
 # The SDK will be selected at build time based on the configuration
 find_package(ClipEngine REQUIRED)
-find_package(FFMPEG REQUIRED)
+
+# Find FFmpeg using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavcodec
+    libavformat
+    libavutil
+    libswscale
+)
 
 # Note: GLFW and ImGui are now provided by ClipEngine::clipengine_debug
 # No need to build them again in example
@@ -39,15 +47,10 @@ target_link_libraries(
     ${PROJECT_NAME} PRIVATE
     ClipEngine::clipengine
     ClipEngine::clipengine_debug  # Debug window support
-    ${FFMPEG_LIBRARIES}
+    PkgConfig::FFMPEG
     d3d11
     dxgi
     d3dcompiler
-)
-
-target_include_directories(
-    ${PROJECT_NAME} PRIVATE
-    ${FFMPEG_INCLUDE_DIRS}
 )
 
 # Copy ClipEngine DLLs to output directory

@@ -3,12 +3,15 @@
 #include <clipengine/core/CompositionEngine.h>
 #include <clipengine/layers/VideoRenderer.h>
 #include <clipengine/debug/DebugWindow.h>
+#include <clipengine/export/VideoExporter.h>
 
 #include <GLFW/glfw3.h>
 #include <string>
 #include <mutex>
+#include <memory>
 
 struct ID3D11Texture2D;
+class Decoder;
 
 class Application
 {
@@ -20,6 +23,8 @@ public:
 private:
     void setupScene();
     void setupInputCallbacks();
+    void exportVideo();
+    void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
 
     // GLFW input callbacks
     static void cursorPosCallback(GLFWwindow* window, double x, double y);
@@ -45,9 +50,15 @@ private:
     };
     FrameData frameData_;
     std::mutex frameMutex_;
+    std::atomic<bool> allowPlaybackDecoderUpdates_{true};  // Control playback decoder
 
     // Interaction state
     bool dragging_ = false;
     double lastMouseX_ = 0.0, lastMouseY_ = 0.0;
     float yaw_ = 0.0f, pitch_ = 0.0f, zoom_ = 1.0f;
+
+    // Export state
+    bool isExporting_ = false;
+    bool allowExportDecoderUpdates_ = false;  // Control export decoder frame updates
+    std::shared_ptr<Decoder> exportDecoder_;  // Separate decoder for export to prevent crashes
 };

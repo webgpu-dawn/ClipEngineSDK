@@ -160,35 +160,29 @@ bool OffscreenRenderer::readPixelsSync(uint8_t* buffer, size_t bufferSize) {
     }
 
     bool dataReady = false;
-    const uint8_t* mappedData = nullptr;
+    size_t bytesPerRow = width_ * getBytesPerPixel();
+    size_t alignedBytesPerRow = (bytesPerRow + 255) & ~255;
 
-    // Use readPixels with a lambda that captures our local variables
+    // Use readPixels with a lambda that copies data immediately
+    // This is important because the mapped data becomes invalid after Unmap()
     readPixels([&](const uint8_t* data, size_t size) {
-        mappedData = data;
-        dataReady = true;
+        if (data) {
+            // Copy row by row, skipping padding
+            for (uint32_t row = 0; row < height_; ++row) {
+                memcpy(
+                    buffer + row * bytesPerRow,
+                    data + row * alignedBytesPerRow,
+                    bytesPerRow
+                );
+            }
+            dataReady = true;
+        }
     });
 
     // Wait for the operation to complete
     waitForCompletion();
 
-    if (dataReady && mappedData) {
-        // Handle aligned bytes per row
-        size_t bytesPerRow = width_ * getBytesPerPixel();
-        size_t alignedBytesPerRow = (bytesPerRow + 255) & ~255;
-
-        // Copy row by row, skipping padding
-        for (uint32_t row = 0; row < height_; ++row) {
-            memcpy(
-                buffer + row * bytesPerRow,
-                mappedData + row * alignedBytesPerRow,
-                bytesPerRow
-            );
-        }
-
-        return true;
-    }
-
-    return false;
+    return dataReady;
 }
 
 void OffscreenRenderer::waitForCompletion() {

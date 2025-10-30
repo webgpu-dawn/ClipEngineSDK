@@ -31,6 +31,15 @@ find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
+# Find FFmpeg libraries
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavcodec
+    libavformat
+    libavutil
+    libswscale
+)
+
 # Optional: ImGui for debug module (using FetchContent)
 include(FetchContent)
 FetchContent_Declare(
@@ -74,6 +83,9 @@ add_library(clipengine STATIC
     src/clipengine/utils/RuntimeInspector.cpp
     src/clipengine/utils/GPUTimer.cpp
 
+    # Export
+    src/clipengine/export/VideoExporter.cpp
+
     # Note: Debug module (DebugWindow) is provided as source code in debug/
     # Applications can optionally include and compile it with ImGui/GLFW support
 )
@@ -104,6 +116,9 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/shaders/ShaderLibrary.h
     src/clipengine/shaders/ShaderConfig.h
 
+    # Export
+    src/clipengine/export/VideoExporter.h
+
     # Debug
     src/clipengine/debug/DebugWindow.h
 )
@@ -130,6 +145,7 @@ target_link_libraries(clipengine
         spdlog::spdlog_header_only
         fmt::fmt
         glm::glm
+        PkgConfig::FFMPEG
 )
 
 # Alias for consistent naming
