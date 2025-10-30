@@ -4,6 +4,7 @@
 #include <clipengine/layers/VideoRenderer.h>
 #include <clipengine/debug/DebugWindow.h>
 #include <clipengine/export/VideoExporter.h>
+#include <clipengine/effects/ShaderEffect.h>
 
 #include <GLFW/glfw3.h>
 #include <string>
@@ -25,6 +26,10 @@ private:
     void setupInputCallbacks();
     void exportVideo();
     void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
+
+    bool updateVideoFrame();
+    void setupExportDecoder();
+    void waitForFrames(int milliseconds);
 
     // GLFW input callbacks
     static void cursorPosCallback(GLFWwindow* window, double x, double y);
@@ -59,6 +64,14 @@ private:
 
     // Export state
     bool isExporting_ = false;
-    bool allowExportDecoderUpdates_ = false;  // Control export decoder frame updates
-    std::shared_ptr<Decoder> exportDecoder_;  // Separate decoder for export to prevent crashes
+    bool allowExportDecoderUpdates_ = false;
+    std::shared_ptr<Decoder> exportDecoder_;
+
+    // Color adjustment filter
+    ShaderEffect* colorAdjust_ = nullptr;
+    float brightness_ = 0.0f;
+    float contrast_ = 1.0f;
+    float saturation_ = 1.0f;
+    float exposure_ = 0.0f;
+    float gain_ = 1.0f;
 };

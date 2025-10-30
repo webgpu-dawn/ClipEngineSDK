@@ -91,6 +91,11 @@ void ShaderEffect::packUniformData(std::vector<float>& buffer) {
             }
         }, value);
     }
+
+    // Pad buffer to next multiple of 4 floats (16 bytes) for proper vec4f alignment
+    while (buffer.size() % 4 != 0) {
+        buffer.push_back(0.0f);
+    }
 }
 
 void ShaderEffect::packInputData(std::vector<float>& buffer) {
@@ -152,8 +157,10 @@ std::unique_ptr<ShaderEffect> ShaderEffect::createColorAdjust() {
     std::vector<ShaderParam> params = {
         {"brightness", 0.0f, -1.0f, 1.0f, "Brightness adjustment (-1 to 1)"},
         {"contrast", 1.0f, 0.0f, 2.0f, "Contrast adjustment (0 to 2)"},
-        {"hue", 0.0f, -180.0f, 180.0f, "Hue shift in degrees (-180 to 180)"},
-        {"saturation", 1.0f, 0.0f, 2.0f, "Saturation adjustment (0 to 2)"}
+        {"saturation", 1.0f, 0.0f, 2.0f, "Saturation adjustment (0 to 2)"},
+        {"exposure", 0.0f, -3.0f, 3.0f, "Exposure adjustment (-3 to 3 stops)"},
+        {"gain", 1.0f, 0.0f, 4.0f, "Gain multiplier (0 to 4)"},
+        {"hue", 0.0f, -180.0f, 180.0f, "Hue shift in degrees (-180 to 180)"}
     };
 
     return std::make_unique<ShaderEffect>(
@@ -275,7 +282,7 @@ ShaderConfig createColorAdjustConfig() {
     config.fragmentShaderSource = R"(
         @group(0) @binding(0) var mySampler : sampler;
         @group(0) @binding(1) var inputTexture : texture_2d<f32>;
-        @group(0) @binding(2) var<uniform> params : vec4f; // brightness, contrast, hue, saturation
+        @group(0) @binding(2) var<uniform> params : array<vec4f, 2>; // [brightness, contrast, saturation, exposure], [gain, hue, _, _]
 
         struct VertexOutput {
             @builtin(position) pos : vec4f,
@@ -328,19 +335,35 @@ ShaderConfig createColorAdjustConfig() {
         @fragment
         fn fs(input : VertexOutput) -> @location(0) vec4f {
             var color = textureSample(inputTexture, mySampler, input.uv);
-            let brightness = params.x;
-            let contrast = params.y;
-            let hueShift = params.z;
-            let saturation = params.w;
 
-            var rgb = color.rgb + vec3f(brightness);
+            // Extract parameters (alphabetical order: brightness, contrast, exposure, gain, hue, saturation)
+            let brightness = params[0].x;
+            let contrast = params[0].y;
+            let exposure = params[0].z;
+            let gain = params[0].w;
+            let hueShift = params[1].x;
+            let saturation = params[1].y;
+
+            // Apply exposure (logarithmic)
+            var rgb = color.rgb * pow(2.0, exposure);
+
+            // Apply gain (linear multiplier)
+            rgb = rgb * gain;
+
+            // Apply brightness
+            rgb = rgb + vec3f(brightness);
+
+            // Apply contrast
             rgb = (rgb - 0.5) * contrast + 0.5;
+
+            // Apply saturation and hue shift in HSV space
             var hsv = rgb2hsv(rgb);
             hsv.y = hsv.y * saturation;
             hsv.x = hsv.x + hueShift;
             if (hsv.x < 0.0) { hsv.x = hsv.x + 360.0; }
             else if (hsv.x >= 360.0) { hsv.x = hsv.x - 360.0; }
             rgb = hsv2rgb(hsv);
+
             return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), color.a);
         }
     )";
@@ -348,7 +371,7 @@ ShaderConfig createColorAdjustConfig() {
     config.bindings = {
         {0, wgpu::ShaderStage::Fragment, ShaderBindingDesc::Type::Sampler},
         {1, wgpu::ShaderStage::Fragment, ShaderBindingDesc::Type::Texture, wgpu::SamplerBindingType::Filtering, wgpu::TextureSampleType::Float},
-        {2, wgpu::ShaderStage::Fragment, ShaderBindingDesc::Type::Buffer, wgpu::SamplerBindingType::Filtering, wgpu::TextureSampleType::Float, wgpu::TextureViewDimension::e2D, wgpu::BufferBindingType::Uniform, false, 16}
+        {2, wgpu::ShaderStage::Fragment, ShaderBindingDesc::Type::Buffer, wgpu::SamplerBindingType::Filtering, wgpu::TextureSampleType::Float, wgpu::TextureViewDimension::e2D, wgpu::BufferBindingType::Uniform, false, 32}
     };
 
     config.vertexAttributes = {

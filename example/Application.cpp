@@ -53,10 +53,26 @@ void Application::initialize()
     // Attach debug window to engine for automatic updates
     engine_.setDebugWindow(&debugWindow_);
 
+    // Setup color adjustment filter
+    auto colorAdjust = ShaderEffect::createColorAdjust();
+
+    // Set initial parameter values before adding to filter chain
+    // This ensures the uniform buffer is created with correct size
+    colorAdjust->setParam("brightness", 0.0f);
+    colorAdjust->setParam("contrast", 1.0f);
+    colorAdjust->setParam("saturation", 1.0f);
+    colorAdjust->setParam("exposure", 0.0f);
+    colorAdjust->setParam("gain", 1.0f);
+    colorAdjust->setParam("hue", 0.0f);
+
+    colorAdjust_ = colorAdjust.get();
+    engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
+
     std::cout << "ClipEngine initialized\nControls:\n"
-              << "  1-4: Switch render modes (Planar/Panorama/Little Planet/Crystal Ball)\n"
-              << "  E: Export video (10s) | ESC: Exit\n"
-              << "  Mouse: Drag to rotate, wheel to zoom\n" << std::endl;
+              << "  1-4: Switch render modes | E: Export video | ESC: Exit\n"
+              << "  Mouse: Drag to rotate, wheel to zoom\n"
+              << "  Q/W: Brightness +/-  | A/S: Contrast +/-\n"
+              << "  Z/X: Exposure +/-    | C/V: Gain +/-\n" << std::endl;
 }
 
 void Application::setupScene()
@@ -88,52 +104,70 @@ void Application::setupInputCallbacks()
     glfwSetKeyCallback(window_, keyCallback);
 }
 
+bool Application::updateVideoFrame()
+{
+    ID3D11Texture2D* currentTexture = nullptr;
+    int currentSubIndex = 0;
+    bool hasFrame = false;
+
+    {
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        if (frameData_.hasNewFrame) {
+            currentTexture = frameData_.texture;
+            currentSubIndex = frameData_.subIndex;
+            hasFrame = true;
+            frameData_.hasNewFrame = false;
+        }
+    }
+
+    if (hasFrame && videoRenderer_) {
+        videoRenderer_->updateFrame(currentTexture, currentSubIndex);
+    }
+
+    return hasFrame;
+}
+
+void Application::setupExportDecoder()
+{
+    if (exportDecoder_) return;
+
+    exportDecoder_ = std::make_shared<Decoder>();
+    exportDecoder_->open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
+        if (!allowExportDecoderUpdates_ || frame->format != AV_PIX_FMT_D3D11) return;
+
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        frameData_.texture = (ID3D11Texture2D*)frame->data[0];
+        frameData_.subIndex = (int)(intptr_t)frame->data[1];
+        frameData_.hasNewFrame = true;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    });
+}
+
+void Application::waitForFrames(int milliseconds)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+}
+
 void Application::run()
 {
     Decoder decoder;
-    decoder.open_video("D:/video/8K.mp4", [&, this](AVFrame* frame) {
-        // Only update frames when playback is active (not during export)
-        if (!allowPlaybackDecoderUpdates_) {
+    decoder.open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
+        if (!allowPlaybackDecoderUpdates_ || frame->format != AV_PIX_FMT_D3D11) {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
             return;
         }
 
-        if(frame->format == AV_PIX_FMT_D3D11) {
-            ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
-            int subIndex = (int)(intptr_t)frame->data[1];
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        frameData_.texture = (ID3D11Texture2D*)frame->data[0];
+        frameData_.subIndex = (int)(intptr_t)frame->data[1];
+        frameData_.hasNewFrame = true;
 
-            {
-                std::lock_guard<std::mutex> lock(frameMutex_);
-                frameData_.texture = srcTex;
-                frameData_.subIndex = subIndex;
-                frameData_.hasNewFrame = true;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     });
 
     while(!glfwWindowShouldClose(window_)) {
-        // Update video frame (thread-safe) - minimize lock scope
-        ID3D11Texture2D* currentTexture = nullptr;
-        int currentSubIndex = 0;
-        bool hasFrame = false;
-
-        {
-            std::lock_guard<std::mutex> lock(frameMutex_);
-            if (frameData_.hasNewFrame) {
-                currentTexture = frameData_.texture;
-                currentSubIndex = frameData_.subIndex;
-                hasFrame = true;
-                frameData_.hasNewFrame = false;
-            }
-        }
-
-        // Perform GPU operations outside the lock to avoid blocking decoder thread
-        if (hasFrame && videoRenderer_) {
-            videoRenderer_->updateFrame(currentTexture, currentSubIndex);
-        }
-
+        updateVideoFrame();
         glfwPollEvents();
 
         // Handle panorama rotation (mouse drag)
@@ -195,45 +229,38 @@ void Application::scrollCallback(GLFWwindow* window, double xoffset, double yoff
 
 void Application::exportVideo()
 {
-    if (isExporting_) {
-        std::cout << "Export already in progress" << std::endl;
-        return;
-    }
-
+    if (isExporting_) return;
     isExporting_ = true;
 
-    // Configure export settings
-    VideoExportConfig config;
-    config.outputPath = "exported_video.mp4";
-    config.width = width_;
-    config.height = height_;
-    config.fps = 60;
-    config.bitrate = 20000000;  // 20 Mbps for high quality
-    config.codec = VideoCodec::H264;
-    config.preset = VideoQualityPreset::Fast;
-    config.hardwareAcceleration = true;
+    VideoExportConfig config = {
+        .outputPath = "exported_video.mp4",
+        .width = width_,
+        .height = height_,
+        .fps = 60,
+        .bitrate = 20000000,
+        .codec = VideoCodec::H264,
+        .preset = VideoQualityPreset::Fast,
+        .hardwareAcceleration = true
+    };
 
-    // Create and initialize exporter
     VideoExporter exporter;
     if (!exporter.initialize(config, engine_.getDevice())) {
-        std::cerr << "Failed to initialize video exporter" << std::endl;
+        std::cerr << "Failed to initialize exporter" << std::endl;
         isExporting_ = false;
         return;
     }
 
-    // Set progress callback
-    exporter.setProgressCallback([](float progress) {
-        static int lastPercent = -1;
-        int percent = static_cast<int>(progress * 100);
-        if (percent != lastPercent && percent % 5 == 0) {
-            std::cout << "Export progress: " << percent << "%" << std::endl;
-            lastPercent = percent;
+    exporter.setProgressCallback([](float p) {
+        static int last = -1;
+        int pct = (int)(p * 100);
+        if (pct != last && pct % 5 == 0) {
+            std::cout << "Export: " << pct << "%" << std::endl;
+            last = pct;
         }
     });
 
-    // Begin export (10 seconds)
-    std::cout << "Exporting to: " << config.outputPath
-              << " (" << config.width << "x" << config.height << " @ " << config.fps << " fps)" << std::endl;
+    std::cout << "Exporting: " << config.width << "x" << config.height
+              << " @ " << config.fps << " fps -> " << config.outputPath << std::endl;
 
     if (!exporter.beginExport(&engine_, 0.0f, 10.0f)) {
         std::cerr << "Failed to begin export" << std::endl;
@@ -241,103 +268,48 @@ void Application::exportVideo()
         return;
     }
 
-    // Pause playback decoder and enable export decoder
-    allowPlaybackDecoderUpdates_ = false;  // Pause normal playback
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Let playback decoder stop
+    allowPlaybackDecoderUpdates_ = false;
+    waitForFrames(100);
 
-    allowExportDecoderUpdates_ = true;  // Enable export decoder
+    allowExportDecoderUpdates_ = true;
+    setupExportDecoder();
+    waitForFrames(200);
 
-    // Create or reuse export decoder
-    if (!exportDecoder_) {
-        exportDecoder_ = std::make_shared<Decoder>();
-        exportDecoder_->open_video("D:/video/8K.mp4", [this](AVFrame* frame) {
-            // Only update frames when export is active
-            if (!allowExportDecoderUpdates_) {
-                return;
-            }
-
-            if(frame->format == AV_PIX_FMT_D3D11) {
-                ID3D11Texture2D* srcTex = (ID3D11Texture2D*)frame->data[0];
-                int subIndex = (int)(intptr_t)frame->data[1];
-
-                {
-                    std::lock_guard<std::mutex> lock(frameMutex_);
-                    frameData_.texture = srcTex;
-                    frameData_.subIndex = subIndex;
-                    frameData_.hasNewFrame = true;
-                }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            }
-        });
-    }
-
-    // Wait for decoder to start
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-    // Export all frames
     auto startTime = std::chrono::high_resolution_clock::now();
 
     while (!exporter.isFinished() && !exporter.isCancelled()) {
-        // Update video frame from decoder
-        ID3D11Texture2D* currentTexture = nullptr;
-        int currentSubIndex = 0;
-        bool hasFrame = false;
+        updateVideoFrame();
 
-        {
-            std::lock_guard<std::mutex> lock(frameMutex_);
-            if (frameData_.hasNewFrame) {
-                currentTexture = frameData_.texture;
-                currentSubIndex = frameData_.subIndex;
-                hasFrame = true;
-                frameData_.hasNewFrame = false;
-            }
-        }
-
-        // Update frame in renderer
-        if (hasFrame && videoRenderer_) {
-            videoRenderer_->updateFrame(currentTexture, currentSubIndex);
-        }
-
-        // Export frame
         if (!exporter.exportFrame()) {
-            std::cerr << "Failed to export frame " << exporter.getCurrentFrame() << std::endl;
+            std::cerr << "Export frame failed at " << exporter.getCurrentFrame() << std::endl;
             break;
         }
 
-        // Poll events to keep the window responsive
         glfwPollEvents();
-
-        // Check if user wants to cancel
         if (glfwWindowShouldClose(window_)) {
-            std::cout << "Export cancelled by user" << std::endl;
             exporter.cancel();
             break;
         }
     }
 
-    // Stop export decoder and resume playback
     allowExportDecoderUpdates_ = false;
+    waitForFrames(200);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     {
         std::lock_guard<std::mutex> lock(frameMutex_);
-        frameData_.texture = nullptr;
-        frameData_.subIndex = 0;
-        frameData_.hasNewFrame = false;
+        frameData_ = {};
     }
 
     allowPlaybackDecoderUpdates_ = true;
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    waitForFrames(100);
 
-    // Finalize export
     if (!exporter.isCancelled() && exporter.finalize()) {
-        auto endTime = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
-        std::cout << "Export completed: " << exporter.getCurrentFrame() << " frames in "
-                  << duration << "s -> " << config.outputPath << std::endl;
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::high_resolution_clock::now() - startTime).count();
+        std::cout << "Export done: " << exporter.getCurrentFrame()
+                  << " frames in " << duration << "s" << std::endl;
     } else if (!exporter.isCancelled()) {
-        std::cerr << "Failed to finalize export" << std::endl;
+        std::cerr << "Export finalize failed" << std::endl;
     }
 
     isExporting_ = false;
@@ -391,6 +363,79 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
             case GLFW_KEY_4:
                 app->switchRenderMode(VideoRenderer::RenderMode::CrystalBall, 0.0f, 1.57f, 0.8f);
                 std::cout << "Switched to Crystal Ball mode" << std::endl;
+                break;
+
+            // Brightness control
+            case GLFW_KEY_Q:
+                app->brightness_ += 0.05f;
+                if (app->brightness_ > 1.0f) app->brightness_ = 1.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("brightness", app->brightness_);
+                std::cout << "Brightness: " << app->brightness_ << std::endl;
+                break;
+            case GLFW_KEY_W:
+                app->brightness_ -= 0.05f;
+                if (app->brightness_ < -1.0f) app->brightness_ = -1.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("brightness", app->brightness_);
+                std::cout << "Brightness: " << app->brightness_ << std::endl;
+                break;
+
+            // Contrast control
+            case GLFW_KEY_A:
+                app->contrast_ += 0.1f;
+                if (app->contrast_ > 2.0f) app->contrast_ = 2.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("contrast", app->contrast_);
+                std::cout << "Contrast: " << app->contrast_ << std::endl;
+                break;
+            case GLFW_KEY_S:
+                app->contrast_ -= 0.1f;
+                if (app->contrast_ < 0.0f) app->contrast_ = 0.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("contrast", app->contrast_);
+                std::cout << "Contrast: " << app->contrast_ << std::endl;
+                break;
+
+            // Exposure control
+            case GLFW_KEY_Z:
+                app->exposure_ += 0.2f;
+                if (app->exposure_ > 3.0f) app->exposure_ = 3.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("exposure", app->exposure_);
+                std::cout << "Exposure: " << app->exposure_ << " stops" << std::endl;
+                break;
+            case GLFW_KEY_X:
+                app->exposure_ -= 0.2f;
+                if (app->exposure_ < -3.0f) app->exposure_ = -3.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("exposure", app->exposure_);
+                std::cout << "Exposure: " << app->exposure_ << " stops" << std::endl;
+                break;
+
+            // Gain control
+            case GLFW_KEY_C:
+                app->gain_ += 0.1f;
+                if (app->gain_ > 4.0f) app->gain_ = 4.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("gain", app->gain_);
+                std::cout << "Gain: " << app->gain_ << "x" << std::endl;
+                break;
+            case GLFW_KEY_V:
+                app->gain_ -= 0.1f;
+                if (app->gain_ < 0.0f) app->gain_ = 0.0f;
+                if (app->colorAdjust_) app->colorAdjust_->setParam("gain", app->gain_);
+                std::cout << "Gain: " << app->gain_ << "x" << std::endl;
+                break;
+
+            // Reset all adjustments
+            case GLFW_KEY_R:
+                app->brightness_ = 0.0f;
+                app->contrast_ = 1.0f;
+                app->saturation_ = 1.0f;
+                app->exposure_ = 0.0f;
+                app->gain_ = 1.0f;
+                if (app->colorAdjust_) {
+                    app->colorAdjust_->setParam("brightness", app->brightness_);
+                    app->colorAdjust_->setParam("contrast", app->contrast_);
+                    app->colorAdjust_->setParam("saturation", app->saturation_);
+                    app->colorAdjust_->setParam("exposure", app->exposure_);
+                    app->colorAdjust_->setParam("gain", app->gain_);
+                }
+                std::cout << "Reset all color adjustments" << std::endl;
                 break;
         }
     }

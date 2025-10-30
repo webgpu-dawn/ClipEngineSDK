@@ -92,7 +92,9 @@
         "any": "cpp",
         "codecvt": "cpp",
         "csignal": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "stack": "cpp",
+        "complex": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
