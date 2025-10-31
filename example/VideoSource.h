@@ -107,6 +107,18 @@ public:
      */
     const std::string& getFilePath() const { return filePath_; }
 
+    /**
+     * @brief Get video duration in seconds
+     * @return Duration in seconds, or 0.0 if not available
+     */
+    double getDuration() const;
+
+    /**
+     * @brief Get video frame rate (fps)
+     * @return Frame rate in fps, or 0.0 if not available
+     */
+    double getFrameRate() const;
+
 private:
     void setupPlaybackDecoder();
     void setupExportDecoder();

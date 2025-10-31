@@ -411,14 +411,17 @@ void VideoExporter::cleanup() {
 
     if (frame_) {
         av_frame_free(&frame_);
+        frame_ = nullptr;
     }
 
     if (packet_) {
         av_packet_free(&packet_);
+        packet_ = nullptr;
     }
 
     if (codecContext_) {
         avcodec_free_context(&codecContext_);
+        codecContext_ = nullptr;
     }
 
     if (formatContext_) {

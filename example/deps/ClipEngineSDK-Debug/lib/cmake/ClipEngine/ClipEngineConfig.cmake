@@ -86,6 +86,35 @@ if(NOT TARGET ClipEngine::clipengine)
     endif()
 endif()
 
+# Create clipengine_debug target (optional, for debug window support)
+if(NOT TARGET ClipEngine::clipengine_debug)
+    # Check if clipengine_debug.lib exists
+    if(EXISTS "${PACKAGE_PREFIX_DIR}/lib/clipengine_debug.lib")
+        add_library(ClipEngine::clipengine_debug STATIC IMPORTED)
+
+        # Set the library location
+        set_target_properties(ClipEngine::clipengine_debug PROPERTIES
+            IMPORTED_LOCATION_DEBUG "${PACKAGE_PREFIX_DIR}/lib/clipengine_debug.lib"
+            IMPORTED_LOCATION_RELEASE "${PACKAGE_PREFIX_DIR}/lib/clipengine_debug.lib"
+            IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/clipengine_debug.lib"
+        )
+
+        # Set include directories (same as clipengine)
+        set_target_properties(ClipEngine::clipengine_debug PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${ClipEngine_INCLUDE_DIR};${ClipEngine_INCLUDE_DIR}/dawn"
+        )
+
+        # Link against clipengine, imgui, and GLFW
+        set_target_properties(ClipEngine::clipengine_debug PROPERTIES
+            INTERFACE_LINK_LIBRARIES "ClipEngine::clipengine;${PACKAGE_PREFIX_DIR}/lib/imgui_core.lib;${PACKAGE_PREFIX_DIR}/lib/imgui_backends.lib;${PACKAGE_PREFIX_DIR}/lib/glfw3.lib"
+        )
+
+        set(ClipEngine_DEBUG_FOUND TRUE)
+    else()
+        set(ClipEngine_DEBUG_FOUND FALSE)
+    endif()
+endif()
+
 # Define ClipEngine variables
 set(ClipEngine_FOUND TRUE)
 set(ClipEngine_VERSION "1.0.0")

@@ -41,6 +41,7 @@ void Application::initialize()
     setupScene();
     setupInputCallbacks();
 
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
     // Initialize Debug Window (standalone window)
     if (!debugWindow_.initialize(&engine_, "ClipEngine Debug")) {
         std::cerr << "Failed to initialize Debug Window" << std::endl;
@@ -49,6 +50,7 @@ void Application::initialize()
 
     // Attach debug window to engine for automatic updates
     engine_.setDebugWindow(&debugWindow_);
+#endif
 
     // Setup color adjustment filter
     auto colorAdjust = ShaderEffect::createColorAdjust();
@@ -67,7 +69,7 @@ void Application::initialize()
 
     // Setup video source
     videoSource_ = std::make_unique<VideoSource>();
-    videoSource_->open("D:/video/8K.mp4");
+    videoSource_->open("D:/video/test.mp4");
 
     std::cout << "ClipEngine initialized\nControls:\n"
               << "  1-4: Switch render modes | E: Export video | ESC: Exit\n"
@@ -182,11 +184,24 @@ void Application::exportVideo()
     if (isExporting_) return;
     isExporting_ = true;
 
+    // Get actual video duration and frame rate
+    float videoDuration = static_cast<float>(videoSource_->getDuration());
+    if (videoDuration <= 0.0f) {
+        std::cerr << "Cannot determine video duration, using default 10s" << std::endl;
+        videoDuration = 10.0f;
+    }
+
+    uint32_t videoFps = static_cast<uint32_t>(videoSource_->getFrameRate());
+    if (videoFps <= 0) {
+        std::cerr << "Cannot determine video frame rate, using default 30fps" << std::endl;
+        videoFps = 30;
+    }
+
     VideoExportConfig config = {
         .outputPath = "exported_video.mp4",
         .width = width_,
         .height = height_,
-        .fps = 60,
+        .fps = videoFps,  // Use source video's frame rate
         .bitrate = 20000000,
         .codec = VideoCodec::H264,
         .preset = VideoQualityPreset::Fast,
@@ -210,9 +225,9 @@ void Application::exportVideo()
     });
 
     std::cout << "Exporting: " << config.width << "x" << config.height
-              << " @ " << config.fps << " fps -> " << config.outputPath << std::endl;
+              << " @ " << config.fps << " fps, duration: " << videoDuration << "s -> " << config.outputPath << std::endl;
 
-    if (!exporter.beginExport(&engine_, 0.0f, 10.0f)) {
+    if (!exporter.beginExport(&engine_, 0.0f, videoDuration)) {
         std::cerr << "Failed to begin export" << std::endl;
         isExporting_ = false;
         return;

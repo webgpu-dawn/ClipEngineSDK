@@ -119,8 +119,8 @@ set(CLIPENGINE_PUBLIC_HEADERS
     # Export
     src/clipengine/export/VideoExporter.h
 
-    # Debug
-    src/clipengine/debug/DebugWindow.h
+    # Note: Debug headers (DebugWindow) are NOT exported
+    # They are optional and available as source code only
 )
 
 # Configure library properties

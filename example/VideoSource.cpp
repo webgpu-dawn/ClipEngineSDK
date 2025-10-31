@@ -69,6 +69,8 @@ void VideoSource::setupExportDecoder() {
     if (exportDecoder_) return;
 
     exportDecoder_ = std::make_unique<Decoder>();
+    // Export decoder should loop to ensure we always have frames available
+    // The export duration is controlled by VideoExporter, not by decoder
     exportDecoder_->open_video(filePath_.c_str(), [this](AVFrame* frame) {
         if (!allowExportDecoderUpdates_ || frame->format != AV_PIX_FMT_D3D11) {
             return;
@@ -80,7 +82,7 @@ void VideoSource::setupExportDecoder() {
         );
 
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    });
+    }, true);  // loop = true to ensure continuous frame availability
 }
 
 void VideoSource::onFrameDecoded(ID3D11Texture2D* texture, int subIndex) {
@@ -127,4 +129,18 @@ void VideoSource::endExportMode() {
 
 void VideoSource::waitForFrames(int milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+}
+
+double VideoSource::getDuration() const {
+    if (playbackDecoder_) {
+        return playbackDecoder_->getDuration();
+    }
+    return 0.0;
+}
+
+double VideoSource::getFrameRate() const {
+    if (playbackDecoder_) {
+        return playbackDecoder_->getFrameRate();
+    }
+    return 0.0;
 }

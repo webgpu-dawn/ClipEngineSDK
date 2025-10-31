@@ -2,7 +2,9 @@
 
 #include <clipengine/core/CompositionEngine.h>
 #include <clipengine/layers/VideoRenderer.h>
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
 #include <clipengine/debug/DebugWindow.h>
+#endif
 #include <clipengine/export/VideoExporter.h>
 #include <clipengine/effects/ShaderEffect.h>
 
@@ -39,7 +41,9 @@ private:
 
     CompositionEngine engine_;
     VideoRenderer* videoRenderer_ = nullptr;
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
     DebugWindow debugWindow_;
+#endif
 
     // Video source management (encapsulates decoder and frame handling)
     std::unique_ptr<VideoSource> videoSource_;

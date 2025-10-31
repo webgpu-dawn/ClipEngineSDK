@@ -16,14 +16,28 @@ list(APPEND CMAKE_PREFIX_PATH
 # The SDK will be selected at build time based on the configuration
 find_package(ClipEngine REQUIRED)
 
-# Find FFmpeg using pkg-config
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-    libavcodec
-    libavformat
-    libavutil
-    libswscale
+# Set FFmpeg paths directly from deps directory
+set(FFMPEG_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps/ffmpeg_x64-windows")
+
+# FFmpeg include directories
+set(FFMPEG_INCLUDE_DIRS "${FFMPEG_ROOT}/include")
+
+# FFmpeg libraries based on build configuration
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(FFMPEG_LIB_DIR "${FFMPEG_ROOT}/debug/lib")
+else()
+    set(FFMPEG_LIB_DIR "${FFMPEG_ROOT}/lib")
+endif()
+
+set(FFMPEG_LIBRARIES
+    "${FFMPEG_LIB_DIR}/avcodec.lib"
+    "${FFMPEG_LIB_DIR}/avformat.lib"
+    "${FFMPEG_LIB_DIR}/avutil.lib"
+    "${FFMPEG_LIB_DIR}/swscale.lib"
 )
+
+message(STATUS "FFmpeg include: ${FFMPEG_INCLUDE_DIRS}")
+message(STATUS "FFmpeg libraries: ${FFMPEG_LIBRARIES}")
 
 # Note: GLFW and ImGui are now provided by ClipEngine::clipengine_debug
 # No need to build them again in example
@@ -47,11 +61,24 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
     ClipEngine::clipengine
-    ClipEngine::clipengine_debug  # Debug window support
-    PkgConfig::FFMPEG
+    ${FFMPEG_LIBRARIES}
     d3d11
     dxgi
     d3dcompiler
+)
+
+# Link debug window support if available (only when building from source)
+if(TARGET ClipEngine::clipengine_debug)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ClipEngine::clipengine_debug)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CLIPENGINE_DEBUG_WINDOW_ENABLED)
+    message(STATUS "Debug window support: enabled")
+else()
+    message(STATUS "Debug window support: disabled (not available in SDK)")
+endif()
+
+target_include_directories(
+    ${PROJECT_NAME} PRIVATE
+    ${FFMPEG_INCLUDE_DIRS}
 )
 
 # Copy ClipEngine DLLs to output directory
