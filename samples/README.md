@@ -220,6 +220,22 @@ Solution: 确保已经构建并安装了 ClipEngine SDK
 cmake --install . --config Debug
 ```
 
+**问题**: 链接错误 - InputSystem 符号无法解析
+```
+错误信息: error LNK2019: 无法解析的外部符号 InputSystem::InputSystem
+
+Solution: InputSystem 是 ClipEngine SDK 的一部分，需要重新生成 SDK
+1. 在 ClipEngineSDK 根目录重新构建：
+   cmake --build build --config Debug
+
+2. SDK 会自动安装到 output/ClipEngineSDK-Debug/
+
+3. 如果是独立构建 sample，复制 SDK 到 deps 目录：
+   cp -r output/ClipEngineSDK-Debug samples/deps/
+
+4. 确保使用的是包含 InputSystem 的最新版 SDK
+```
+
 **问题**: 找不到 FFmpeg
 ```
 Solution: 确保 deps/ffmpeg_x64-windows 目录存在

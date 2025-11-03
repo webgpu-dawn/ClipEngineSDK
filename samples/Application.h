@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "VideoSource.h"
+#include "ImageLoader.h"
 
 class Application
 {
@@ -32,6 +33,7 @@ private:
     void exportVideo();
     void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
     void updateVideoFrame();
+    void loadImageTexture(const std::string& imagePath);
 
     // Input event handlers (InputSystem)
     void handlePointerDown(const clipengine::InputEvent& event);
@@ -47,6 +49,7 @@ private:
 
     CompositionEngine engine_;
     VideoRenderer* videoRenderer_ = nullptr;
+    TextureRenderer* imageRenderer_ = nullptr;  // For displaying loaded images
 #ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
     DebugWindow debugWindow_;
 #endif

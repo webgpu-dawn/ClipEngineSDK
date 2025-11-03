@@ -37,23 +37,36 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
 find_package(spdlog CONFIG REQUIRED)
 
-# Find FFmpeg libraries
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-    libavcodec
-    libavformat
-    libavutil
-    libswscale
+# Set FFmpeg paths from deps directory
+set(FFMPEG_ROOT "${CMAKE_SOURCE_DIR}/samples/deps/ffmpeg_x64-windows")
+
+# FFmpeg include directories
+set(FFMPEG_INCLUDE_DIRS "${FFMPEG_ROOT}/include")
+
+# FFmpeg libraries based on build configuration
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(FFMPEG_LIB_DIR "${FFMPEG_ROOT}/debug/lib")
+else()
+    set(FFMPEG_LIB_DIR "${FFMPEG_ROOT}/lib")
+endif()
+
+set(FFMPEG_LIBRARIES
+    "${FFMPEG_LIB_DIR}/avcodec.lib"
+    "${FFMPEG_LIB_DIR}/avformat.lib"
+    "${FFMPEG_LIB_DIR}/avutil.lib"
+    "${FFMPEG_LIB_DIR}/swscale.lib"
 )
 
-# Optional: ImGui for debug module (using FetchContent)
-include(FetchContent)
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking
-)
-FetchContent_MakeAvailable(imgui)
+message(STATUS "FFmpeg root: ${FFMPEG_ROOT}")
+message(STATUS "FFmpeg include: ${FFMPEG_INCLUDE_DIRS}")
+message(STATUS "FFmpeg libraries: ${FFMPEG_LIBRARIES}")
+
+# ImGui for debug module (using local deps)
+set(imgui_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/imgui")
+if(NOT EXISTS "${imgui_SOURCE_DIR}/imgui.h")
+    message(FATAL_ERROR "ImGui not found in deps/imgui. Please copy imgui source to deps/imgui/")
+endif()
+message(STATUS "Using local ImGui from: ${imgui_SOURCE_DIR}")
 
 include_directories(
     deps/dawn/include
@@ -137,6 +150,7 @@ target_include_directories(clipengine
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/dawn/include>
+        $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
         $<INSTALL_INTERFACE:include>
         $<INSTALL_INTERFACE:include/dawn>
 )
@@ -154,7 +168,7 @@ target_link_libraries(clipengine
         spdlog::spdlog_header_only
         fmt::fmt-header-only
         glm::glm
-        PkgConfig::FFMPEG
+        ${FFMPEG_LIBRARIES}
 )
 
 # Alias for consistent naming
@@ -165,12 +179,24 @@ add_library(ClipEngine::clipengine ALIAS clipengine)
 # ============================================================================
 # Separate library for debug features to avoid forcing ImGui dependency on all users
 
-# Find GLFW from example deps (or system)
-set(GLFW_SOURCE_DIR "${CMAKE_SOURCE_DIR}/example/deps/glfw")
+# Find GLFW from samples deps (or system)
+set(GLFW_SOURCE_DIR "${CMAKE_SOURCE_DIR}/samples/deps/glfw")
 if(EXISTS "${GLFW_SOURCE_DIR}/CMakeLists.txt")
+    # Force GLFW to build as static library
+    set(BUILD_SHARED_LIBS_SAVE ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+
     add_subdirectory(${GLFW_SOURCE_DIR} ${CMAKE_BINARY_DIR}/glfw EXCLUDE_FROM_ALL)
+
+    # Restore BUILD_SHARED_LIBS
+    set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE} CACHE BOOL "" FORCE)
+    message(STATUS "Using local GLFW (static) from: ${GLFW_SOURCE_DIR}")
 else()
     find_package(glfw3 REQUIRED)
+    message(STATUS "Using system GLFW")
 endif()
 
 # Create ImGui core library
@@ -229,7 +255,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Install libraries (without EXPORT to avoid exporting PRIVATE dependencies)
-install(TARGETS clipengine clipengine_debug imgui_core imgui_backends
+install(TARGETS clipengine clipengine_debug imgui_core imgui_backends glfw
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -250,6 +276,14 @@ install(DIRECTORY deps/dawn/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dawn
     FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
+
+# Install GLFW headers
+if(EXISTS "${GLFW_SOURCE_DIR}/include")
+    install(DIRECTORY ${GLFW_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
 
 # Install shaders
 install(DIRECTORY src/clipengine/shaders/

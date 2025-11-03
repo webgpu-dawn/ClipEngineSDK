@@ -68,7 +68,7 @@ add_executable(
     Decoder.cpp
     VideoSource.cpp
     Application.cpp
-    ../src/clipengine/input/InputSystem.cpp
+    ImageLoader.cpp
 )
 
 # Link against ClipEngine SDK and other dependencies

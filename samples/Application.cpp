@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "VideoSource.h"
+#include "ImageLoader.h"
 
 #include <iostream>
 
@@ -73,9 +74,10 @@ void Application::initialize()
 
     std::cout << "ClipEngine initialized\nControls:\n"
               << "  1-4: Switch render modes | E: Export video | ESC: Exit\n"
+              << "  L: Load image overlay   | I: Toggle image visibility\n"
               << "  Mouse: Drag to rotate, wheel to zoom\n"
               << "  Q/W: Brightness +/-  | A/S: Contrast +/-\n"
-              << "  Z/X: Exposure +/-    | C/V: Gain +/-\n" << std::endl;
+              << "  Z/X: Exposure +/-    | C/V: Gain +/-    | R: Reset\n" << std::endl;
 
     initialized_ = true;
 }
@@ -96,6 +98,17 @@ void Application::setupScene()
     if (videoRenderer_) {
         videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
     }
+
+    // Create image overlay layer (for displaying loaded images)
+    // Use VideoRenderer with RGBA format for image display
+    auto imageLayer = std::make_unique<VideoRenderer>(VideoFormat::RGBA);
+    imageLayer->setTransform(0.0f, 0.0f, 1.0f, 1.0f);  // Full screen
+    imageLayer->setLayer(1);  // Above video layer
+    imageLayer->setName("Image Overlay Layer");
+    imageLayer->setEnabled(false);  // Start hidden
+    size_t imageIdx = engine_.addLayer(std::move(imageLayer));
+
+    imageRenderer_ = static_cast<TextureRenderer*>(engine_.getLayer(imageIdx));
 
     // No post-processing effects - show raw video output
 }
@@ -462,6 +475,21 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
             }
             std::cout << "Reset all color adjustments" << std::endl;
             break;
+
+        // Load image overlay
+        case GLFW_KEY_L:
+            // Load a sample image (you can change this path)
+            loadImageTexture("D:/video/overlay.JPG");
+            break;
+
+        // Toggle image visibility
+        case GLFW_KEY_I:
+            if (imageRenderer_) {
+                bool isEnabled = imageRenderer_->isEnabled();
+                imageRenderer_->setEnabled(!isEnabled);
+                std::cout << "Image overlay: " << (!isEnabled ? "ON" : "OFF") << std::endl;
+            }
+            break;
     }
 }
 
@@ -475,4 +503,40 @@ void Application::switchRenderMode(VideoRenderer::RenderMode mode, float yaw, fl
     zoom_ = zoom;
     videoRenderer_->setRotation(yaw_, pitch_);
     videoRenderer_->setZoom(zoom_);
+}
+
+void Application::loadImageTexture(const std::string& imagePath)
+{
+    if (!imageRenderer_) {
+        std::cerr << "Image renderer not initialized" << std::endl;
+        return;
+    }
+
+    std::cout << "\n[Application] Loading image: " << imagePath << std::endl;
+
+    // Load image and create texture
+    ComPtr<ID3D11Texture2D> imageTexture;
+    uint32_t imageWidth, imageHeight;
+
+    if (!ImageLoader::loadImage(imagePath, imageTexture, imageWidth, imageHeight)) {
+        std::cerr << "[Application] Failed to load image texture" << std::endl;
+        return;
+    }
+
+    // Update image renderer with the loaded texture
+    // Note: VideoRenderer::updateFrame() expects a texture, but for RGBA textures
+    // we need to use the base TextureRenderer methods
+    auto videoRenderer = dynamic_cast<VideoRenderer*>(imageRenderer_);
+    if (videoRenderer) {
+        // Set to RGBA format for image display
+        videoRenderer->setVideoFormat(VideoFormat::RGBA);
+        videoRenderer->setTransform(0, 0, 0.2, 0.2);
+        videoRenderer->updateFrame(imageTexture.Get(), 0);
+    }
+
+    // Enable the image layer to make it visible
+    imageRenderer_->setEnabled(true);
+
+    std::cout << "[Application] Image loaded and displayed successfully" << std::endl;
+    std::cout << "[Application] Press 'I' to toggle image visibility" << std::endl;
 }
