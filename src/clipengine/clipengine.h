@@ -13,3 +13,8 @@
 #include "shaders/ShaderLibrary.h"
 #include "shaders/ShaderConfig.h"
 #include "export/VideoExporter.h"
+#include "input/InputEvent.h"
+#include "input/InputSystem.h"
+#include "input/KeyCode.h"
+#include "input/InputSystemGLFWAdapter.h"
+#include "input/InputSystemWin32Adapter.h"

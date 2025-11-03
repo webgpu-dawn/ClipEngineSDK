@@ -23,7 +23,38 @@ VideoRenderer::VideoRenderer(VideoFormat format)
     createShaderForMode();
 }
 
-VideoRenderer::~VideoRenderer() = default;
+VideoRenderer::~VideoRenderer() {
+    cleanupSharedTextures();
+}
+
+void VideoRenderer::cleanupSharedTextures() {
+    // End access to Dawn texture if active
+    if (dawnTextureData_.sharedMemory && dawnTextureData_.texture) {
+        wgpu::SharedTextureMemoryEndAccessState endState = {};
+        dawnTextureData_.sharedMemory.EndAccess(dawnTextureData_.texture, &endState);
+    }
+
+    // Release Dawn resources
+    dawnTextureData_.texture = nullptr;
+    dawnTextureData_.sharedMemory = nullptr;
+    dawnTextureData_.width = 0;
+    dawnTextureData_.height = 0;
+
+    // Release texture views
+    yPlaneView_ = nullptr;
+    uvPlaneView_ = nullptr;
+    uPlaneView_ = nullptr;
+    vPlaneView_ = nullptr;
+
+    // Close shared handle and release D3D11 texture
+    if (sharedTextureData_.handle) {
+        CloseHandle(sharedTextureData_.handle);
+        sharedTextureData_.handle = nullptr;
+    }
+    sharedTextureData_.texture = nullptr;
+    sharedTextureData_.width = 0;
+    sharedTextureData_.height = 0;
+}
 
 void VideoRenderer::setVideoFormat(VideoFormat format) {
     if (videoFormat_ == format) return;
@@ -39,14 +70,7 @@ void VideoRenderer::setVideoFormat(VideoFormat format) {
 }
 
 namespace {
-    struct SharedTextureData {
-        ComPtr<ID3D11Texture2D> texture;
-        HANDLE handle = nullptr;
-        uint32_t width = 0;
-        uint32_t height = 0;
-    };
-
-    bool CreateD3D11SharedTexture(ComPtr<ID3D11Device>& device, const D3D11_TEXTURE2D_DESC& srcDesc, SharedTextureData& outData) {
+    bool CreateD3D11SharedTexture(ComPtr<ID3D11Device>& device, const D3D11_TEXTURE2D_DESC& srcDesc, VideoRenderer::SharedTextureData& outData) {
         D3D11_TEXTURE2D_DESC desc = {
             .Width       = srcDesc.Width,
             .Height      = srcDesc.Height,
@@ -89,13 +113,8 @@ namespace {
         return true;
     }
 
-    struct DawnTextureData {
-        wgpu::Texture texture;
-        wgpu::SharedTextureMemory sharedMemory;
-    };
-
-    DawnTextureData ImportToDawnTexture(wgpu::Device& device, HANDLE sharedHandle) {
-        DawnTextureData result;
+    VideoRenderer::DawnTextureData ImportToDawnTexture(wgpu::Device& device, HANDLE sharedHandle) {
+        VideoRenderer::DawnTextureData result;
 
         wgpu::SharedTextureMemoryDXGISharedHandleDescriptor handleDesc = {};
         handleDesc.handle = sharedHandle;
@@ -140,25 +159,45 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
     D3D11_TEXTURE2D_DESC srcDesc = {};
     texture->GetDesc(&srcDesc);
 
-    static SharedTextureData sharedData;
+    // Check if resolution changed - if so, cleanup old textures
+    bool resolutionChanged = (sharedTextureData_.width != srcDesc.Width ||
+                              sharedTextureData_.height != srcDesc.Height);
 
-    if(!sharedData.texture || sharedData.width != srcDesc.Width || sharedData.height != srcDesc.Height) {
-        if(sharedData.handle) CloseHandle(sharedData.handle);
-        sharedData = {};
-        if(!CreateD3D11SharedTexture(d3d11Device, srcDesc, sharedData)) return false;
+    if (!sharedTextureData_.texture || resolutionChanged) {
+        if (resolutionChanged) {
+            std::cout << "[VideoRenderer] Resolution changed: "
+                      << sharedTextureData_.width << "x" << sharedTextureData_.height
+                      << " -> " << srcDesc.Width << "x" << srcDesc.Height << std::endl;
+            cleanupSharedTextures();
+        }
+
+        if (!CreateD3D11SharedTexture(d3d11Device, srcDesc, sharedTextureData_)) {
+            return false;
+        }
     }
 
-    ctx->CopySubresourceRegion(sharedData.texture.Get(), 0, 0, 0, 0, texture, arrayIndex, nullptr);
+    ctx->CopySubresourceRegion(sharedTextureData_.texture.Get(), 0, 0, 0, 0, texture, arrayIndex, nullptr);
     ctx->Flush();
 
-    static DawnTextureData dawnData;
-    static uint32_t lastWidth = 0, lastHeight = 0;
+    // Recreate Dawn texture if resolution changed or not yet created
+    if (!dawnTextureData_.texture || resolutionChanged) {
+        // End access to old texture if it exists
+        if (dawnTextureData_.sharedMemory && dawnTextureData_.texture) {
+            wgpu::SharedTextureMemoryEndAccessState endState = {};
+            dawnTextureData_.sharedMemory.EndAccess(dawnTextureData_.texture, &endState);
+        }
 
-    if(!dawnData.texture || lastWidth != srcDesc.Width || lastHeight != srcDesc.Height) {
-        dawnData = ImportToDawnTexture(device_, sharedData.handle);
-        if(!dawnData.texture) return false;
-        lastWidth = srcDesc.Width;
-        lastHeight = srcDesc.Height;
+        dawnTextureData_ = ImportToDawnTexture(device_, sharedTextureData_.handle);
+        if (!dawnTextureData_.texture) return false;
+
+        dawnTextureData_.width = srcDesc.Width;
+        dawnTextureData_.height = srcDesc.Height;
+
+        // Clear cached texture views - they will be recreated below
+        yPlaneView_ = nullptr;
+        uvPlaneView_ = nullptr;
+        uPlaneView_ = nullptr;
+        vPlaneView_ = nullptr;
     }
 
     // Create texture views based on video format
@@ -175,7 +214,7 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
                 .arrayLayerCount = 1,
                 .aspect          = wgpu::TextureAspect::Plane0Only
             };
-            yPlaneView_ = dawnData.texture.CreateView(&yViewDesc);
+            yPlaneView_ = dawnTextureData_.texture.CreateView(&yViewDesc);
 
             wgpu::TextureViewDescriptor uvViewDesc = {
                 .format          = wgpu::TextureFormat::RG8Unorm,
@@ -186,7 +225,7 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
                 .arrayLayerCount = 1,
                 .aspect          = wgpu::TextureAspect::Plane1Only
             };
-            uvPlaneView_ = dawnData.texture.CreateView(&uvViewDesc);
+            uvPlaneView_ = dawnTextureData_.texture.CreateView(&uvViewDesc);
 
             views = {yPlaneView_, uvPlaneView_};
             break;
@@ -205,7 +244,7 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
                 .baseArrayLayer  = 0,
                 .arrayLayerCount = 1
             };
-            yPlaneView_ = dawnData.texture.CreateView(&rgbaViewDesc);
+            yPlaneView_ = dawnTextureData_.texture.CreateView(&rgbaViewDesc);
             views = {yPlaneView_};
             break;
         }

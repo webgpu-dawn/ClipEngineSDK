@@ -1,4 +1,0 @@
-{
-  "name": "Grayscale Effect",
-  "shader": "custom_shader.wgsl"
-}

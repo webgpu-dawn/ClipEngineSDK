@@ -29,21 +29,6 @@ enum class VideoFormat {
  */
 class VideoRenderer : public TextureRenderer {
 public:
-    // Internal structures for shared texture management
-    struct SharedTextureData {
-        ComPtr<ID3D11Texture2D> texture;
-        HANDLE handle = nullptr;
-        uint32_t width = 0;
-        uint32_t height = 0;
-    };
-
-    struct DawnTextureData {
-        wgpu::Texture texture;
-        wgpu::SharedTextureMemory sharedMemory;
-        uint32_t width = 0;
-        uint32_t height = 0;
-    };
-
     /**
      * @brief Render mode for video display
      */
@@ -151,10 +136,4 @@ private:
     wgpu::TextureView uvPlaneView_;
     wgpu::TextureView uPlaneView_;
     wgpu::TextureView vPlaneView_;
-
-    // Shared texture data (instance-specific, not static)
-    SharedTextureData sharedTextureData_;
-    DawnTextureData dawnTextureData_;
-
-    void cleanupSharedTextures();
 };

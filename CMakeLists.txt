@@ -29,6 +29,12 @@ list(APPEND CMAKE_PREFIX_PATH
 )
 find_package(Dawn REQUIRED)
 find_package(glm CONFIG REQUIRED)
+
+# Force static linking for fmt
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+find_package(fmt CONFIG REQUIRED)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+
 find_package(spdlog CONFIG REQUIRED)
 
 # Find FFmpeg libraries
@@ -85,6 +91,9 @@ add_library(clipengine STATIC
 
     # Export
     src/clipengine/export/VideoExporter.cpp
+
+    # Input
+    src/clipengine/input/InputSystem.cpp
 
     # Note: Debug module (DebugWindow) is provided as source code in debug/
     # Applications can optionally include and compile it with ImGui/GLFW support
@@ -143,7 +152,7 @@ target_link_libraries(clipengine
         dawn::webgpu_dawn
     PRIVATE
         spdlog::spdlog_header_only
-        fmt::fmt
+        fmt::fmt-header-only
         glm::glm
         PkgConfig::FFMPEG
 )
@@ -328,11 +337,110 @@ add_custom_target(install_sdk ALL
 add_dependencies(install_sdk clipengine clipengine_debug)
 
 # ============================================================================
-# Examples
+# Examples/Samples
 # ============================================================================
 
-# Add example subdirectory (optional, can be disabled with -DBUILD_EXAMPLES=OFF)
-option(BUILD_EXAMPLES "Build example projects" ON)
-if(BUILD_EXAMPLES)
-    add_subdirectory(example)
+# Option to build samples (default: ON)
+option(BUILD_SAMPLES "Build sample projects" ON)
+option(BUILD_TESTS "Build test projects" ON)
+
+if(BUILD_SAMPLES)
+    message(STATUS "Building samples as subdirectories")
+
+    # Add samples as subdirectory - sdk_demo is now directly in samples/
+    add_subdirectory(samples)
+
+    message(STATUS "Samples added as subdirectories and will appear as launchable targets in Visual Studio")
+    message(STATUS "  - Sample_sdk_demo: Complete SDK demonstration with video rendering")
 endif()
+
+if(BUILD_TESTS)
+    message(STATUS "Building tests as subdirectories")
+
+    # Add tests as subdirectories
+    add_subdirectory(tests/input_system_demo)
+
+    message(STATUS "Tests added as subdirectories and will appear as launchable targets in Visual Studio")
+    message(STATUS "  - Test_input_system_demo: Input system test demonstration")
+endif()
+
+# OLD CODE COMMENTED OUT - keeping for reference
+if(FALSE)
+    # Custom target to build input_system_demo (NO LONGER USED)
+    add_custom_target(Sample_input_system_demo_OLD
+        COMMAND ${CMAKE_COMMAND} -E echo "Building input_system_demo..."
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/samples/input_system_demo/build
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/samples/input_system_demo
+                                 -B ${CMAKE_SOURCE_DIR}/samples/input_system_demo/build
+                                 -G "${CMAKE_GENERATOR}"
+                                 ${PLATFORM_ARG}
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_SOURCE_DIR}/samples/input_system_demo/build --config $<CONFIG>
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying input_system_demo.exe to build directory..."
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/$<CONFIG>/samples
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/input_system_demo/build/bin/$<CONFIG>/input_system_demo.exe
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/Sample_input_system_demo.exe
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Building input_system_demo sample"
+    )
+
+    # Custom target to build sdk_demo (depends on SDK being installed)
+    add_custom_target(Sample_sdk_demo
+        COMMAND ${CMAKE_COMMAND} -E echo "Building sdk_demo..."
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/samples/sdk_demo
+                                 -B ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build
+                                 -G "${CMAKE_GENERATOR}"
+                                 ${PLATFORM_ARG}
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build --config $<CONFIG>
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying sdk_demo.exe to build directory..."
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/$<CONFIG>/samples
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build/$<CONFIG>/sdk_demo.exe
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/Sample_sdk_demo.exe
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying required DLLs for sdk_demo..."
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build/$<CONFIG>/webgpu_dawn.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/webgpu_dawn.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build/$<CONFIG>/d3dcompiler_47.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/d3dcompiler_47.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build/$<CONFIG>/vulkan-1.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/vulkan-1.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/build/$<CONFIG>/shaders
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/shaders
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying FFmpeg DLLs for sdk_demo..."
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/deps/ffmpeg_x64-windows/bin/avcodec-61.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/avcodec-61.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/deps/ffmpeg_x64-windows/bin/avformat-61.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/avformat-61.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/deps/ffmpeg_x64-windows/bin/avutil-59.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/avutil-59.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/deps/ffmpeg_x64-windows/bin/swscale-8.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/swscale-8.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_SOURCE_DIR}/samples/sdk_demo/deps/ffmpeg_x64-windows/bin/swresample-5.dll
+                ${CMAKE_BINARY_DIR}/$<CONFIG>/samples/swresample-5.dll
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Building sdk_demo sample"
+    )
+
+    # Make sure sdk_demo is built after SDK is installed
+    add_dependencies(Sample_sdk_demo install_sdk)
+
+    # Aggregate target to build all samples
+    add_custom_target(Sample_build_all_samples
+        DEPENDS Sample_input_system_demo Sample_sdk_demo
+    )
+
+    message(STATUS "Sample build targets created:")
+    message(STATUS "  - Sample_input_system_demo: Build input system demo")
+    message(STATUS "  - Sample_sdk_demo: Build SDK demo (requires install_sdk)")
+    message(STATUS "  - Sample_build_all_samples: Build all samples")
+endif() # if(FALSE) - commented out old custom targets
