@@ -112,8 +112,6 @@ endif()
 target_include_directories(
     ${DEMO_TARGET_NAME} PRIVATE
     ${FFMPEG_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
 
 # Copy ClipEngine DLLs to output directory

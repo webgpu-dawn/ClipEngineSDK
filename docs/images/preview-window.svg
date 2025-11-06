@@ -1,0 +1,157 @@
+<svg width="700" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="previewGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <filter id="dropShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Window background -->
+  <rect width="700" height="500" rx="8" fill="#1a202c"/>
+
+  <!-- Title bar -->
+  <rect width="700" height="35" rx="8" fill="#2d3748"/>
+  <rect y="35" width="700" height="8" fill="#2d3748"/>
+
+  <!-- Window title -->
+  <text x="15" y="23" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#e2e8f0">
+    ClipEngine Preview - Demo Project
+  </text>
+
+  <!-- Window controls -->
+  <circle cx="665" cy="17" r="6" fill="#f56565"/>
+  <circle cx="645" cy="17" r="6" fill="#fbbf24"/>
+  <circle cx="625" cy="17" r="6" fill="#48bb78"/>
+
+  <!-- Main viewport -->
+  <rect x="15" y="50" width="520" height="390" rx="4" fill="#000000"/>
+  <rect x="20" y="55" width="510" height="380" rx="2" fill="url(#previewGrad)" opacity="0.6"/>
+
+  <!-- Video content placeholder -->
+  <circle cx="275" cy="245" r="60" fill="#ffffff" opacity="0.3"/>
+  <text x="275" y="255" font-family="Arial, sans-serif" font-size="48" fill="#ffffff" opacity="0.5" text-anchor="middle">▶</text>
+
+  <!-- Viewport overlay info -->
+  <text x="25" y="70" font-family="Courier New, monospace" font-size="10" fill="#ffffff" opacity="0.7">
+    1920x1080 @ 30fps
+  </text>
+
+  <!-- Right panel - Controls -->
+  <rect x="545" y="50" width="140" height="390" rx="4" fill="#2d3748"/>
+
+  <!-- Panel title -->
+  <text x="615" y="70" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
+    Effects
+  </text>
+
+  <!-- Effect controls -->
+  <g transform="translate(555, 85)">
+    <!-- Brightness -->
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Brightness</text>
+    <rect y="5" width="120" height="4" rx="2" fill="#4a5568"/>
+    <rect y="5" width="80" height="4" rx="2" fill="#4299e1"/>
+    <circle cx="80" cy="7" r="5" fill="#4299e1"/>
+    <text x="115" y="8" font-family="Courier New, monospace" font-size="9" fill="#e2e8f0" text-anchor="end">0.2</text>
+
+    <!-- Saturation -->
+    <text x="0" y="30" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Saturation</text>
+    <rect y="35" width="120" height="4" rx="2" fill="#4a5568"/>
+    <rect y="35" width="90" height="4" rx="2" fill="#48bb78"/>
+    <circle cx="90" cy="37" r="5" fill="#48bb78"/>
+    <text x="115" y="38" font-family="Courier New, monospace" font-size="9" fill="#e2e8f0" text-anchor="end">1.3</text>
+
+    <!-- Contrast -->
+    <text x="0" y="60" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Contrast</text>
+    <rect y="65" width="120" height="4" rx="2" fill="#4a5568"/>
+    <rect y="65" width="60" height="4" rx="2" fill="#f6ad55"/>
+    <circle cx="60" cy="67" r="5" fill="#f6ad55"/>
+    <text x="115" y="68" font-family="Courier New, monospace" font-size="9" fill="#e2e8f0" text-anchor="end">1.0</text>
+
+    <!-- Exposure -->
+    <text x="0" y="90" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Exposure</text>
+    <rect y="95" width="120" height="4" rx="2" fill="#4a5568"/>
+    <rect y="95" width="72" height="4" rx="2" fill="#9f7aea"/>
+    <circle cx="72" cy="97" r="5" fill="#9f7aea"/>
+    <text x="115" y="98" font-family="Courier New, monospace" font-size="9" fill="#e2e8f0" text-anchor="end">0.5</text>
+
+    <!-- Blur -->
+    <text x="0" y="120" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Blur Radius</text>
+    <rect y="125" width="120" height="4" rx="2" fill="#4a5568"/>
+    <rect y="125" width="36" height="4" rx="2" fill="#fc8181"/>
+    <circle cx="36" cy="127" r="5" fill="#fc8181"/>
+    <text x="115" y="128" font-family="Courier New, monospace" font-size="9" fill="#e2e8f0" text-anchor="end">3.0</text>
+  </g>
+
+  <!-- Layer list -->
+  <g transform="translate(555, 235)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">
+      Layers
+    </text>
+
+    <rect y="10" width="120" height="25" rx="3" fill="#4a5568"/>
+    <text x="5" y="26" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0">Video Layer 1</text>
+
+    <rect y="40" width="120" height="25" rx="3" fill="#374151"/>
+    <text x="5" y="56" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Adjustment</text>
+
+    <rect y="70" width="120" height="25" rx="3" fill="#374151"/>
+    <text x="5" y="86" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">Background</text>
+  </g>
+
+  <!-- Render mode selector -->
+  <g transform="translate(555, 355)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">
+      Render Mode
+    </text>
+
+    <rect y="10" width="120" height="20" rx="3" fill="#667eea" opacity="0.8"/>
+    <text x="60" y="24" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">Equirectangular</text>
+  </g>
+
+  <!-- Timeline -->
+  <rect x="15" y="450" width="670" height="35" rx="4" fill="#2d3748"/>
+
+  <!-- Timeline ruler -->
+  <line x1="25" y1="463" x2="675" y2="463" stroke="#4a5568" stroke-width="1"/>
+
+  <!-- Time markers -->
+  <line x1="25" y1="460" x2="25" y2="470" stroke="#718096" stroke-width="1"/>
+  <text x="25" y="481" font-family="Courier New, monospace" font-size="8" fill="#a0aec0" text-anchor="middle">0:00</text>
+
+  <line x1="150" y1="460" x2="150" y2="470" stroke="#718096" stroke-width="1"/>
+  <text x="150" y="481" font-family="Courier New, monospace" font-size="8" fill="#a0aec0" text-anchor="middle">0:05</text>
+
+  <line x1="275" y1="460" x2="275" y2="470" stroke="#718096" stroke-width="1"/>
+  <text x="275" y="481" font-family="Courier New, monospace" font-size="8" fill="#a0aec0" text-anchor="middle">0:10</text>
+
+  <line x1="400" y1="460" x2="400" y2="470" stroke="#718096" stroke-width="1"/>
+  <text x="400" y="481" font-family="Courier New, monospace" font-size="8" fill="#a0aec0" text-anchor="middle">0:15</text>
+
+  <line x1="525" y1="460" x2="525" y2="470" stroke="#718096" stroke-width="1"/>
+  <text x="525" y="481" font-family="Courier New, monospace" font-size="8" fill="#a0aec0" text-anchor="middle">0:20</text>
+
+  <!-- Playhead -->
+  <line x1="180" y1="455" x2="180" y2="475" stroke="#ef4444" stroke-width="2"/>
+  <polygon points="180,453 176,458 184,458" fill="#ef4444"/>
+
+  <!-- Current time display -->
+  <rect x="630" y="456" width="45" height="18" rx="3" fill="#1a202c"/>
+  <text x="652" y="469" font-family="Courier New, monospace" font-size="10" fill="#e2e8f0" text-anchor="middle">0:07</text>
+
+  <!-- Status bar at very bottom -->
+  <rect y="492" width="700" height="8" rx="0 0 8 8" fill="#171923"/>
+  <text x="10" y="498" font-family="Arial, sans-serif" font-size="7" fill="#718096">
+    Ready | GPU: RTX 3070 | FPS: 60
+  </text>
+</svg>

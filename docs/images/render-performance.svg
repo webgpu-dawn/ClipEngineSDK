@@ -1,0 +1,122 @@
+<svg width="650" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gpuGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#667eea;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cpuGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#fc8181;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f6ad55;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="325" y="30" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    渲染性能对比 Render Performance
+  </text>
+  <text x="325" y="50" font-family="Arial, sans-serif" font-size="12" fill="#718096" text-anchor="middle">
+    GPU 加速 vs CPU 渲染 (1920x1080, 单帧处理时间)
+  </text>
+
+  <!-- Y-axis -->
+  <line x1="80" y1="80" x2="80" y2="320" stroke="#cbd5e0" stroke-width="2"/>
+  <text x="45" y="85" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">200ms</text>
+  <text x="45" y="140" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">150ms</text>
+  <text x="45" y="195" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">100ms</text>
+  <text x="45" y="250" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">50ms</text>
+  <text x="45" y="305" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">25ms</text>
+  <text x="45" y="325" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="end">0ms</text>
+
+  <!-- Y-axis label -->
+  <text x="20" y="200" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4a5568" text-anchor="middle" transform="rotate(-90 20 200)">
+    处理时间 (毫秒)
+  </text>
+
+  <!-- X-axis -->
+  <line x1="80" y1="320" x2="620" y2="320" stroke="#cbd5e0" stroke-width="2"/>
+
+  <!-- Grid lines -->
+  <line x1="80" y1="80" x2="620" y2="80" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="80" y1="135" x2="620" y2="135" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="80" y1="190" x2="620" y2="190" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="80" y1="245" x2="620" y2="245" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="80" y1="300" x2="620" y2="300" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Bar 1: Color Correction -->
+  <g transform="translate(120, 0)">
+    <!-- CPU bar -->
+    <rect x="0" y="170" width="50" height="150" rx="4" fill="url(#cpuGrad)"/>
+    <text x="25" y="160" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e53e3e" text-anchor="middle">125ms</text>
+
+    <!-- GPU bar -->
+    <rect x="60" y="295" width="50" height="25" rx="4" fill="url(#gpuGrad)"/>
+    <text x="85" y="285" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#3182ce" text-anchor="middle">8ms</text>
+
+    <!-- Label -->
+    <text x="55" y="345" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle">色彩校正</text>
+    <text x="55" y="360" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0" text-anchor="middle">Color Correct</text>
+  </g>
+
+  <!-- Bar 2: Gaussian Blur -->
+  <g transform="translate(260, 0)">
+    <!-- CPU bar -->
+    <rect x="0" y="95" width="50" height="225" rx="4" fill="url(#cpuGrad)"/>
+    <text x="25" y="85" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e53e3e" text-anchor="middle">187ms</text>
+
+    <!-- GPU bar -->
+    <rect x="60" y="282" width="50" height="38" rx="4" fill="url(#gpuGrad)"/>
+    <text x="85" y="272" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#3182ce" text-anchor="middle">12ms</text>
+
+    <!-- Label -->
+    <text x="55" y="345" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle">高斯模糊</text>
+    <text x="55" y="360" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0" text-anchor="middle">Gaussian Blur</text>
+  </g>
+
+  <!-- Bar 3: Compositing -->
+  <g transform="translate(400, 0)">
+    <!-- CPU bar -->
+    <rect x="0" y="200" width="50" height="120" rx="4" fill="url(#cpuGrad)"/>
+    <text x="25" y="190" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e53e3e" text-anchor="middle">100ms</text>
+
+    <!-- GPU bar -->
+    <rect x="60" y="303" width="50" height="17" rx="4" fill="url(#gpuGrad)"/>
+    <text x="85" y="293" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#3182ce" text-anchor="middle">5ms</text>
+
+    <!-- Label -->
+    <text x="55" y="345" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle">多层合成</text>
+    <text x="55" y="360" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0" text-anchor="middle">Compositing</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(480, 100)">
+    <rect x="0" y="0" width="120" height="70" rx="6" fill="#f7fafc" stroke="#cbd5e0" stroke-width="1"/>
+
+    <rect x="10" y="15" width="20" height="15" rx="2" fill="url(#cpuGrad)"/>
+    <text x="35" y="27" font-family="Arial, sans-serif" font-size="11" fill="#4a5568">CPU 渲染</text>
+
+    <rect x="10" y="40" width="20" height="15" rx="2" fill="url(#gpuGrad)"/>
+    <text x="35" y="52" font-family="Arial, sans-serif" font-size="11" fill="#4a5568">GPU 加速</text>
+  </g>
+
+  <!-- Performance boost labels -->
+  <g transform="translate(145, 240)">
+    <path d="M 0,0 L 10,10 L 20,0" stroke="#48bb78" stroke-width="2" fill="none"/>
+    <text x="10" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#38a169" text-anchor="middle">15.6×</text>
+  </g>
+
+  <g transform="translate(285, 185)">
+    <path d="M 0,0 L 10,10 L 20,0" stroke="#48bb78" stroke-width="2" fill="none"/>
+    <text x="10" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#38a169" text-anchor="middle">15.5×</text>
+  </g>
+
+  <g transform="translate(425, 260)">
+    <path d="M 0,0 L 10,10 L 20,0" stroke="#48bb78" stroke-width="2" fill="none"/>
+    <text x="10" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#38a169" text-anchor="middle">20×</text>
+  </g>
+
+  <!-- Footer note -->
+  <rect x="50" y="370" width="550" height="25" rx="4" fill="#edf2f7"/>
+  <text x="325" y="387" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" text-anchor="middle">
+    测试环境: Intel i7-12700K, NVIDIA RTX 3070, 32GB RAM | WebGPU Backend
+  </text>
+</svg>

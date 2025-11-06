@@ -53,19 +53,23 @@ void Application::initialize()
     engine_.setDebugWindow(&debugWindow_);
 #endif
 
-    // Setup color adjustment filter
-    auto colorAdjust = ShaderEffect::createColorAdjust();
+    // ========================================================================
+    // New Architecture: Create ColorAdjustEffect (for future use)
+    // ========================================================================
+    colorEffect_ = std::make_shared<clipengine::ColorAdjustEffect>();
+    // TODO: Implement ColorAdjustEffect::initialize()
+    // colorEffect_->initialize(engine_.getDevice(), engine_.getFormat());
 
-    // Set initial parameter values before adding to filter chain
-    // This ensures the uniform buffer is created with correct size
+    // ========================================================================
+    // TEMPORARY: Use old ShaderEffect for actual color adjustment
+    // ========================================================================
+    auto colorAdjust = ShaderEffect::createColorAdjust();
     colorAdjust->setParam("brightness", 0.0f);
     colorAdjust->setParam("contrast", 1.0f);
     colorAdjust->setParam("saturation", 1.0f);
     colorAdjust->setParam("exposure", 0.0f);
     colorAdjust->setParam("gain", 1.0f);
     colorAdjust->setParam("hue", 0.0f);
-
-    colorAdjust_ = colorAdjust.get();
     engine_.getGlobalFilterChain().addFilter(std::move(colorAdjust));
 
     // Setup video source
@@ -84,11 +88,41 @@ void Application::initialize()
 
 void Application::setupScene()
 {
-    // Create video renderer for panorama mode
+    // ========================================================================
+    // New Architecture: Use VideoLayer + ImageLayer + Effect
+    // ========================================================================
+    std::cout << "\n=== Using New Layer + Effect API ===" << std::endl;
+
+    // 1. Create VideoLayer (TODO: needs VideoLayer CPP implementation)
+    videoLayer_ = std::make_shared<clipengine::VideoLayer>();
+    videoLayer_->transform.position = {960.0f, 540.0f};
+    videoLayer_->transform.scale = {1.0f, 1.0f};
+    videoLayer_->setName("Main Video Layer");
+    std::cout << "[VideoLayer] Created (new API)" << std::endl;
+
+    // 2. Create ImageLayer (TODO: needs ImageLayer CPP implementation)
+    imageLayer_ = std::make_shared<clipengine::ImageLayer>();
+    imageLayer_->transform.position = {100.0f, 100.0f};
+    imageLayer_->transform.scale = {0.2f, 0.2f};
+    imageLayer_->transform.opacity = 0.8f;
+    imageLayer_->setName("Image Overlay");
+    std::cout << "[ImageLayer] Created (new API)" << std::endl;
+
+    // 3. Create ColorAdjustEffect
+    if (colorEffect_) {
+        std::cout << "[ColorAdjustEffect] Created (new API)" << std::endl;
+    }
+
+    std::cout << "\n=== Temporary: Using Old Rendering System ===" << std::endl;
+    std::cout << "NOTE: New Layer API is created but rendering uses old CompositionEngine" << std::endl;
+
+    // ========================================================================
+    // TEMPORARY: Use old VideoRenderer for actual rendering
+    // ========================================================================
     auto video = std::make_unique<VideoRenderer>();
     video->setTransform(0.0f, 0.0f, 1.0f, 1.0f);
     video->setLayer(0);
-    video->setName("Main Video Layer");
+    video->setName("Video Layer (old API)");
     video->setAspect((float)width_ / (float)height_);
     size_t videoIdx = engine_.addLayer(std::move(video));
 
@@ -99,18 +133,17 @@ void Application::setupScene()
         videoRenderer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
     }
 
-    // Create image overlay layer (for displaying loaded images)
-    // Use VideoRenderer with RGBA format for image display
     auto imageLayer = std::make_unique<VideoRenderer>(VideoFormat::RGBA);
-    imageLayer->setTransform(0.0f, 0.0f, 1.0f, 1.0f);  // Full screen
+    imageLayer->setTransform(0.0f, 0.0f, 0.2f, 0.2f);  // Full screen
     imageLayer->setLayer(1);  // Above video layer
-    imageLayer->setName("Image Overlay Layer");
+    imageLayer->setName("Image Layer (old API)");
     imageLayer->setEnabled(false);  // Start hidden
     size_t imageIdx = engine_.addLayer(std::move(imageLayer));
 
     imageRenderer_ = static_cast<TextureRenderer*>(engine_.getLayer(imageIdx));
 
-    // No post-processing effects - show raw video output
+    std::cout << "Old rendering system initialized" << std::endl;
+    std::cout << "=================================\n" << std::endl;
 }
 
 void Application::setupInputCallbacks()
@@ -173,10 +206,17 @@ void Application::setupInputEventListeners()
 
 void Application::updateVideoFrame()
 {
+    // TEMPORARY: Use old VideoRenderer to update frames
     if (videoSource_->hasNewFrame() && videoRenderer_) {
         auto frame = videoSource_->getLatestFrame();
         videoRenderer_->updateFrame(frame.texture, frame.subIndex);
     }
+
+    // TODO: Implement VideoLayer::updateFrame()
+    // if (videoSource_->hasNewFrame() && videoLayer_) {
+    //     auto frame = videoSource_->getLatestFrame();
+    //     videoLayer_->updateFrame(frame.texture, frame.subIndex);
+    // }
 }
 
 
@@ -238,7 +278,11 @@ void Application::handlePointerMove(const clipengine::InputEvent& event)
         if (pitch_ > 1.5f) pitch_ = 1.5f;
         if (pitch_ < -1.5f) pitch_ = -1.5f;
 
+        // TEMPORARY: Use old VideoRenderer
         videoRenderer_->setRotation(yaw_, pitch_);
+
+        // TODO: Implement VideoLayer::setRotation()
+        // videoLayer_->setRotation(yaw_, pitch_);
 
         lastMouseX_ = event.mouseX;
         lastMouseY_ = event.mouseY;
@@ -268,7 +312,12 @@ void Application::handleScroll(const clipengine::InputEvent& event)
         zoom_ += event.deltaY * 0.1f;
         if (zoom_ < 0.1f) zoom_ = 0.1f;
         if (zoom_ > 5.0f) zoom_ = 5.0f;
+
+        // TEMPORARY: Use old VideoRenderer
         videoRenderer_->setZoom(zoom_);
+
+        // TODO: Implement VideoLayer::setZoom()
+        // videoLayer_->setZoom(zoom_);
     }
 }
 
@@ -386,7 +435,7 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
 
         case GLFW_KEY_2:
             switchRenderMode(VideoRenderer::RenderMode::Panorama, 0.0f, 0.0f, 1.0f);
-            std::cout << "Switched to Panorama mode" << std::endl;
+            std::cout << "Switched to Equirectangular (360°) mode" << std::endl;
             break;
 
         case GLFW_KEY_3:
@@ -399,81 +448,99 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
             std::cout << "Switched to Crystal Ball mode" << std::endl;
             break;
 
-        // Brightness control
+        // Brightness control (New API: 0.0 - 2.0, 1.0 = normal)
+        // TODO: Implement ColorAdjustEffect::setBrightness()
         case GLFW_KEY_Q:
-            brightness_ += 0.05f;
-            if (brightness_ > 1.0f) brightness_ = 1.0f;
-            if (colorAdjust_) colorAdjust_->setParam("brightness", brightness_);
-            std::cout << "Brightness: " << brightness_ << std::endl;
+            brightness_ += 0.1f;
+            if (brightness_ > 2.0f) brightness_ = 2.0f;
+            if (colorEffect_) {
+                // TODO: colorEffect_->setBrightness(brightness_);
+            }
+            std::cout << "Brightness: " << brightness_ << " (Type-safe)" << std::endl;
             break;
 
         case GLFW_KEY_W:
-            brightness_ -= 0.05f;
-            if (brightness_ < -1.0f) brightness_ = -1.0f;
-            if (colorAdjust_) colorAdjust_->setParam("brightness", brightness_);
-            std::cout << "Brightness: " << brightness_ << std::endl;
+            brightness_ -= 0.1f;
+            if (brightness_ < 0.0f) brightness_ = 0.0f;
+            if (colorEffect_) {
+                // TODO: colorEffect_->setBrightness(brightness_);
+            }
+            std::cout << "Brightness: " << brightness_ << " (Type-safe)" << std::endl;
             break;
 
-        // Contrast control
+        // Contrast control (TODO: implement ColorAdjustEffect::setContrast)
         case GLFW_KEY_A:
             contrast_ += 0.1f;
             if (contrast_ > 2.0f) contrast_ = 2.0f;
-            if (colorAdjust_) colorAdjust_->setParam("contrast", contrast_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setContrast(contrast_);
+            }
             std::cout << "Contrast: " << contrast_ << std::endl;
             break;
 
         case GLFW_KEY_S:
             contrast_ -= 0.1f;
             if (contrast_ < 0.0f) contrast_ = 0.0f;
-            if (colorAdjust_) colorAdjust_->setParam("contrast", contrast_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setContrast(contrast_);
+            }
             std::cout << "Contrast: " << contrast_ << std::endl;
             break;
 
-        // Exposure control
+        // Exposure control (TODO: implement ColorAdjustEffect::setExposure)
         case GLFW_KEY_Z:
             exposure_ += 0.2f;
             if (exposure_ > 3.0f) exposure_ = 3.0f;
-            if (colorAdjust_) colorAdjust_->setParam("exposure", exposure_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setExposure(exposure_);
+            }
             std::cout << "Exposure: " << exposure_ << " stops" << std::endl;
             break;
 
         case GLFW_KEY_X:
             exposure_ -= 0.2f;
             if (exposure_ < -3.0f) exposure_ = -3.0f;
-            if (colorAdjust_) colorAdjust_->setParam("exposure", exposure_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setExposure(exposure_);
+            }
             std::cout << "Exposure: " << exposure_ << " stops" << std::endl;
             break;
 
-        // Gain control
+        // Gain control (TODO: implement ColorAdjustEffect::setGain)
         case GLFW_KEY_C:
             gain_ += 0.1f;
             if (gain_ > 4.0f) gain_ = 4.0f;
-            if (colorAdjust_) colorAdjust_->setParam("gain", gain_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setGain(gain_);
+            }
             std::cout << "Gain: " << gain_ << "x" << std::endl;
             break;
 
         case GLFW_KEY_V:
             gain_ -= 0.1f;
             if (gain_ < 0.0f) gain_ = 0.0f;
-            if (colorAdjust_) colorAdjust_->setParam("gain", gain_);
+            if (colorEffect_) {
+                // TODO: colorEffect_->setGain(gain_);
+            }
             std::cout << "Gain: " << gain_ << "x" << std::endl;
             break;
 
-        // Reset all adjustments
+        // Reset all adjustments (TODO: implement ColorAdjustEffect methods)
         case GLFW_KEY_R:
-            brightness_ = 0.0f;
+            brightness_ = 1.0f;  // New API: 1.0 = normal
             contrast_ = 1.0f;
             saturation_ = 1.0f;
             exposure_ = 0.0f;
             gain_ = 1.0f;
-            if (colorAdjust_) {
-                colorAdjust_->setParam("brightness", brightness_);
-                colorAdjust_->setParam("contrast", contrast_);
-                colorAdjust_->setParam("saturation", saturation_);
-                colorAdjust_->setParam("exposure", exposure_);
-                colorAdjust_->setParam("gain", gain_);
+            if (colorEffect_) {
+                // TODO: Implement type-safe methods
+                // colorEffect_->setBrightness(brightness_);
+                // colorEffect_->setContrast(contrast_);
+                // colorEffect_->setSaturation(saturation_);
+                // colorEffect_->setExposure(exposure_);
+                // colorEffect_->setGain(gain_);
             }
-            std::cout << "Reset all color adjustments" << std::endl;
+            std::cout << "Reset all color adjustments (New API)" << std::endl;
             break;
 
         // Load image overlay
@@ -484,10 +551,17 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
 
         // Toggle image visibility
         case GLFW_KEY_I:
+            // Update new API layer object (for future use)
+            if (imageLayer_) {
+                bool newVisible = !imageLayer_->isVisible();
+                imageLayer_->setVisible(newVisible);
+            }
+
+            // TEMPORARY: Use old rendering system
             if (imageRenderer_) {
-                bool isEnabled = imageRenderer_->isEnabled();
-                imageRenderer_->setEnabled(!isEnabled);
-                std::cout << "Image overlay: " << (!isEnabled ? "ON" : "OFF") << std::endl;
+                bool isVisible = imageRenderer_->isEnabled();
+                imageRenderer_->setEnabled(!isVisible);
+                std::cout << "Image overlay: " << (!isVisible ? "visible" : "hidden") << " (using old API)" << std::endl;
             }
             break;
     }
@@ -497,46 +571,55 @@ void Application::switchRenderMode(VideoRenderer::RenderMode mode, float yaw, fl
 {
     if (!videoRenderer_) return;
 
+    // TEMPORARY: Use old VideoRenderer
     videoRenderer_->setRenderMode(mode);
     yaw_ = yaw;
     pitch_ = pitch;
     zoom_ = zoom;
     videoRenderer_->setRotation(yaw_, pitch_);
     videoRenderer_->setZoom(zoom_);
+
+    // TODO: Implement VideoLayer projection and transform methods
+    // if (videoLayer_) {
+    //     videoLayer_->setProjection(projection);
+    //     videoLayer_->setRotation(yaw_, pitch_);
+    //     videoLayer_->setZoom(zoom_);
+    // }
 }
 
 void Application::loadImageTexture(const std::string& imagePath)
 {
-    if (!imageRenderer_) {
-        std::cerr << "Image renderer not initialized" << std::endl;
-        return;
-    }
-
     std::cout << "\n[Application] Loading image: " << imagePath << std::endl;
 
-    // Load image and create texture
-    ComPtr<ID3D11Texture2D> imageTexture;
-    uint32_t imageWidth, imageHeight;
+    // Update new API layer object (for future use)
+    if (imageLayer_) {
+        imageLayer_->transform.position = {100.0f, 100.0f};
+        imageLayer_->transform.scale = {0.2f, 0.2f};
+        imageLayer_->transform.opacity = 0.8f;
+    }
 
-    if (!ImageLoader::loadImage(imagePath, imageTexture, imageWidth, imageHeight)) {
-        std::cerr << "[Application] Failed to load image texture" << std::endl;
+    // TEMPORARY: Use old rendering system
+    if (!imageRenderer_) {
+        std::cerr << "[Application] Image renderer not initialized" << std::endl;
         return;
     }
 
-    // Update image renderer with the loaded texture
-    // Note: VideoRenderer::updateFrame() expects a texture, but for RGBA textures
-    // we need to use the base TextureRenderer methods
-    auto videoRenderer = dynamic_cast<VideoRenderer*>(imageRenderer_);
-    if (videoRenderer) {
-        // Set to RGBA format for image display
-        videoRenderer->setVideoFormat(VideoFormat::RGBA);
-        videoRenderer->setTransform(0, 0, 0.2, 0.2);
-        videoRenderer->updateFrame(imageTexture.Get(), 0);
+    // Load image using ImageLoader
+    ComPtr<ID3D11Texture2D> texture;
+    uint32_t width, height;
+    if (!ImageLoader::loadImage(imagePath, texture, width, height)) {
+        std::cerr << "[Application] Failed to load image from: " << imagePath << std::endl;
+        return;
     }
 
-    // Enable the image layer to make it visible
-    imageRenderer_->setEnabled(true);
-
-    std::cout << "[Application] Image loaded and displayed successfully" << std::endl;
-    std::cout << "[Application] Press 'I' to toggle image visibility" << std::endl;
+    // Update texture in the old renderer (cast to VideoRenderer to access updateFrame)
+    auto* videoRenderer = static_cast<VideoRenderer*>(imageRenderer_);
+    if (videoRenderer) {
+        videoRenderer->updateFrame(texture.Get(), 0);
+        imageRenderer_->setEnabled(true);
+        std::cout << "[Application] Image loaded successfully (using old API): " << width << "x" << height << std::endl;
+        std::cout << "[Application] Press 'I' to toggle image visibility" << std::endl;
+    } else {
+        std::cerr << "[Application] Failed to cast renderer" << std::endl;
+    }
 }

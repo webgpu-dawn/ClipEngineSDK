@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="1000" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: #2d3748; }
+      .class-name { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #2d3748; }
+      .method { font-family: Arial, sans-serif; font-size: 11px; fill: #4a5568; }
+      .method-public { fill: #48bb78; }
+      .method-private { fill: #fc8181; }
+      .note { font-family: Arial, sans-serif; font-size: 10px; fill: #718096; }
+      .arrow { stroke: #4a5568; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .arrow-inherit { stroke: #667eea; stroke-width: 2; fill: none; marker-end: url(#arrowhead-inherit); }
+      .arrow-compose { stroke: #48bb78; stroke-width: 2; fill: none; stroke-dasharray: 5,5; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4a5568" />
+    </marker>
+    <marker id="arrowhead-inherit" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#667eea" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" class="title" text-anchor="middle">ClipEngine SDK - 核心 API 类图</text>
+  <text x="700" y="50" class="note" text-anchor="middle">Core API Class Diagram</text>
+
+  <!-- Legend -->
+  <g transform="translate(1150, 70)">
+    <rect width="220" height="100" rx="4" fill="#f7fafc" stroke="#cbd5e0"/>
+    <text x="110" y="20" class="class-name" text-anchor="middle">图例 Legend</text>
+
+    <line x1="10" y1="35" x2="60" y2="35" class="arrow-inherit"/>
+    <text x="70" y="40" class="note">继承 Inheritance</text>
+
+    <line x1="10" y1="55" x2="60" y2="55" class="arrow"/>
+    <text x="70" y="60" class="note">依赖 Dependency</text>
+
+    <line x1="10" y1="75" x2="60" y2="75" class="arrow-compose"/>
+    <text x="70" y="80" class="note">组合 Composition</text>
+  </g>
+
+  <!-- RenderDevice -->
+  <g transform="translate(50, 100)">
+    <rect width="250" height="140" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+    <rect width="250" height="30" rx="6" fill="#319795"/>
+    <text x="125" y="20" class="class-name" fill="white" text-anchor="middle">RenderDevice</text>
+
+    <text x="10" y="50" class="method">+ initialize(config: DeviceConfig): bool</text>
+    <text x="10" y="67" class="method">+ shutdown(): void</text>
+    <text x="10" y="84" class="method">+ getDevice(): wgpu::Device</text>
+    <text x="10" y="101" class="method">+ getQueue(): wgpu::Queue</text>
+    <text x="10" y="118" class="method">+ getSurface(): wgpu::Surface</text>
+    <text x="10" y="135" class="method">+ reconfigureSurface(w, h): void</text>
+  </g>
+
+  <!-- CompositionEngine -->
+  <g transform="translate(350, 100)">
+    <rect width="280" height="200" rx="6" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#d69e2e"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">CompositionEngine</text>
+
+    <text x="10" y="50" class="method">+ initialize(device, format, w, h): bool</text>
+    <text x="10" y="67" class="method">+ addLayer(layer): size_t</text>
+    <text x="10" y="84" class="method">+ removeLayer(index): void</text>
+    <text x="10" y="101" class="method">+ getLayer(index): CompositionLayer*</text>
+    <text x="10" y="118" class="method">+ render(outputView): void</text>
+    <text x="10" y="135" class="method">+ update(deltaTime): void</text>
+    <text x="10" y="152" class="method">+ resize(w, h): void</text>
+    <text x="10" y="169" class="method">+ getGlobalFilterChain(): FilterChain&amp;</text>
+    <text x="10" y="186" class="method">+ setMousePosition(x, y): void</text>
+  </g>
+
+  <!-- Arrow: RenderDevice -> CompositionEngine -->
+  <line x1="300" y1="170" x2="350" y2="170" class="arrow"/>
+
+  <!-- CompositionLayer (abstract) -->
+  <g transform="translate(700, 100)">
+    <rect width="260" height="180" rx="6" fill="#e6e6fa" stroke="#805ad5" stroke-width="2"/>
+    <rect width="260" height="30" rx="6" fill="#805ad5"/>
+    <text x="130" y="20" class="class-name" fill="white" text-anchor="middle">«abstract» CompositionLayer</text>
+
+    <text x="10" y="50" class="method" font-style="italic">+ render(): wgpu::TextureView</text>
+    <text x="10" y="67" class="method" font-style="italic">+ update(deltaTime): void</text>
+    <text x="10" y="84" class="method">+ setLayer(order): void</text>
+    <text x="10" y="101" class="method">+ setName(name): void</text>
+    <text x="10" y="118" class="method">+ setTransform(x, y, w, h): void</text>
+    <text x="10" y="135" class="method">+ setVisible(visible): void</text>
+    <text x="10" y="152" class="method">+ getFilterChain(): FilterChain*</text>
+    <text x="10" y="169" class="method">+ setBlendMode(mode): void</text>
+  </g>
+
+  <!-- Arrow: CompositionEngine -> CompositionLayer (composition) -->
+  <line x1="630" y1="200" x2="700" y2="200" class="arrow-compose"/>
+  <text x="640" y="195" class="note">1..*</text>
+
+  <!-- VideoRenderer -->
+  <g transform="translate(1020, 100)">
+    <rect width="240" height="140" rx="6" fill="#c6f6d5" stroke="#38a169" stroke-width="2"/>
+    <rect width="240" height="30" rx="6" fill="#38a169"/>
+    <text x="120" y="20" class="class-name" fill="white" text-anchor="middle">VideoRenderer</text>
+
+    <text x="10" y="50" class="method">+ loadVideo(path): bool</text>
+    <text x="10" y="67" class="method">+ setTime(seconds): void</text>
+    <text x="10" y="84" class="method">+ play(): void</text>
+    <text x="10" y="101" class="method">+ pause(): void</text>
+    <text x="10" y="118" class="method">+ render(): wgpu::TextureView</text>
+    <text x="10" y="135" class="method">+ update(deltaTime): void</text>
+  </g>
+
+  <!-- Arrow: CompositionLayer -> VideoRenderer (inheritance) -->
+  <line x1="960" y1="190" x2="1020" y2="190" class="arrow-inherit"/>
+
+  <!-- Filter (abstract) -->
+  <g transform="translate(50, 350)">
+    <rect width="250" height="160" rx="6" fill="#e6e6fa" stroke="#805ad5" stroke-width="2"/>
+    <rect width="250" height="30" rx="6" fill="#805ad5"/>
+    <text x="125" y="20" class="class-name" fill="white" text-anchor="middle">«abstract» Filter</text>
+
+    <text x="10" y="50" class="method" font-style="italic">+ initialize(device, format): bool</text>
+    <text x="10" y="67" class="method" font-style="italic">+ apply(pass, inputs): void</text>
+    <text x="10" y="84" class="method" font-style="italic">+ updateParameters(): void</text>
+    <text x="10" y="101" class="method" font-style="italic">+ getName(): string</text>
+    <text x="10" y="118" class="method">+ setEnabled(enabled): void</text>
+    <text x="10" y="135" class="method">+ isEnabled(): bool</text>
+    <text x="10" y="152" class="method">+ setInputState(input): void</text>
+  </g>
+
+  <!-- FilterChain -->
+  <g transform="translate(350, 350)">
+    <rect width="250" height="140" rx="6" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <rect width="250" height="30" rx="6" fill="#d69e2e"/>
+    <text x="125" y="20" class="class-name" fill="white" text-anchor="middle">FilterChain</text>
+
+    <text x="10" y="50" class="method">+ initialize(device, format): bool</text>
+    <text x="10" y="67" class="method">+ addEffect(filter): void</text>
+    <text x="10" y="84" class="method">+ removeEffect(index): void</text>
+    <text x="10" y="101" class="method">+ getEffect(index): Filter*</text>
+    <text x="10" y="118" class="method">+ apply(pass, input): void</text>
+    <text x="10" y="135" class="method">+ hasEffects(): bool</text>
+  </g>
+
+  <!-- Arrow: FilterChain -> Filter (composition) -->
+  <line x1="350" y1="420" x2="300" y2="420" class="arrow-compose"/>
+  <text x="310" y="415" class="note">0..*</text>
+
+  <!-- ShaderEffect -->
+  <g transform="translate(50, 560)">
+    <rect width="250" height="120" rx="6" fill="#c6f6d5" stroke="#38a169" stroke-width="2"/>
+    <rect width="250" height="30" rx="6" fill="#38a169"/>
+    <text x="125" y="20" class="class-name" fill="white" text-anchor="middle">ShaderEffect</text>
+
+    <text x="10" y="50" class="method">+ ShaderEffect(name, config)</text>
+    <text x="10" y="67" class="method">+ initialize(device, format): bool</text>
+    <text x="10" y="84" class="method">+ apply(pass, inputs): void</text>
+    <text x="10" y="101" class="method">+ updateParameters(): void</text>
+    <text x="10" y="118" class="method">+ getName(): string</text>
+  </g>
+
+  <!-- Arrow: Filter -> ShaderEffect (inheritance) -->
+  <line x1="175" y1="510" x2="175" y2="560" class="arrow-inherit"/>
+
+  <!-- VideoExporter -->
+  <g transform="translate(700, 350)">
+    <rect width="280" height="180" rx="6" fill="#fed7d7" stroke="#e53e3e" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#e53e3e"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">VideoExporter</text>
+
+    <text x="10" y="50" class="method">+ initialize(config, device): bool</text>
+    <text x="10" y="67" class="method">+ beginExport(engine, start, end): bool</text>
+    <text x="10" y="84" class="method">+ exportFrame(): bool</text>
+    <text x="10" y="101" class="method">+ finalize(): bool</text>
+    <text x="10" y="118" class="method">+ isFinished(): bool</text>
+    <text x="10" y="135" class="method">+ getProgress(): float</text>
+    <text x="10" y="152" class="method">+ setProgressCallback(callback): void</text>
+    <text x="10" y="169" class="method">+ cancel(): void</text>
+  </g>
+
+  <!-- Arrow: VideoExporter -> CompositionEngine (dependency) -->
+  <line x1="700" y1="440" x2="630" y2="300" class="arrow"/>
+
+  <!-- Project -->
+  <g transform="translate(700, 580)">
+    <rect width="260" height="180" rx="6" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <rect width="260" height="30" rx="6" fill="#d69e2e"/>
+    <text x="130" y="20" class="class-name" fill="white" text-anchor="middle">Project</text>
+
+    <text x="10" y="50" class="method">+ create(config): Project*</text>
+    <text x="10" y="67" class="method">+ load(path): Project*</text>
+    <text x="10" y="84" class="method">+ save(path, options): bool</text>
+    <text x="10" y="101" class="method">+ createComposition(name, ...): Composition*</text>
+    <text x="10" y="118" class="method">+ getComposition(name): Composition*</text>
+    <text x="10" y="135" class="method">+ getAssetManager(): AssetManager&amp;</text>
+    <text x="10" y="152" class="method">+ isDirty(): bool</text>
+    <text x="10" y="169" class="method">+ setDirtyCallback(callback): void</text>
+  </g>
+
+  <!-- AssetManager -->
+  <g transform="translate(1020, 580)">
+    <rect width="280" height="180" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#319795"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">AssetManager</text>
+
+    <text x="10" y="50" class="method">+ importAsset(path, options): string</text>
+    <text x="10" y="67" class="method">+ removeAsset(id, deleteFile): bool</text>
+    <text x="10" y="84" class="method">+ getAsset(id): Asset*</text>
+    <text x="10" y="101" class="method">+ searchAssets(query): vector&lt;Asset*&gt;</text>
+    <text x="10" y="118" class="method">+ filterByType(type): vector&lt;Asset*&gt;</text>
+    <text x="10" y="135" class="method">+ generateThumbnail(id): bool</text>
+    <text x="10" y="152" class="method">+ findUnusedAssets(): vector&lt;string&gt;</text>
+    <text x="10" y="169" class="method">+ cleanupUnusedAssets(): size_t</text>
+  </g>
+
+  <!-- Arrow: Project -> AssetManager (composition) -->
+  <line x1="960" y1="670" x2="1020" y2="670" class="arrow-compose"/>
+  <text x="970" y="665" class="note">1</text>
+
+  <!-- Timeline -->
+  <g transform="translate(350, 580)">
+    <rect width="280" height="200" rx="6" fill="#fed7d7" stroke="#e53e3e" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#e53e3e"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">Timeline</text>
+
+    <text x="10" y="50" class="method">+ setDuration(seconds): void</text>
+    <text x="10" y="67" class="method">+ setFPS(fps): void</text>
+    <text x="10" y="84" class="method">+ play(): void</text>
+    <text x="10" y="101" class="method">+ pause(): void</text>
+    <text x="10" y="118" class="method">+ seekTo(seconds): void</text>
+    <text x="10" y="135" class="method">+ addMarker(time, label): string</text>
+    <text x="10" y="152" class="method">+ setWorkArea(start, end): void</text>
+    <text x="10" y="169" class="method">+ update(deltaTime): void</text>
+    <text x="10" y="186" class="method">+ getCurrentTime(): float</text>
+  </g>
+
+  <!-- AnimatableProperty -->
+  <g transform="translate(50, 810)">
+    <rect width="280" height="160" rx="6" fill="#c6f6d5" stroke="#38a169" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#38a169"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">AnimatableProperty&lt;T&gt;</text>
+
+    <text x="10" y="50" class="method">+ addKeyframe(time, value, easing): size_t</text>
+    <text x="10" y="67" class="method">+ removeKeyframe(index): bool</text>
+    <text x="10" y="84" class="method">+ evaluate(time): T</text>
+    <text x="10" y="101" class="method">+ getValue(): T</text>
+    <text x="10" y="118" class="method">+ setValue(value): void</text>
+    <text x="10" y="135" class="method">+ isAnimated(): bool</text>
+    <text x="10" y="152" class="method">+ setInTangent(idx, tangent): void</text>
+  </g>
+
+  <!-- CacheManager -->
+  <g transform="translate(380, 810)">
+    <rect width="240" height="160" rx="6" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+    <rect width="240" height="30" rx="6" fill="#319795"/>
+    <text x="120" y="20" class="class-name" fill="white" text-anchor="middle">CacheManager</text>
+
+    <text x="10" y="50" class="method">+ initialize(config): bool</text>
+    <text x="10" y="67" class="method">+ get(key): optional&lt;data&gt;</text>
+    <text x="10" y="84" class="method">+ put(key, data, forceL2): bool</text>
+    <text x="10" y="101" class="method">+ contains(key): bool</text>
+    <text x="10" y="118" class="method">+ clear(): void</text>
+    <text x="10" y="135" class="method">+ getStats(): CacheStats</text>
+    <text x="10" y="152" class="method">+ preheat(keys, renderFunc): void</text>
+  </g>
+
+  <!-- ColorManager -->
+  <g transform="translate(670, 810)">
+    <rect width="280" height="160" rx="6" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <rect width="280" height="30" rx="6" fill="#d69e2e"/>
+    <text x="140" y="20" class="class-name" fill="white" text-anchor="middle">ColorManager</text>
+
+    <text x="10" y="50" class="method">+ setConfig(config): void</text>
+    <text x="10" y="67" class="method">+ transform(color, from, to): vec3</text>
+    <text x="10" y="84" class="method">+ loadOCIOConfig(path): bool</text>
+    <text x="10" y="101" class="method">+ applyOCIOTransform(...): vec3</text>
+    <text x="10" y="118" class="method">+ addLUT(name, lut): void</text>
+    <text x="10" y="135" class="method">+ getLUT(name): ColorLUT*</text>
+    <text x="10" y="152" class="method">+ generateShader(from, to): string</text>
+  </g>
+
+  <!-- Summary note -->
+  <g transform="translate(50, 960)">
+    <text x="0" y="15" class="note">说明：本图展示 ClipEngine SDK 核心 API 接口的类关系。</text>
+    <text x="0" y="30" class="note">• 蓝色箭头 = 继承关系 | 黑色箭头 = 依赖关系 | 绿色虚线 = 组合关系</text>
+  </g>
+</svg>

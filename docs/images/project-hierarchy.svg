@@ -1,0 +1,175 @@
+<svg width="800" height="450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="projGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="projGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="projGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrowProj" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#718096" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    项目层次结构 Project Hierarchy
+  </text>
+
+  <!-- Project Level -->
+  <g transform="translate(300, 70)">
+    <rect width="200" height="60" rx="8" fill="url(#projGrad1)" opacity="0.9"/>
+    <text x="100" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Project 项目
+    </text>
+    <text x="100" y="48" font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">
+      顶层容器 • 资源管理
+    </text>
+  </g>
+
+  <!-- Arrow down -->
+  <line x1="400" y1="130" x2="400" y2="160" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+
+  <!-- Composition Level -->
+  <g transform="translate(50, 160)">
+    <rect width="180" height="60" rx="8" fill="url(#projGrad2)" opacity="0.9"/>
+    <text x="90" y="30" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Composition 1
+    </text>
+    <text x="90" y="48" font-family="Arial, sans-serif" font-size="10" fill="#bee3f8" text-anchor="middle">
+      1920x1080 @ 30fps
+    </text>
+  </g>
+
+  <g transform="translate(310, 160)">
+    <rect width="180" height="60" rx="8" fill="url(#projGrad2)" opacity="0.9"/>
+    <text x="90" y="30" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Composition 2
+    </text>
+    <text x="90" y="48" font-family="Arial, sans-serif" font-size="10" fill="#bee3f8" text-anchor="middle">
+      1280x720 @ 60fps
+    </text>
+  </g>
+
+  <g transform="translate(570, 160)">
+    <rect width="180" height="60" rx="8" fill="url(#projGrad2)" opacity="0.9"/>
+    <text x="90" y="30" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Composition N...
+    </text>
+    <text x="90" y="48" font-family="Arial, sans-serif" font-size="10" fill="#bee3f8" text-anchor="middle">
+      自定义分辨率
+    </text>
+  </g>
+
+  <!-- Arrows from project to compositions -->
+  <line x1="350" y1="130" x2="140" y2="160" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+  <line x1="450" y1="130" x2="660" y2="160" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+
+  <!-- Arrow down from composition 1 -->
+  <line x1="140" y1="220" x2="140" y2="250" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+
+  <!-- Layer Level -->
+  <g transform="translate(30, 250)">
+    <rect width="100" height="50" rx="6" fill="url(#projGrad3)" opacity="0.9"/>
+    <text x="50" y="25" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">Layer 1</text>
+    <text x="50" y="40" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">Video</text>
+  </g>
+
+  <g transform="translate(150, 250)">
+    <rect width="100" height="50" rx="6" fill="url(#projGrad3)" opacity="0.9"/>
+    <text x="50" y="25" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">Layer 2</text>
+    <text x="50" y="40" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">Image</text>
+  </g>
+
+  <g transform="translate(270, 250)">
+    <rect width="100" height="50" rx="6" fill="url(#projGrad3)" opacity="0.9"/>
+    <text x="50" y="25" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">Layer N...</text>
+    <text x="50" y="40" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">Text</text>
+  </g>
+
+  <!-- Arrows to layers -->
+  <line x1="90" y1="220" x2="80" y2="250" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+  <line x1="190" y1="220" x2="200" y2="250" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+  <line x1="140" y1="220" x2="320" y2="250" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+
+  <!-- Arrow down from layer 1 -->
+  <line x1="80" y1="300" x2="80" y2="330" stroke="#718096" stroke-width="2" marker-end="url(#arrowProj)"/>
+
+  <!-- Layer Components -->
+  <g transform="translate(30, 330)">
+    <rect width="220" height="90" rx="6" fill="#2d3748" opacity="0.9"/>
+    <text x="110" y="20" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
+      Layer 组成
+    </text>
+
+    <rect x="10" y="30" width="95" height="25" rx="4" fill="#4a5568"/>
+    <text x="57" y="47" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Source 素材源</text>
+
+    <rect x="115" y="30" width="95" height="25" rx="4" fill="#4a5568"/>
+    <text x="162" y="47" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Effects 效果</text>
+
+    <rect x="10" y="60" width="95" height="25" rx="4" fill="#4a5568"/>
+    <text x="57" y="77" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Masks 蒙版</text>
+
+    <rect x="115" y="60" width="95" height="25" rx="4" fill="#4a5568"/>
+    <text x="162" y="77" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Transform 变换</text>
+  </g>
+
+  <!-- Assets (connected to Project) -->
+  <g transform="translate(550, 70)">
+    <rect width="200" height="120" rx="8" fill="#ed8936" opacity="0.2" stroke="#ed8936" stroke-width="2"/>
+    <text x="100" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c05621" text-anchor="middle">
+      Assets 资源库
+    </text>
+
+    <rect x="20" y="35" width="160" height="20" rx="4" fill="#fbbf24" opacity="0.8"/>
+    <text x="100" y="49" font-family="Arial, sans-serif" font-size="10" fill="#744210" text-anchor="middle">video1.mp4</text>
+
+    <rect x="20" y="60" width="160" height="20" rx="4" fill="#fbbf24" opacity="0.8"/>
+    <text x="100" y="74" font-family="Arial, sans-serif" font-size="10" fill="#744210" text-anchor="middle">image1.png</text>
+
+    <rect x="20" y="85" width="160" height="20" rx="4" fill="#fbbf24" opacity="0.8"/>
+    <text x="100" y="99" font-family="Arial, sans-serif" font-size="10" fill="#744210" text-anchor="middle">audio1.wav</text>
+  </g>
+
+  <!-- Arrow from Project to Assets -->
+  <line x1="500" y1="100" x2="550" y2="100" stroke="#ed8936" stroke-width="2" stroke-dasharray="5,5"/>
+
+  <!-- Arrow from Assets to Layers -->
+  <line x1="580" y1="190" x2="370" y2="270" stroke="#ed8936" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowProj)"/>
+
+  <!-- Key concepts box -->
+  <rect x="400" y="330" width="360" height="90" rx="6" fill="#edf2f7"/>
+
+  <text x="580" y="350" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    核心概念 Key Concepts
+  </text>
+
+  <g transform="translate(410, 360)">
+    <circle cx="0" cy="0" r="3" fill="#667eea"/>
+    <text x="10" y="4" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      <tspan font-weight="bold">Project:</tspan> 顶层容器，包含所有资源和合成
+    </text>
+
+    <circle cx="0" cy="18" r="3" fill="#4299e1"/>
+    <text x="10" y="22" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      <tspan font-weight="bold">Composition:</tspan> 独立渲染单元，类似 AE 的 Comp
+    </text>
+
+    <circle cx="0" cy="36" r="3" fill="#48bb78"/>
+    <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      <tspan font-weight="bold">Layer:</tspan> 基本渲染单元，支持嵌套合成
+    </text>
+
+    <circle cx="0" cy="54" r="3" fill="#ed8936"/>
+    <text x="10" y="58" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      <tspan font-weight="bold">Asset:</tspan> 媒体文件、素材的引用
+    </text>
+  </g>
+</svg>

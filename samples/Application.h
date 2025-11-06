@@ -1,12 +1,17 @@
 #pragma once
 
 #include <clipengine/core/CompositionEngine.h>
+// 新架构 - Layer + Effect API
+#include <clipengine/layers/VideoLayer.h>
+#include <clipengine/layers/ImageLayer.h>
+#include <clipengine/effects/ColorAdjustEffect.h>
+// 旧架构 - 临时保留用于渲染
 #include <clipengine/layers/VideoRenderer.h>
+#include <clipengine/layers/TextureRenderer.h>
 #ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
 #include <clipengine/debug/DebugWindow.h>
 #endif
 #include <clipengine/export/VideoExporter.h>
-#include <clipengine/effects/ShaderEffect.h>
 #include <clipengine/input/InputSystem.h>
 #include <clipengine/input/InputSystemGLFWAdapter.h>
 
@@ -29,7 +34,7 @@ public:
 private:
     void setupScene();
     void setupInputCallbacks();
-    void setupInputEventListeners();  // New: Setup InputSystem event listeners
+    void setupInputEventListeners();
     void exportVideo();
     void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
     void updateVideoFrame();
@@ -48,8 +53,16 @@ private:
     std::string title_ = "ClipEngine Video Example";
 
     CompositionEngine engine_;
+
+    // 新架构 - Layer + Effect API
+    std::shared_ptr<clipengine::VideoLayer> videoLayer_;
+    std::shared_ptr<clipengine::ImageLayer> imageLayer_;
+    std::shared_ptr<clipengine::ColorAdjustEffect> colorEffect_;
+
+    // 旧架构 - 临时保留的渲染器指针（用于实际渲染）
     VideoRenderer* videoRenderer_ = nullptr;
-    TextureRenderer* imageRenderer_ = nullptr;  // For displaying loaded images
+    TextureRenderer* imageRenderer_ = nullptr;
+
 #ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
     DebugWindow debugWindow_;
 #endif
@@ -69,9 +82,8 @@ private:
     // Export state
     bool isExporting_ = false;
 
-    // Color adjustment filter
-    ShaderEffect* colorAdjust_ = nullptr;
-    float brightness_ = 0.0f;
+    // 颜色调整参数 (新 API: 1.0 = 正常)
+    float brightness_ = 1.0f;  // 新 API: 0.0 - 2.0, 1.0 = 正常
     float contrast_ = 1.0f;
     float saturation_ = 1.0f;
     float exposure_ = 0.0f;

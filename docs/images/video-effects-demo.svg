@@ -1,0 +1,117 @@
+<svg width="750" height="420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="videoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <filter id="blurEffect">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="750" height="420" fill="#1a202c"/>
+
+  <!-- Title -->
+  <text x="375" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
+    视频特效演示 Video Effects Demo
+  </text>
+
+  <!-- Before/After comparison -->
+  <text x="190" y="70" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#a0aec0" text-anchor="middle">
+    原始视频 Original
+  </text>
+
+  <text x="560" y="70" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#48bb78" text-anchor="middle">
+    应用特效后 With Effects
+  </text>
+
+  <!-- Original video -->
+  <rect x="40" y="85" width="300" height="280" rx="8" fill="#2d3748"/>
+  <rect x="50" y="95" width="280" height="260" rx="4" fill="url(#videoGrad)" opacity="0.4"/>
+  <circle cx="190" cy="225" r="40" fill="#ffffff" opacity="0.2"/>
+
+  <!-- Arrow -->
+  <g transform="translate(355, 225)">
+    <line x1="0" y1="0" x2="30" y2="0" stroke="#48bb78" stroke-width="3"/>
+    <polygon points="30,-5 40,0 30,5" fill="#48bb78"/>
+  </g>
+
+  <!-- Effects applied video -->
+  <rect x="410" y="85" width="300" height="280" rx="8" fill="#2d3748"/>
+  <rect x="420" y="95" width="280" height="260" rx="4" fill="url(#videoGrad)" opacity="0.8"/>
+  <circle cx="560" cy="225" r="40" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Effect labels on right video -->
+  <g transform="translate(430, 110)">
+    <rect width="90" height="18" rx="9" fill="#4299e1" opacity="0.9"/>
+    <text x="45" y="13" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">色彩校正 +0.3</text>
+  </g>
+
+  <g transform="translate(530, 110)">
+    <rect width="70" height="18" rx="9" fill="#48bb78" opacity="0.9"/>
+    <text x="35" y="13" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">饱和度 1.4</text>
+  </g>
+
+  <g transform="translate(430, 135)">
+    <rect width="75" height="18" rx="9" fill="#f6ad55" opacity="0.9"/>
+    <text x="37" y="13" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">对比度 1.2</text>
+  </g>
+
+  <g transform="translate(515" y="135)">
+    <rect width="85" height="18" rx="9" fill="#9f7aea" opacity="0.9"/>
+    <text x="42" y="13" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">锐化 Sharpen</text>
+  </g>
+
+  <!-- Effect chain visualization at bottom -->
+  <rect x="40" y="380" width="670" height="35" rx="8" fill="#2d3748"/>
+
+  <text x="50" y="400" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e2e8f0">
+    效果链:
+  </text>
+
+  <!-- Chain items -->
+  <g transform="translate(110, 385)">
+    <rect width="80" height="24" rx="4" fill="#4299e1"/>
+    <text x="40" y="16" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">色彩校正</text>
+  </g>
+
+  <text x="200" y="400" font-family="Arial, sans-serif" font-size="14" fill="#718096">→</text>
+
+  <g transform="translate(220, 385)">
+    <rect width="80" height="24" rx="4" fill="#48bb78"/>
+    <text x="40" y="16" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">饱和度</text>
+  </g>
+
+  <text x="310" y="400" font-family="Arial, sans-serif" font-size="14" fill="#718096">→</text>
+
+  <g transform="translate(330, 385)">
+    <rect width="80" height="24" rx="4" fill="#f6ad55"/>
+    <text x="40" y="16" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">对比度</text>
+  </g>
+
+  <text x="420" y="400" font-family="Arial, sans-serif" font-size="14" fill="#718096">→</text>
+
+  <g transform="translate(440, 385)">
+    <rect width="80" height="24" rx="4" fill="#9f7aea"/>
+    <text x="40" y="16" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">锐化</text>
+  </g>
+
+  <text x="530" y="400" font-family="Arial, sans-serif" font-size="14" fill="#718096">→</text>
+
+  <g transform="translate(550, 385)">
+    <rect width="80" height="24" rx="4" fill="#fc8181"/>
+    <text x="40" y="16" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">输出</text>
+  </g>
+
+  <!-- Performance note -->
+  <g transform="translate(650, 390)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="9" fill="#48bb78" font-weight="bold">⚡ GPU</text>
+    <text x="0" y="12" font-family="Arial, sans-serif" font-size="8" fill="#a0aec0">实时</text>
+  </g>
+
+  <!-- Note about GIF -->
+  <text x="375" y="415" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" opacity="0.7">
+    📹 实际 GIF 演示将显示参数调整的实时效果变化
+  </text>
+</svg>

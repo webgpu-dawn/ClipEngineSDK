@@ -1,0 +1,587 @@
+<svg width="1200" height="900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="detailGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="detailGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="detailGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="detailGrad4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6ad55;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ed8936;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="detailGrad5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fc8181;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f56565;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrowDetail" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4a5568" />
+    </marker>
+    <marker id="arrowDetailDashed" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#cbd5e0" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    ClipEngine SDK 详细架构图 Detailed Architecture
+  </text>
+
+  <!-- Legend -->
+  <g transform="translate(950, 60)">
+    <rect width="230" height="120" rx="6" fill="#edf2f7"/>
+    <text x="115" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2d3748" text-anchor="middle">
+      模块状态 Status
+    </text>
+
+    <rect x="10" y="30" width="60" height="20" rx="4" fill="#48bb78" opacity="0.9"/>
+    <text x="80" y="44" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      ✅ 已实现
+    </text>
+
+    <rect x="10" y="55" width="60" height="20" rx="4" fill="#f6ad55" opacity="0.9"/>
+    <text x="80" y="69" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      ⚠️ 部分实现
+    </text>
+
+    <rect x="10" y="80" width="60" height="20" rx="4" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+    <text x="80" y="94" font-family="Arial, sans-serif" font-size="10" fill="#4a5568">
+      ❌ 待实现
+    </text>
+  </g>
+
+  <!-- Layer 1: Core Engine (Bottom) -->
+  <g transform="translate(50, 750)">
+    <rect width="1100" height="120" rx="8" fill="url(#detailGrad1)" opacity="0.1" stroke="url(#detailGrad1)" stroke-width="3"/>
+    <text x="550" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#667eea" text-anchor="middle">
+      Layer 1: Core Engine 核心引擎层
+    </text>
+
+    <!-- Core modules -->
+    <g transform="translate(20, 40)">
+      <rect width="180" height="65" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="90" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ RenderDevice
+      </text>
+      <text x="90" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        WebGPU 设备管理
+      </text>
+      <text x="90" y="53" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        Instance • Adapter • Device
+      </text>
+    </g>
+
+    <g transform="translate(220, 40)">
+      <rect width="180" height="65" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="90" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ GPU Abstraction
+      </text>
+      <text x="90" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        GPU 抽象层
+      </text>
+      <text x="90" y="53" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        Pipeline • Shader • Buffer
+      </text>
+    </g>
+
+    <g transform="translate(420, 40)">
+      <rect width="180" height="65" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="90" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ Utils
+      </text>
+      <text x="90" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        工具模块
+      </text>
+      <text x="90" y="53" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        Logger • Timer • Inspector
+      </text>
+    </g>
+
+    <g transform="translate(620, 40)">
+      <rect width="180" height="65" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="90" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ InputSystem
+      </text>
+      <text x="90" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        输入系统
+      </text>
+      <text x="90" y="53" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        Mouse • Keyboard • Event
+      </text>
+    </g>
+
+    <g transform="translate(820, 40)">
+      <rect width="260" height="65" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="130" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Cache System
+      </text>
+      <text x="130" y="38" font-family="Arial, sans-serif" font-size="10" fill="#fc8181" text-anchor="middle">
+        三层缓存系统
+      </text>
+      <text x="130" y="53" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        L1 (RAM) • L2 (Disk) • L3 (Network)
+      </text>
+    </g>
+  </g>
+
+  <!-- Layer 2: Rendering System -->
+  <g transform="translate(50, 570)">
+    <rect width="1100" height="160" rx="8" fill="url(#detailGrad2)" opacity="0.1" stroke="url(#detailGrad2)" stroke-width="3"/>
+    <text x="550" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#38a169" text-anchor="middle">
+      Layer 2: Rendering System 渲染系统层
+    </text>
+
+    <!-- Left column -->
+    <g transform="translate(20, 40)">
+      <rect width="250" height="100" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="125" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ CompositionEngine
+      </text>
+      <text x="125" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        合成引擎
+      </text>
+      <text x="125" y="55" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 多图层合成管理
+      </text>
+      <text x="125" y="69" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • Z-order 排序
+      </text>
+      <text x="125" y="83" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 图层渲染循环
+      </text>
+    </g>
+
+    <g transform="translate(290, 40)">
+      <rect width="250" height="100" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="125" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ OffscreenRenderer
+      </text>
+      <text x="125" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        离屏渲染器
+      </text>
+      <text x="125" y="55" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 帧缓冲渲染
+      </text>
+      <text x="125" y="69" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 纹理读回
+      </text>
+      <text x="125" y="83" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 导出支持
+      </text>
+    </g>
+
+    <g transform="translate(560, 40)">
+      <rect width="250" height="100" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="125" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ ShaderLibrary
+      </text>
+      <text x="125" y="38" font-family="Arial, sans-serif" font-size="10" fill="#c6f6d5" text-anchor="middle">
+        着色器库
+      </text>
+      <text x="125" y="55" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • WGSL 着色器管理
+      </text>
+      <text x="125" y="69" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 动态加载
+      </text>
+      <text x="125" y="83" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 参数绑定
+      </text>
+    </g>
+
+    <g transform="translate(830, 40)">
+      <rect width="250" height="100" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="125" y="22" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ ColorManagement
+      </text>
+      <text x="125" y="38" font-family="Arial, sans-serif" font-size="10" fill="#fc8181" text-anchor="middle">
+        色彩管理
+      </text>
+      <text x="125" y="55" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 色彩空间转换
+      </text>
+      <text x="125" y="69" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • LUT 应用
+      </text>
+      <text x="125" y="83" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • OCIO 支持
+      </text>
+    </g>
+  </g>
+
+  <!-- Layer 3: Layer & Effect System -->
+  <g transform="translate(50, 340)">
+    <rect width="530" height="210" rx="8" fill="url(#detailGrad3)" opacity="0.1" stroke="url(#detailGrad3)" stroke-width="3"/>
+    <text x="265" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#3182ce" text-anchor="middle">
+      Layer 3: Layer System 图层系统
+    </text>
+
+    <!-- Layer types -->
+    <g transform="translate(20, 40)">
+      <rect width="240" height="70" rx="6" fill="#f6ad55" opacity="0.9"/>
+      <text x="120" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ⚠️ CompositionLayer
+      </text>
+      <text x="120" y="35" font-family="Arial, sans-serif" font-size="9" fill="#fffaf0" text-anchor="middle">
+        图层抽象基类
+      </text>
+      <text x="120" y="50" font-family="Arial, sans-serif" font-size="9" fill="#ffefd5" text-anchor="middle">
+        • Transform • Visibility
+      </text>
+      <text x="120" y="63" font-family="Arial, sans-serif" font-size="9" fill="#ffefd5" text-anchor="middle">
+        • Z-order • FilterChain
+      </text>
+    </g>
+
+    <g transform="translate(270, 40)">
+      <rect width="240" height="70" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="120" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ VideoRenderer
+      </text>
+      <text x="120" y="35" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+        视频图层 (FFmpeg)
+      </text>
+      <text x="120" y="50" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • H.264/H.265 解码
+      </text>
+      <text x="120" y="63" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 时间轴同步
+      </text>
+    </g>
+
+    <g transform="translate(20, 120)">
+      <rect width="115" height="70" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="57" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ Texture
+      </text>
+      <text x="57" y="35" font-family="Arial, sans-serif" font-size="8" fill="#c6f6d5" text-anchor="middle">
+        纹理图层
+      </text>
+      <text x="57" y="48" font-family="Arial, sans-serif" font-size="8" fill="#f0fff4" text-anchor="middle">
+        • GPU纹理
+      </text>
+      <text x="57" y="60" font-family="Arial, sans-serif" font-size="8" fill="#f0fff4" text-anchor="middle">
+        • 渲染目标
+      </text>
+    </g>
+
+    <g transform="translate(145, 120)">
+      <rect width="115" height="70" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="57" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Image
+      </text>
+      <text x="57" y="35" font-family="Arial, sans-serif" font-size="8" fill="#fc8181" text-anchor="middle">
+        图片图层
+      </text>
+      <text x="57" y="48" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • PNG/JPG
+      </text>
+      <text x="57" y="60" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • stb_image
+      </text>
+    </g>
+
+    <g transform="translate(270, 120)">
+      <rect width="115" height="70" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="57" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Text
+      </text>
+      <text x="57" y="35" font-family="Arial, sans-serif" font-size="8" fill="#fc8181" text-anchor="middle">
+        文本图层
+      </text>
+      <text x="57" y="48" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • 字体渲染
+      </text>
+      <text x="57" y="60" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • 文本样式
+      </text>
+    </g>
+
+    <g transform="translate(395, 120)">
+      <rect width="115" height="70" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="57" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Shape
+      </text>
+      <text x="57" y="35" font-family="Arial, sans-serif" font-size="8" fill="#fc8181" text-anchor="middle">
+        形状图层
+      </text>
+      <text x="57" y="48" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • 矢量绘制
+      </text>
+      <text x="57" y="60" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        • 路径动画
+      </text>
+    </g>
+  </g>
+
+  <!-- Effect System (right side of Layer 3) -->
+  <g transform="translate(600, 340)">
+    <rect width="550" height="210" rx="8" fill="url(#detailGrad4)" opacity="0.1" stroke="url(#detailGrad4)" stroke-width="3"/>
+    <text x="275" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ed8936" text-anchor="middle">
+      Layer 3: Effect System 效果系统
+    </text>
+
+    <!-- Effect core -->
+    <g transform="translate(20, 40)">
+      <rect width="250" height="70" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="125" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ Filter & FilterChain
+      </text>
+      <text x="125" y="35" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+        滤镜基类 + 滤镜链
+      </text>
+      <text x="125" y="50" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 多通道渲染
+      </text>
+      <text x="125" y="63" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 参数管理
+      </text>
+    </g>
+
+    <g transform="translate(280, 40)">
+      <rect width="250" height="70" rx="6" fill="#48bb78" opacity="0.9"/>
+      <text x="125" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ✅ ShaderEffect
+      </text>
+      <text x="125" y="35" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+        着色器特效
+      </text>
+      <text x="125" y="50" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • 自定义 WGSL
+      </text>
+      <text x="125" y="63" font-family="Arial, sans-serif" font-size="9" fill="#f0fff4" text-anchor="middle">
+        • JSON 配置加载
+      </text>
+    </g>
+
+    <!-- Effect categories -->
+    <g transform="translate(20, 120)">
+      <rect width="125" height="70" rx="6" fill="#f6ad55" opacity="0.9"/>
+      <text x="62" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ⚠️ Color
+      </text>
+      <text x="62" y="32" font-family="Arial, sans-serif" font-size="8" fill="#fffaf0" text-anchor="middle">
+        色彩校正
+      </text>
+      <text x="62" y="45" font-family="Arial, sans-serif" font-size="8" fill="#ffefd5" text-anchor="middle">
+        色阶·曲线
+      </text>
+      <text x="62" y="57" font-family="Arial, sans-serif" font-size="8" fill="#ffefd5" text-anchor="middle">
+        HSL·曝光
+      </text>
+    </g>
+
+    <g transform="translate(155, 120)">
+      <rect width="125" height="70" rx="6" fill="#f6ad55" opacity="0.9"/>
+      <text x="62" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">
+        ⚠️ Blur
+      </text>
+      <text x="62" y="32" font-family="Arial, sans-serif" font-size="8" fill="#fffaf0" text-anchor="middle">
+        模糊效果
+      </text>
+      <text x="62" y="45" font-family="Arial, sans-serif" font-size="8" fill="#ffefd5" text-anchor="middle">
+        高斯·径向
+      </text>
+      <text x="62" y="57" font-family="Arial, sans-serif" font-size="8" fill="#ffefd5" text-anchor="middle">
+        方向·景深
+      </text>
+    </g>
+
+    <g transform="translate(290, 120)">
+      <rect width="120" height="70" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="60" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Distort
+      </text>
+      <text x="60" y="32" font-family="Arial, sans-serif" font-size="8" fill="#fc8181" text-anchor="middle">
+        扭曲变形
+      </text>
+      <text x="60" y="45" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        镜头扭曲
+      </text>
+      <text x="60" y="57" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        涟漪·球面化
+      </text>
+    </g>
+
+    <g transform="translate(420, 120)">
+      <rect width="110" height="70" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="55" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Stylize
+      </text>
+      <text x="55" y="32" font-family="Arial, sans-serif" font-size="8" fill="#fc8181" text-anchor="middle">
+        风格化
+      </text>
+      <text x="55" y="45" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        发光·描边
+      </text>
+      <text x="55" y="57" font-family="Arial, sans-serif" font-size="8" fill="#feb2b2" text-anchor="middle">
+        卡通·油画
+      </text>
+    </g>
+  </g>
+
+  <!-- Layer 4: Project Management -->
+  <g transform="translate(50, 150)">
+    <rect width="530" height="170" rx="8" fill="url(#detailGrad5)" opacity="0.1" stroke="url(#detailGrad5)" stroke-width="3"/>
+    <text x="265" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#f56565" text-anchor="middle">
+      Layer 4: Project Management 项目管理层
+    </text>
+
+    <g transform="translate(20, 40)">
+      <rect width="240" height="110" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="120" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Project
+      </text>
+      <text x="120" y="35" font-family="Arial, sans-serif" font-size="9" fill="#fc8181" text-anchor="middle">
+        项目管理
+      </text>
+      <text x="120" y="52" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 项目保存/加载
+      </text>
+      <text x="120" y="66" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 多 Composition 管理
+      </text>
+      <text x="120" y="80" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 版本控制
+      </text>
+      <text x="120" y="94" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 协作支持
+      </text>
+    </g>
+
+    <g transform="translate(270, 40)">
+      <rect width="240" height="110" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="120" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ AssetManager
+      </text>
+      <text x="120" y="35" font-family="Arial, sans-serif" font-size="9" fill="#fc8181" text-anchor="middle">
+        资源管理器
+      </text>
+      <text x="120" y="52" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 视频/图片/音频
+      </text>
+      <text x="120" y="66" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 资源索引/搜索
+      </text>
+      <text x="120" y="80" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 引用计数
+      </text>
+      <text x="120" y="94" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 缩略图生成
+      </text>
+    </g>
+  </g>
+
+  <!-- Layer 4 right: Animation & Timeline -->
+  <g transform="translate(600, 150)">
+    <rect width="550" height="170" rx="8" fill="url(#detailGrad5)" opacity="0.1" stroke="url(#detailGrad5)" stroke-width="3"/>
+    <text x="275" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#f56565" text-anchor="middle">
+      Layer 4: Animation & Timeline 动画时间轴层
+    </text>
+
+    <g transform="translate(20, 40)">
+      <rect width="250" height="110" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="125" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Timeline
+      </text>
+      <text x="125" y="35" font-family="Arial, sans-serif" font-size="9" fill="#fc8181" text-anchor="middle">
+        时间轴系统
+      </text>
+      <text x="125" y="52" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 时间码管理
+      </text>
+      <text x="125" y="66" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 图层时间区间
+      </text>
+      <text x="125" y="80" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 播放控制
+      </text>
+      <text x="125" y="94" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 标记/注释
+      </text>
+    </g>
+
+    <g transform="translate(280, 40)">
+      <rect width="250" height="110" rx="6" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="125" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c53030" text-anchor="middle">
+        ❌ Animation
+      </text>
+      <text x="125" y="35" font-family="Arial, sans-serif" font-size="9" fill="#fc8181" text-anchor="middle">
+        动画系统
+      </text>
+      <text x="125" y="52" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 关键帧动画
+      </text>
+      <text x="125" y="66" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 缓动函数
+      </text>
+      <text x="125" y="80" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 表达式引擎
+      </text>
+      <text x="125" y="94" font-family="Arial, sans-serif" font-size="9" fill="#feb2b2" text-anchor="middle">
+        • 贝塞尔插值
+      </text>
+    </g>
+  </g>
+
+  <!-- Layer 5: Export & UI -->
+  <g transform="translate(50, 60)">
+    <rect width="1100" height="70" rx="8" fill="url(#detailGrad3)" opacity="0.1" stroke="url(#detailGrad3)" stroke-width="3"/>
+    <text x="550" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#3182ce" text-anchor="middle">
+      Layer 5: Export & UI 导出与用户界面层
+    </text>
+
+    <g transform="translate(20, 35)">
+      <rect width="240" height="25" rx="4" fill="#48bb78" opacity="0.9"/>
+      <text x="120" y="17" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">
+        ✅ VideoExporter (FFmpeg)
+      </text>
+    </g>
+
+    <g transform="translate(270, 35)">
+      <rect width="240" height="25" rx="4" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="120" y="17" font-family="Arial, sans-serif" font-size="11" fill="#c53030" text-anchor="middle">
+        ❌ ImageExporter
+      </text>
+    </g>
+
+    <g transform="translate(520, 35)">
+      <rect width="240" height="25" rx="4" fill="#fc8181" opacity="0.2" stroke="#fc8181" stroke-width="2"/>
+      <text x="120" y="17" font-family="Arial, sans-serif" font-size="11" fill="#c53030" text-anchor="middle">
+        ❌ AudioExporter
+      </text>
+    </g>
+
+    <g transform="translate(770, 35)">
+      <rect width="240" height="25" rx="4" fill="#48bb78" opacity="0.9"/>
+      <text x="120" y="17" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">
+        ✅ DebugWindow (ImGui)
+      </text>
+    </g>
+  </g>
+
+  <!-- Dependencies -->
+  <line x1="140" y1="750" x2="140" y2="730" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+  <line x1="415" y1="730" x2="415" y2="750" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+  <line x1="685" y1="730" x2="685" y2="750" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+
+  <line x1="325" y1="550" x2="325" y2="570" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+  <line x1="875" y1="550" x2="875" y2="570" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+
+  <line x1="315" y1="340" x2="315" y2="360" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+  <line x1="875" y1="340" x2="875" y2="360" stroke="#4a5568" stroke-width="2" marker-end="url(#arrowDetail)"/>
+
+  <line x1="315" y1="150" x2="315" y2="170" stroke="#cbd5e0" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowDetailDashed)"/>
+  <line x1="875" y1="150" x2="875" y2="170" stroke="#cbd5e0" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowDetailDashed)"/>
+
+  <!-- Summary -->
+  <text x="600" y="895" font-family="Arial, sans-serif" font-size="11" fill="#718096" text-anchor="middle">
+    实现进度: Core ✅ | Rendering ✅ | Layers ⚠️ | Effects ⚠️ | Project ❌ | Animation ❌ | Total: 60% Complete
+  </text>
+</svg>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #2d3748; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 14px; fill: #4a5568; }
+      .layer-title { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #2d3748; }
+      .module-title { font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; fill: white; }
+      .module-subtitle { font-family: Arial, sans-serif; font-size: 10px; fill: rgba(255,255,255,0.8); }
+      .status-done { fill: #48bb78; }
+      .status-partial { fill: #ed8936; }
+      .status-todo { fill: #fc8181; opacity: 0.3; stroke: #fc8181; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="500" y="30" class="title" text-anchor="middle">ClipEngine SDK 架构图</text>
+  <text x="500" y="50" class="subtitle" text-anchor="middle">Five-Layer Architecture (60% Complete)</text>
+
+  <!-- Legend -->
+  <g transform="translate(750, 70)">
+    <rect x="0" y="0" width="200" height="80" rx="4" fill="#f7fafc" stroke="#cbd5e0"/>
+    <text x="100" y="20" class="subtitle" text-anchor="middle">实现状态</text>
+    <rect x="10" y="30" width="40" height="15" class="status-done"/>
+    <text x="55" y="42" class="subtitle">已实现</text>
+    <rect x="10" y="50" width="40" height="15" class="status-partial"/>
+    <text x="55" y="62" class="subtitle">部分实现</text>
+    <rect x="10" y="70" width="40" height="15" class="status-todo"/>
+    <text x="55" y="82" class="subtitle">待实现</text>
+  </g>
+
+  <!-- Layer 5: Export & UI -->
+  <g transform="translate(50, 80)">
+    <rect width="700" height="60" rx="6" fill="#e2e8f0"/>
+    <text x="10" y="25" class="layer-title">Layer 5: Export & UI 导出与界面层</text>
+
+    <rect x="10" y="35" width="160" height="20" rx="3" class="status-done"/>
+    <text x="90" y="49" class="module-title" text-anchor="middle">VideoExporter</text>
+
+    <rect x="180" y="35" width="160" height="20" rx="3" class="status-todo"/>
+    <text x="260" y="49" class="module-title" text-anchor="middle">ImageExporter</text>
+
+    <rect x="350" y="35" width="160" height="20" rx="3" class="status-done"/>
+    <text x="430" y="49" class="module-title" text-anchor="middle">DebugWindow</text>
+
+    <rect x="520" y="35" width="160" height="20" rx="3" class="status-todo"/>
+    <text x="600" y="49" class="module-title" text-anchor="middle">AudioExporter</text>
+  </g>
+
+  <!-- Layer 4: Project Management -->
+  <g transform="translate(50, 160)">
+    <rect width="700" height="100" rx="6" fill="#fed7d7"/>
+    <text x="10" y="25" class="layer-title">Layer 4: Project Management 项目管理层</text>
+
+    <rect x="10" y="40" width="160" height="50" rx="3" class="status-todo"/>
+    <text x="90" y="57" class="module-title" text-anchor="middle">Project</text>
+    <text x="90" y="70" class="module-subtitle" text-anchor="middle">项目管理</text>
+    <text x="90" y="82" class="module-subtitle" text-anchor="middle">保存/加载</text>
+
+    <rect x="180" y="40" width="160" height="50" rx="3" class="status-todo"/>
+    <text x="260" y="57" class="module-title" text-anchor="middle">AssetManager</text>
+    <text x="260" y="70" class="module-subtitle" text-anchor="middle">资源管理</text>
+    <text x="260" y="82" class="module-subtitle" text-anchor="middle">索引/搜索</text>
+
+    <rect x="350" y="40" width="160" height="50" rx="3" class="status-todo"/>
+    <text x="430" y="57" class="module-title" text-anchor="middle">Timeline</text>
+    <text x="430" y="70" class="module-subtitle" text-anchor="middle">时间轴</text>
+    <text x="430" y="82" class="module-subtitle" text-anchor="middle">播放控制</text>
+
+    <rect x="520" y="40" width="160" height="50" rx="3" class="status-todo"/>
+    <text x="600" y="57" class="module-title" text-anchor="middle">Animation</text>
+    <text x="600" y="70" class="module-subtitle" text-anchor="middle">关键帧</text>
+    <text x="600" y="82" class="module-subtitle" text-anchor="middle">缓动函数</text>
+  </g>
+
+  <!-- Layer 3: Layer & Effect System -->
+  <g transform="translate(50, 280)">
+    <rect width="700" height="120" rx="6" fill="#feebc8"/>
+    <text x="10" y="25" class="layer-title">Layer 3: Layer & Effect System 图层与效果系统</text>
+
+    <!-- Layers -->
+    <rect x="10" y="40" width="100" height="70" rx="3" class="status-partial"/>
+    <text x="60" y="57" class="module-title" text-anchor="middle">CompositionLayer</text>
+    <text x="60" y="70" class="module-subtitle" text-anchor="middle">图层基类</text>
+    <text x="60" y="83" class="module-subtitle" text-anchor="middle">✓ Video</text>
+    <text x="60" y="96" class="module-subtitle" text-anchor="middle">✗ Image/Text</text>
+
+    <rect x="120" y="40" width="100" height="70" rx="3" class="status-done"/>
+    <text x="170" y="57" class="module-title" text-anchor="middle">VideoRenderer</text>
+    <text x="170" y="70" class="module-subtitle" text-anchor="middle">视频图层</text>
+    <text x="170" y="83" class="module-subtitle" text-anchor="middle">FFmpeg</text>
+
+    <rect x="230" y="40" width="100" height="70" rx="3" class="status-todo"/>
+    <text x="280" y="57" class="module-title" text-anchor="middle">ImageLayer</text>
+    <text x="280" y="70" class="module-subtitle" text-anchor="middle">图片图层</text>
+    <text x="280" y="83" class="module-subtitle" text-anchor="middle">stb_image</text>
+
+    <!-- Effects -->
+    <rect x="360" y="40" width="100" height="70" rx="3" class="status-done"/>
+    <text x="410" y="57" class="module-title" text-anchor="middle">Filter</text>
+    <text x="410" y="70" class="module-subtitle" text-anchor="middle">滤镜基类</text>
+    <text x="410" y="83" class="module-subtitle" text-anchor="middle">FilterChain</text>
+
+    <rect x="470" y="40" width="100" height="70" rx="3" class="status-partial"/>
+    <text x="520" y="57" class="module-title" text-anchor="middle">Effects</text>
+    <text x="520" y="70" class="module-subtitle" text-anchor="middle">✓ Color/Blur</text>
+    <text x="520" y="83" class="module-subtitle" text-anchor="middle">✗ Distort</text>
+    <text x="520" y="96" class="module-subtitle" text-anchor="middle">✗ Stylize</text>
+
+    <rect x="580" y="40" width="100" height="70" rx="3" class="status-done"/>
+    <text x="630" y="57" class="module-title" text-anchor="middle">ShaderEffect</text>
+    <text x="630" y="70" class="module-subtitle" text-anchor="middle">自定义着色器</text>
+    <text x="630" y="83" class="module-subtitle" text-anchor="middle">JSON配置</text>
+  </g>
+
+  <!-- Layer 2: Rendering System -->
+  <g transform="translate(50, 420)">
+    <rect width="700" height="100" rx="6" fill="#c6f6d5"/>
+    <text x="10" y="25" class="layer-title">Layer 2: Rendering System 渲染系统层</text>
+
+    <rect x="10" y="40" width="160" height="50" rx="3" class="status-done"/>
+    <text x="90" y="57" class="module-title" text-anchor="middle">CompositionEngine</text>
+    <text x="90" y="70" class="module-subtitle" text-anchor="middle">多图层合成</text>
+    <text x="90" y="82" class="module-subtitle" text-anchor="middle">Z-order 排序</text>
+
+    <rect x="180" y="40" width="160" height="50" rx="3" class="status-done"/>
+    <text x="260" y="57" class="module-title" text-anchor="middle">OffscreenRenderer</text>
+    <text x="260" y="70" class="module-subtitle" text-anchor="middle">离屏渲染</text>
+    <text x="260" y="82" class="module-subtitle" text-anchor="middle">帧缓冲</text>
+
+    <rect x="350" y="40" width="160" height="50" rx="3" class="status-done"/>
+    <text x="430" y="57" class="module-title" text-anchor="middle">ShaderLibrary</text>
+    <text x="430" y="70" class="module-subtitle" text-anchor="middle">WGSL 着色器</text>
+    <text x="430" y="82" class="module-subtitle" text-anchor="middle">动态加载</text>
+
+    <rect x="520" y="40" width="160" height="50" rx="3" class="status-todo"/>
+    <text x="600" y="57" class="module-title" text-anchor="middle">ColorManagement</text>
+    <text x="600" y="70" class="module-subtitle" text-anchor="middle">色彩管理</text>
+    <text x="600" y="82" class="module-subtitle" text-anchor="middle">LUT · OCIO</text>
+  </g>
+
+  <!-- Layer 1: Core Engine -->
+  <g transform="translate(50, 540)">
+    <rect width="700" height="100" rx="6" fill="#d6bcfa"/>
+    <text x="10" y="25" class="layer-title">Layer 1: Core Engine 核心引擎层</text>
+
+    <rect x="10" y="40" width="130" height="50" rx="3" class="status-done"/>
+    <text x="75" y="57" class="module-title" text-anchor="middle">RenderDevice</text>
+    <text x="75" y="70" class="module-subtitle" text-anchor="middle">WebGPU</text>
+    <text x="75" y="82" class="module-subtitle" text-anchor="middle">设备管理</text>
+
+    <rect x="150" y="40" width="130" height="50" rx="3" class="status-done"/>
+    <text x="215" y="57" class="module-title" text-anchor="middle">GPU Abstraction</text>
+    <text x="215" y="70" class="module-subtitle" text-anchor="middle">Pipeline</text>
+    <text x="215" y="82" class="module-subtitle" text-anchor="middle">Shader · Buffer</text>
+
+    <rect x="290" y="40" width="130" height="50" rx="3" class="status-done"/>
+    <text x="355" y="57" class="module-title" text-anchor="middle">InputSystem</text>
+    <text x="355" y="70" class="module-subtitle" text-anchor="middle">输入事件</text>
+    <text x="355" y="82" class="module-subtitle" text-anchor="middle">Mouse · Keyboard</text>
+
+    <rect x="430" y="40" width="130" height="50" rx="3" class="status-done"/>
+    <text x="495" y="57" class="module-title" text-anchor="middle">Utils</text>
+    <text x="495" y="70" class="module-subtitle" text-anchor="middle">Logger · Timer</text>
+    <text x="495" y="82" class="module-subtitle" text-anchor="middle">Inspector</text>
+
+    <rect x="570" y="40" width="110" height="50" rx="3" class="status-todo"/>
+    <text x="625" y="57" class="module-title" text-anchor="middle">CacheSystem</text>
+    <text x="625" y="70" class="module-subtitle" text-anchor="middle">三层缓存</text>
+    <text x="625" y="82" class="module-subtitle" text-anchor="middle">L1/L2/L3</text>
+  </g>
+
+  <!-- Progress Bar -->
+  <g transform="translate(50, 660)">
+    <rect width="700" height="40" rx="6" fill="#edf2f7"/>
+    <text x="350" y="20" class="subtitle" text-anchor="middle">整体实现进度</text>
+
+    <!-- Progress bar background -->
+    <rect x="50" y="25" width="600" height="10" rx="5" fill="#e2e8f0"/>
+
+    <!-- Progress bar fill (60%) -->
+    <rect x="50" y="25" width="360" height="10" rx="5" fill="#48bb78"/>
+
+    <text x="350" y="38" class="subtitle" text-anchor="middle">60% Complete</text>
+  </g>
+
+  <!-- Summary -->
+  <g transform="translate(50, 720)">
+    <rect width="700" height="60" rx="6" fill="#f7fafc"/>
+    <text x="350" y="20" class="subtitle" text-anchor="middle">模块状态统计</text>
+
+    <text x="100" y="40" class="subtitle" text-anchor="middle">✅ Core: 100%</text>
+    <text x="250" y="40" class="subtitle" text-anchor="middle">✅ Rendering: 95%</text>
+    <text x="400" y="40" class="subtitle" text-anchor="middle">⚠️ Layers: 40%</text>
+    <text x="550" y="40" class="subtitle" text-anchor="middle">⚠️ Effects: 30%</text>
+
+    <text x="150" y="55" class="subtitle" text-anchor="middle">❌ Project: 0%</text>
+    <text x="350" y="55" class="subtitle" text-anchor="middle">❌ Animation: 0%</text>
+    <text x="550" y="55" class="subtitle" text-anchor="middle">❌ Cache: 0%</text>
+  </g>
+</svg>

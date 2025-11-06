@@ -1,0 +1,111 @@
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pipeGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pipeGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4a5568" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    渲染管线概览 Render Pipeline Overview
+  </text>
+
+  <!-- Stage 1: Input -->
+  <g transform="translate(50, 70)">
+    <rect width="150" height="80" rx="8" fill="url(#pipeGrad1)" opacity="0.85"/>
+    <text x="75" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">输入阶段</text>
+    <text x="75" y="48" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Input Stage</text>
+    <text x="75" y="65" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">• 视频解码</text>
+  </g>
+  <line x1="200" y1="110" x2="240" y2="110" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2: Layer Processing -->
+  <g transform="translate(240, 70)">
+    <rect width="150" height="80" rx="8" fill="url(#pipeGrad1)" opacity="0.85"/>
+    <text x="75" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">图层处理</text>
+    <text x="75" y="48" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Layer Process</text>
+    <text x="75" y="65" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">• 变换 • 蒙版</text>
+  </g>
+  <line x1="390" y1="110" x2="430" y2="110" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3: Effect Chain -->
+  <g transform="translate(430, 70)">
+    <rect width="150" height="80" rx="8" fill="url(#pipeGrad2)" opacity="0.85"/>
+    <text x="75" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">效果链</text>
+    <text x="75" y="48" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Effect Chain</text>
+    <text x="75" y="65" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">• GPU 计算</text>
+  </g>
+  <line x1="580" y1="110" x2="620" y2="110" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 4: Output -->
+  <g transform="translate(620, 70)">
+    <rect width="150" height="80" rx="8" fill="url(#pipeGrad2)" opacity="0.85"/>
+    <text x="75" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">输出</text>
+    <text x="75" y="48" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Output</text>
+    <text x="75" y="65" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">• 编码导出</text>
+  </g>
+
+  <!-- Parallel Processing -->
+  <g transform="translate(50, 200)">
+    <rect width="700" height="100" rx="8" fill="#48bb78" opacity="0.15" stroke="#48bb78" stroke-width="2"/>
+    <text x="350" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2f855a" text-anchor="middle">
+      并行处理 Parallel Processing
+    </text>
+
+    <rect x="20" y="40" width="200" height="50" rx="6" fill="#48bb78" opacity="0.8"/>
+    <text x="120" y="62" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">图层 A</text>
+    <text x="120" y="78" font-family="Arial, sans-serif" font-size="10" fill="#e6fffa" text-anchor="middle">Layer A Processing</text>
+
+    <rect x="250" y="40" width="200" height="50" rx="6" fill="#48bb78" opacity="0.8"/>
+    <text x="350" y="62" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">图层 B</text>
+    <text x="350" y="78" font-family="Arial, sans-serif" font-size="10" fill="#e6fffa" text-anchor="middle">Layer B Processing</text>
+
+    <rect x="480" y="40" width="200" height="50" rx="6" fill="#48bb78" opacity="0.8"/>
+    <text x="580" y="62" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">图层 C</text>
+    <text x="580" y="78" font-family="Arial, sans-serif" font-size="10" fill="#e6fffa" text-anchor="middle">Layer C Processing</text>
+  </g>
+
+  <!-- Cache System -->
+  <g transform="translate(50, 330)">
+    <rect width="700" height="130" rx="8" fill="#ed8936" opacity="0.15" stroke="#ed8936" stroke-width="2"/>
+    <text x="350" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c05621" text-anchor="middle">
+      三层缓存系统 Three-Tier Cache System
+    </text>
+
+    <!-- RAM Cache -->
+    <g transform="translate(50, 40)">
+      <rect width="180" height="70" rx="6" fill="#ed8936" opacity="0.9"/>
+      <text x="90" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">L1: RAM 缓存</text>
+      <text x="90" y="43" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">快速访问</text>
+      <text x="90" y="58" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">实时帧缓存</text>
+    </g>
+
+    <!-- Disk Cache -->
+    <g transform="translate(260, 40)">
+      <rect width="180" height="70" rx="6" fill="#dd6b20" opacity="0.9"/>
+      <text x="90" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">L2: 磁盘缓存</text>
+      <text x="90" y="43" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">持久化存储</text>
+      <text x="90" y="58" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">预渲染结果</text>
+    </g>
+
+    <!-- Network Cache -->
+    <g transform="translate(470, 40)">
+      <rect width="180" height="70" rx="6" fill="#c05621" opacity="0.9"/>
+      <text x="90" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">L3: 网络缓存</text>
+      <text x="90" y="43" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">分布式存储</text>
+      <text x="90" y="58" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">渲染农场</text>
+    </g>
+
+    <!-- Cache flow arrows -->
+    <line x1="230" y1="75" x2="260" y2="75" stroke="#c05621" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="440" y1="75" x2="470" y2="75" stroke="#c05621" stroke-width="2" marker-end="url(#arrow)"/>
+  </g>
+</svg>

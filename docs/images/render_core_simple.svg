@@ -1,0 +1,246 @@
+<svg width="900" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="layer-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="transform-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="filter-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6ad55;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ed8936;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2d3748" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="40" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    Simplified Render Core
+  </text>
+  <text x="450" y="65" font-family="Arial, sans-serif" font-size="14" fill="#718096" text-anchor="middle">
+    图层 + 变换 + 滤镜链
+  </text>
+
+  <!-- Module 1: Layer System -->
+  <g transform="translate(150, 100)">
+    <rect width="600" height="180" rx="10" fill="url(#layer-grad)" stroke="#5a67d8" stroke-width="3"/>
+    <text x="300" y="35" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      1️⃣ Layer System (图层系统)
+    </text>
+
+    <!-- Layer Types -->
+    <rect x="30" y="55" width="130" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="95" y="78" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      图层类型
+    </text>
+    <text x="40" y="98" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • ImageLayer
+    </text>
+    <text x="40" y="115" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • VideoLayer
+    </text>
+    <text x="40" y="132" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • SolidLayer
+    </text>
+    <text x="40" y="149" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • TextLayer
+    </text>
+
+    <!-- Properties -->
+    <rect x="180" y="55" width="180" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="270" y="78" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      图层属性
+    </text>
+    <text x="190" y="98" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Opacity (不透明度)
+    </text>
+    <text x="190" y="115" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Blend Mode (混合)
+    </text>
+    <text x="190" y="132" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Visible (可见性)
+    </text>
+    <text x="190" y="149" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Time Range (时间)
+    </text>
+
+    <!-- Output -->
+    <rect x="390" y="55" width="180" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="480" y="78" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      输出
+    </text>
+    <text x="400" y="98" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • GPU TextureView
+    </text>
+    <text x="400" y="115" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Format: RGBA8
+    </text>
+    <text x="400" y="132" font-family="Arial, sans-serif" font-size="11" fill="#e6e6ff" text-anchor="start">
+      • Location: GPU
+    </text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="450" y1="280" x2="450" y2="330" stroke="#2d3748" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="490" y="310" font-family="Arial, sans-serif" font-size="12" fill="#4a5568">
+    GPU 纹理
+  </text>
+
+  <!-- Module 2: Transform System -->
+  <g transform="translate(150, 330)">
+    <rect width="600" height="160" rx="10" fill="url(#transform-grad)" stroke="#38a169" stroke-width="3"/>
+    <text x="300" y="35" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      2️⃣ Transform System (变换系统)
+    </text>
+
+    <!-- 2D Transform -->
+    <rect x="40" y="55" width="250" height="90" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="165" y="75" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      2D 变换
+    </text>
+    <text x="50" y="92" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Position (位置: x, y)
+    </text>
+    <text x="50" y="107" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Rotation (旋转: angle)
+    </text>
+    <text x="50" y="122" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Scale (缩放: sx, sy)
+    </text>
+    <text x="50" y="137" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Anchor (锚点: ax, ay)
+    </text>
+
+    <!-- Matrix -->
+    <rect x="310" y="55" width="260" height="90" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="440" y="75" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      变换矩阵
+    </text>
+    <text x="320" y="92" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Matrix = T × R × S
+    </text>
+    <text x="320" y="107" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Upload to GPU (Uniform)
+    </text>
+    <text x="320" y="122" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Apply in Vertex Shader
+    </text>
+    <text x="320" y="137" font-family="Arial, sans-serif" font-size="11" fill="#e6ffe6" text-anchor="start">
+      • Support Animation
+    </text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="450" y1="490" x2="450" y2="540" stroke="#2d3748" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="490" y="520" font-family="Arial, sans-serif" font-size="12" fill="#4a5568">
+    变换后的帧
+  </text>
+
+  <!-- Module 3: Filter Chain -->
+  <g transform="translate(150, 540)">
+    <rect width="600" height="180" rx="10" fill="url(#filter-grad)" stroke="#ed8936" stroke-width="3"/>
+    <text x="300" y="35" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      3️⃣ Filter Chain (滤镜链)
+    </text>
+
+    <!-- Filter Categories -->
+    <rect x="30" y="55" width="135" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="97" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      滤镜分类
+    </text>
+    <text x="40" y="92" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Color Adjust
+    </text>
+    <text x="40" y="107" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Blur & Sharpen
+    </text>
+    <text x="40" y="122" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Distortion
+    </text>
+    <text x="40" y="137" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Stylize
+    </text>
+    <text x="40" y="152" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Custom Shaders
+    </text>
+
+    <!-- Pipeline -->
+    <rect x="185" y="55" width="190" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="280" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      滤镜管线
+    </text>
+    <text x="195" y="92" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Filter Order (顺序)
+    </text>
+    <text x="195" y="107" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Filter Parameters (参数)
+    </text>
+    <text x="195" y="122" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Ping-Pong Buffers
+    </text>
+    <text x="195" y="137" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Multi-pass Rendering
+    </text>
+    <text x="195" y="152" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • GPU Compute Shaders
+    </text>
+
+    <!-- Output -->
+    <rect x="395" y="55" width="175" height="110" rx="6" fill="#ffffff" opacity="0.2"/>
+    <text x="482" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      输出
+    </text>
+    <text x="405" y="92" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • 应用滤镜后的帧
+    </text>
+    <text x="405" y="107" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • GPU TextureView
+    </text>
+    <text x="405" y="122" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Format: RGBA8
+    </text>
+    <text x="405" y="137" font-family="Arial, sans-serif" font-size="10" fill="#fff5e6" text-anchor="start">
+      • Ready for Composite
+    </text>
+  </g>
+
+  <!-- Output -->
+  <ellipse cx="450" cy="755" rx="100" ry="30" fill="#2d3748" opacity="0.9"/>
+  <text x="450" y="753" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    最终输出
+  </text>
+  <text x="450" y="768" font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">
+    Final Output
+  </text>
+
+  <!-- Side Note: Data Flow -->
+  <g transform="translate(50, 150)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2d3748">
+      数据流
+    </text>
+    <line x1="20" y1="10" x2="20" y2="540" stroke="#cbd5e0" stroke-width="2" stroke-dasharray="5,5"/>
+    <polygon points="20,540 15,530 25,530" fill="#cbd5e0"/>
+
+    <text x="30" y="60" font-family="Arial, sans-serif" font-size="10" fill="#718096">
+      源数据
+    </text>
+    <text x="30" y="200" font-family="Arial, sans-serif" font-size="10" fill="#718096">
+      GPU 纹理
+    </text>
+    <text x="30" y="340" font-family="Arial, sans-serif" font-size="10" fill="#718096">
+      变换矩阵
+    </text>
+    <text x="30" y="480" font-family="Arial, sans-serif" font-size="10" fill="#718096">
+      滤镜处理
+    </text>
+  </g>
+
+  <!-- Footer -->
+  <text x="450" y="795" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0" text-anchor="middle">
+    ClipEngine Simplified Render Core | v1.0 | 2025-11
+  </text>
+</svg>

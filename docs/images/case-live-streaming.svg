@@ -1,0 +1,72 @@
+<svg width="250" height="180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="liveGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="spotlight">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="250" height="180" rx="8" fill="#0f172a"/>
+
+  <!-- Main video feed -->
+  <rect x="10" y="10" width="180" height="135" rx="4" fill="#1e293b"/>
+
+  <!-- Simulated video content with effects -->
+  <rect x="15" y="15" width="170" height="125" rx="2" fill="url(#liveGrad1)" opacity="0.6"/>
+
+  <!-- Camera feed silhouette -->
+  <ellipse cx="100" cy="60" rx="30" ry="40" fill="#ffffff" opacity="0.3"/>
+  <circle cx="100" cy="50" r="15" fill="#ffffff" opacity="0.4"/>
+
+  <!-- Live indicator -->
+  <rect x="20" y="20" width="50" height="20" rx="10" fill="#ef4444"/>
+  <circle cx="30" cy="30" r="4" fill="#ffffff">
+    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  <text x="40" y="33" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#ffffff">LIVE</text>
+
+  <!-- Effect overlays -->
+  <!-- Glow effect -->
+  <circle cx="100" cy="70" r="50" fill="url(#spotlight)" opacity="0.4"/>
+
+  <!-- Viewer count -->
+  <rect x="120" y="120" width="60" height="18" rx="9" fill="#1a202c" opacity="0.8"/>
+  <text x="150" y="132" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">👁 1.2K</text>
+
+  <!-- Right panel - Effect controls -->
+  <rect x="200" y="10" width="40" height="135" rx="4" fill="#1e293b"/>
+
+  <!-- Effect buttons -->
+  <circle cx="220" cy="25" r="12" fill="#4299e1" opacity="0.8"/>
+  <text x="220" y="29" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">🎨</text>
+
+  <circle cx="220" cy="50" r="12" fill="#48bb78" opacity="0.8"/>
+  <text x="220" y="54" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">✨</text>
+
+  <circle cx="220" cy="75" r="12" fill="#f6ad55" opacity="0.8"/>
+  <text x="220" y="79" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">🌟</text>
+
+  <circle cx="220" cy="100" r="12" fill="#9f7aea" opacity="0.8"/>
+  <text x="220" y="104" font-family="Arial, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle">🔥</text>
+
+  <!-- Record button -->
+  <circle cx="220" cy="125" r="12" fill="#ef4444"/>
+  <circle cx="220" cy="125" r="6" fill="#ffffff"/>
+
+  <!-- Bottom status bar -->
+  <rect x="10" y="155" width="230" height="15" rx="4" fill="#1e293b"/>
+  <rect x="15" y="158" width="180" height="9" rx="2" fill="#374151"/>
+  <rect x="15" y="158" width="120" height="9" rx="2" fill="#10b981"/>
+  <text x="205" y="166" font-family="Arial, sans-serif" font-size="8" fill="#9ca3af">1080p60</text>
+
+  <!-- Title overlay -->
+  <rect x="0" y="0" width="250" height="30" fill="#0f172a" opacity="0.9"/>
+  <text x="125" y="20" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    实时直播特效
+  </text>
+</svg>

@@ -83,11 +83,22 @@ add_library(clipengine STATIC
     src/clipengine/core/CompositionEngine.cpp
     src/clipengine/core/OffscreenRenderer.cpp
 
-    # Layers
+    # Transform (New Architecture)
+    src/clipengine/transform/Transform2D.cpp
+
+    # Layers (New Architecture)
+    src/clipengine/layers/Layer.cpp
+    src/clipengine/layers/VideoLayer.cpp
+    src/clipengine/layers/ImageLayer.cpp
+
+    # Layers (Old - kept for backward compatibility)
     src/clipengine/layers/TextureRenderer.cpp
     src/clipengine/layers/VideoRenderer.cpp
 
-    # Effects
+    # Effects (New Architecture)
+    src/clipengine/effects/ColorAdjustEffect.cpp
+
+    # Effects (Old - kept for backward compatibility)
     src/clipengine/effects/Filter.cpp
     src/clipengine/effects/FilterChain.cpp
     src/clipengine/effects/ShaderEffect.cpp
@@ -124,15 +135,34 @@ set(CLIPENGINE_PUBLIC_HEADERS
     src/clipengine/core/OffscreenRenderer.h
     src/clipengine/core/InputState.h
 
-    # Layers
+    # Transform (New Architecture)
+    src/clipengine/transform/Transform2D.h
+
+    # Layers (New Architecture)
+    src/clipengine/layers/Layer.h
+    src/clipengine/layers/VideoLayer.h
+    src/clipengine/layers/ImageLayer.h
+    src/clipengine/layers/SolidLayer.h
+
+    # Layers (Old - backward compatibility)
     src/clipengine/layers/TextureRenderer.h
     src/clipengine/layers/VideoRenderer.h
 
-    # Effects
+    # Effects (New Architecture)
+    src/clipengine/effects/Effect.h
+    src/clipengine/effects/ColorAdjustEffect.h
+
+    # Effects (Old - backward compatibility)
     src/clipengine/effects/Filter.h
     src/clipengine/effects/FilterChain.h
     src/clipengine/effects/ShaderEffect.h
     src/clipengine/effects/EffectLoader.h
+
+    # Compositor (New Architecture)
+    src/clipengine/compositor/Compositor.h
+
+    # Simple API (New Architecture)
+    src/clipengine/SimpleAPI.h
 
     # Shaders
     src/clipengine/shaders/ShaderLibrary.h
@@ -140,6 +170,17 @@ set(CLIPENGINE_PUBLIC_HEADERS
 
     # Export
     src/clipengine/export/VideoExporter.h
+
+    # Input
+    src/clipengine/input/InputEvent.h
+    src/clipengine/input/InputSystem.h
+    src/clipengine/input/InputSystemGLFWAdapter.h
+    src/clipengine/input/InputSystemWin32Adapter.h
+    src/clipengine/input/KeyCode.h
+
+    # Utilities
+    src/clipengine/utils/Common.h
+    src/clipengine/utils/RenderUtils.h
 
     # Note: Debug headers (DebugWindow) are NOT exported
     # They are optional and available as source code only
@@ -164,10 +205,10 @@ target_compile_definitions(clipengine
 target_link_libraries(clipengine
     PUBLIC
         dawn::webgpu_dawn
+        glm::glm
     PRIVATE
         spdlog::spdlog_header_only
         fmt::fmt-header-only
-        glm::glm
         ${FFMPEG_LIBRARIES}
 )
 

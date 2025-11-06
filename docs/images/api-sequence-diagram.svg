@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="900" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #2d3748; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 12px; fill: #718096; }
+      .actor { font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; fill: #2d3748; }
+      .message { font-family: Arial, sans-serif; font-size: 11px; fill: #4a5568; }
+      .note-text { font-family: Arial, sans-serif; font-size: 10px; fill: #4a5568; }
+      .lifeline { stroke: #cbd5e0; stroke-width: 2; stroke-dasharray: 5,5; }
+      .call-arrow { stroke: #4299e1; stroke-width: 2; fill: none; marker-end: url(#arrow-call); }
+      .return-arrow { stroke: #48bb78; stroke-width: 2; fill: none; stroke-dasharray: 3,3; marker-end: url(#arrow-return); }
+      .activation { fill: #e6fffa; stroke: #319795; stroke-width: 2; }
+    </style>
+    <marker id="arrow-call" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4299e1" />
+    </marker>
+    <marker id="arrow-return" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#48bb78" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" class="title" text-anchor="middle">ClipEngine SDK - API 调用序列图</text>
+  <text x="600" y="50" class="subtitle" text-anchor="middle">典型使用流程：创建项目 → 添加图层 → 应用效果 → 渲染 → 导出</text>
+
+  <!-- Actors (Objects) -->
+  <g id="actors">
+    <!-- User -->
+    <rect x="30" y="80" width="100" height="40" rx="4" fill="#fed7d7" stroke="#e53e3e" stroke-width="2"/>
+    <text x="80" y="105" class="actor" text-anchor="middle">User Code</text>
+
+    <!-- Project -->
+    <rect x="170" y="80" width="100" height="40" rx="4" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <text x="220" y="105" class="actor" text-anchor="middle">Project</text>
+
+    <!-- CompositionEngine -->
+    <rect x="310" y="80" width="140" height="40" rx="4" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+    <text x="380" y="105" class="actor" text-anchor="middle">CompositionEngine</text>
+
+    <!-- VideoRenderer -->
+    <rect x="490" y="80" width="120" height="40" rx="4" fill="#c6f6d5" stroke="#38a169" stroke-width="2"/>
+    <text x="550" y="105" class="actor" text-anchor="middle">VideoRenderer</text>
+
+    <!-- FilterChain -->
+    <rect x="650" y="80" width="100" height="40" rx="4" fill="#fef5e7" stroke="#d69e2e" stroke-width="2"/>
+    <text x="700" y="105" class="actor" text-anchor="middle">FilterChain</text>
+
+    <!-- ShaderEffect -->
+    <rect x="790" y="80" width="110" height="40" rx="4" fill="#c6f6d5" stroke="#38a169" stroke-width="2"/>
+    <text x="845" y="105" class="actor" text-anchor="middle">ShaderEffect</text>
+
+    <!-- VideoExporter -->
+    <rect x="940" y="80" width="120" height="40" rx="4" fill="#fed7d7" stroke="#e53e3e" stroke-width="2"/>
+    <text x="1000" y="105" class="actor" text-anchor="middle">VideoExporter</text>
+  </g>
+
+  <!-- Lifelines -->
+  <line x1="80" y1="120" x2="80" y2="850" class="lifeline"/>
+  <line x1="220" y1="120" x2="220" y2="850" class="lifeline"/>
+  <line x1="380" y1="120" x2="380" y2="850" class="lifeline"/>
+  <line x1="550" y1="120" x2="550" y2="850" class="lifeline"/>
+  <line x1="700" y1="120" x2="700" y2="850" class="lifeline"/>
+  <line x1="845" y1="120" x2="845" y2="850" class="lifeline"/>
+  <line x1="1000" y1="120" x2="1000" y2="850" class="lifeline"/>
+
+  <!-- Phase 1: Create Project -->
+  <g>
+    <rect x="20" y="140" width="120" height="20" rx="3" fill="#e6e6fa"/>
+    <text x="80" y="155" class="subtitle" text-anchor="middle">1. 创建项目</text>
+
+    <!-- create() -->
+    <line x1="80" y1="170" x2="220" y2="170" class="call-arrow"/>
+    <text x="140" y="165" class="message">create(config)</text>
+
+    <rect x="215" y="175" width="10" height="40" class="activation"/>
+
+    <!-- createComposition() -->
+    <line x1="220" y1="190" x2="380" y2="190" class="call-arrow"/>
+    <text x="290" y="185" class="message">createComposition()</text>
+
+    <rect x="375" y="195" width="10" height="20" class="activation"/>
+
+    <!-- return -->
+    <line x1="385" y1="210" x2="225" y2="210" class="return-arrow"/>
+    <line x1="225" y1="220" x2="85" y2="220" class="return-arrow"/>
+  </g>
+
+  <!-- Phase 2: Add Layers -->
+  <g>
+    <rect x="20" y="240" width="120" height="20" rx="3" fill="#c6f6d5"/>
+    <text x="80" y="255" class="subtitle" text-anchor="middle">2. 添加图层</text>
+
+    <!-- addLayer() -->
+    <line x1="80" y1="270" x2="380" y2="270" class="call-arrow"/>
+    <text x="220" y="265" class="message">addLayer(videoLayer)</text>
+
+    <rect x="375" y="275" width="10" height="120" class="activation"/>
+
+    <!-- create VideoRenderer -->
+    <line x1="380" y1="290" x2="550" y2="290" class="call-arrow"/>
+    <text x="455" y="285" class="message">new VideoRenderer()</text>
+
+    <rect x="545" y="295" width="10" height="80" class="activation"/>
+
+    <!-- loadVideo() -->
+    <line x1="80" y1="310" x2="550" y2="310" class="call-arrow"/>
+    <text x="300" y="305" class="message">loadVideo("input.mp4")</text>
+
+    <!-- FFmpeg decode -->
+    <rect x="560" y="325" width="200" height="35" rx="3" fill="#fff5f5" stroke="#fc8181"/>
+    <text x="660" y="340" class="note-text" text-anchor="middle">FFmpeg 解码视频</text>
+    <text x="660" y="353" class="note-text" text-anchor="middle">创建 GPU 纹理</text>
+
+    <!-- return -->
+    <line x1="555" y1="370" x2="85" y2="370" class="return-arrow"/>
+    <text x="300" y="385" class="message">layerIndex</text>
+    <line x1="385" y1="390" x2="85" y2="390" class="return-arrow"/>
+  </g>
+
+  <!-- Phase 3: Apply Effects -->
+  <g>
+    <rect x="20" y="410" width="120" height="20" rx="3" fill="#fef5e7"/>
+    <text x="80" y="425" class="subtitle" text-anchor="middle">3. 应用效果</text>
+
+    <!-- getLayerFilterChain() -->
+    <line x1="80" y1="440" x2="380" y2="440" class="call-arrow"/>
+    <text x="220" y="435" class="message">getLayerFilterChain(0)</text>
+
+    <rect x="375" y="445" width="10" height="20" class="activation"/>
+
+    <!-- return FilterChain -->
+    <line x1="385" y1="460" x2="85" y2="460" class="return-arrow"/>
+    <text x="220" y="455" class="message">filterChain*</text>
+
+    <!-- addEffect() -->
+    <line x1="80" y1="480" x2="700" y2="480" class="call-arrow"/>
+    <text x="380" y="475" class="message">addEffect(new ShaderEffect(...))</text>
+
+    <rect x="695" y="485" width="10" height="60" class="activation"/>
+
+    <!-- create effect -->
+    <line x1="700" y1="500" x2="845" y2="500" class="call-arrow"/>
+    <text x="765" y="495" class="message">initialize()</text>
+
+    <rect x="840" y="505" width="10" height="30" class="activation"/>
+
+    <!-- Load shader -->
+    <rect x="855" y="515" width="160" height="20" rx="3" fill="#fff5f5" stroke="#fc8181"/>
+    <text x="935" y="530" class="note-text" text-anchor="middle">加载 WGSL 着色器</text>
+
+    <!-- return -->
+    <line x1="850" y1="540" x2="705" y2="540" class="return-arrow"/>
+    <line x1="705" y1="550" x2="85" y2="550" class="return-arrow"/>
+  </g>
+
+  <!-- Phase 4: Render -->
+  <g>
+    <rect x="20" y="570" width="120" height="20" rx="3" fill="#e6fffa"/>
+    <text x="80" y="585" class="subtitle" text-anchor="middle">4. 渲染帧</text>
+
+    <!-- render() -->
+    <line x1="80" y1="600" x2="380" y2="600" class="call-arrow"/>
+    <text x="220" y="595" class="message">render(outputView)</text>
+
+    <rect x="375" y="605" width="10" height="140" class="activation"/>
+
+    <!-- render layer -->
+    <line x1="380" y1="620" x2="550" y2="620" class="call-arrow"/>
+    <text x="455" y="615" class="message">render()</text>
+
+    <rect x="545" y="625" width="10" height="40" class="activation"/>
+
+    <!-- return texture -->
+    <line x1="555" y1="660" x2="385" y2="660" class="return-arrow"/>
+    <text x="460" y="655" class="message">textureView</text>
+
+    <!-- apply effects -->
+    <line x1="380" y1="680" x2="700" y2="680" class="call-arrow"/>
+    <text x="530" y="675" class="message">apply(pass, texture)</text>
+
+    <rect x="695" y="685" width="10" height="40" class="activation"/>
+
+    <!-- apply shader -->
+    <line x1="700" y1="700" x2="845" y2="700" class="call-arrow"/>
+    <text x="765" y="695" class="message">apply()</text>
+
+    <rect x="840" y="705" width="10" height="15" class="activation"/>
+
+    <!-- GPU compute -->
+    <rect x="855" y="710" width="160" height="20" rx="3" fill="#fff5f5" stroke="#fc8181"/>
+    <text x="935" y="725" class="note-text" text-anchor="middle">GPU 着色器计算</text>
+
+    <!-- return -->
+    <line x1="850" y1="735" x2="705" y2="735" class="return-arrow"/>
+    <line x1="705" y1="740" x2="385" y2="740" class="return-arrow"/>
+    <line x1="385" y1="750" x2="85" y2="750" class="return-arrow"/>
+  </g>
+
+  <!-- Phase 5: Export -->
+  <g>
+    <rect x="20" y="770" width="120" height="20" rx="3" fill="#fed7d7"/>
+    <text x="80" y="785" class="subtitle" text-anchor="middle">5. 导出视频</text>
+
+    <!-- beginExport() -->
+    <line x1="80" y1="800" x2="1000" y2="800" class="call-arrow"/>
+    <text x="520" y="795" class="message">beginExport(engine, 0.0, 10.0)</text>
+
+    <rect x="995" y="805" width="10" height="30" class="activation"/>
+
+    <!-- FFmpeg encode -->
+    <rect x="1015" y="810" width="160" height="20" rx="3" fill="#fff5f5" stroke="#fc8181"/>
+    <text x="1095" y="825" class="note-text" text-anchor="middle">FFmpeg 编码导出</text>
+
+    <!-- return -->
+    <line x1="1005" y1="840" x2="85" y2="840" class="return-arrow"/>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(20, 860)">
+    <text x="0" y="15" class="subtitle">说明：</text>
+    <line x1="50" y1="10" x2="100" y2="10" class="call-arrow"/>
+    <text x="110" y="15" class="subtitle">方法调用</text>
+
+    <line x1="200" y1="10" x2="250" y2="10" class="return-arrow"/>
+    <text x="260" y="15" class="subtitle">返回值</text>
+
+    <rect x="350" y="5" width="20" height="10" class="activation"/>
+    <text x="380" y="15" class="subtitle">激活状态</text>
+  </g>
+</svg>

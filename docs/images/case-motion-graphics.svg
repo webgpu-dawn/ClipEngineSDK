@@ -1,0 +1,105 @@
+<svg width="250" height="180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mgGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mgGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mgGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="250" height="180" rx="8" fill="#0a0e27"/>
+
+  <!-- Main canvas -->
+  <rect x="10" y="10" width="230" height="130" rx="4" fill="#1a1f3a"/>
+
+  <!-- Animated shapes -->
+  <!-- Circle -->
+  <circle cx="60" cy="50" r="25" fill="url(#mgGrad1)" opacity="0.8">
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 60 50"
+      to="360 60 50"
+      dur="3s"
+      repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Rectangle -->
+  <rect x="110" y="25" width="50" height="50" rx="4" fill="url(#mgGrad2)" opacity="0.8">
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      values="1;1.2;1"
+      dur="2s"
+      repeatCount="indefinite"
+      additive="sum"/>
+  </rect>
+
+  <!-- Triangle -->
+  <polygon points="200,30 220,70 180,70" fill="url(#mgGrad3)" opacity="0.8">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0,0; 0,10; 0,0"
+      dur="1.5s"
+      repeatCount="indefinite"/>
+  </polygon>
+
+  <!-- Motion path lines -->
+  <path d="M 30,90 Q 60,110 90,90 T 150,90" stroke="#4299e1" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="5,5">
+    <animate attributeName="stroke-dashoffset" from="0" to="20" dur="1s" repeatCount="indefinite"/>
+  </path>
+
+  <path d="M 150,100 L 210,100" stroke="#f6ad55" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="5,5">
+    <animate attributeName="stroke-dashoffset" from="0" to="20" dur="1s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Keyframe markers on path -->
+  <circle cx="30" cy="90" r="3" fill="#4299e1"/>
+  <circle cx="90" cy="90" r="3" fill="#4299e1"/>
+  <circle cx="150" cy="90" r="3" fill="#4299e1"/>
+  <circle cx="210" cy="100" r="3" fill="#f6ad55"/>
+
+  <!-- Text animation indicator -->
+  <text x="60" y="125" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="url(#mgGrad1)">
+    MOTION
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="145" y="125" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="url(#mgGrad2)">
+    GRAPHICS
+    <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Timeline at bottom -->
+  <rect x="10" y="150" width="230" height="20" rx="4" fill="#1a1f3a"/>
+
+  <!-- Playhead -->
+  <line x1="80" y1="150" x2="80" y2="170" stroke="#ef4444" stroke-width="2"/>
+  <polygon points="80,148 76,153 84,153" fill="#ef4444"/>
+
+  <!-- Timeline ruler marks -->
+  <line x1="40" y1="155" x2="40" y2="165" stroke="#4a5568" stroke-width="1"/>
+  <line x1="80" y1="155" x2="80" y2="165" stroke="#4a5568" stroke-width="1"/>
+  <line x1="120" y1="155" x2="120" y2="165" stroke="#4a5568" stroke-width="1"/>
+  <line x1="160" y1="155" x2="160" y2="165" stroke="#4a5568" stroke-width="1"/>
+  <line x1="200" y1="155" x2="200" y2="165" stroke="#4a5568" stroke-width="1"/>
+
+  <!-- Time indicators -->
+  <text x="15" y="167" font-family="Arial, sans-serif" font-size="8" fill="#718096">0:00</text>
+  <text x="215" y="167" font-family="Arial, sans-serif" font-size="8" fill="#718096">0:05</text>
+
+  <!-- Title overlay -->
+  <rect x="0" y="0" width="250" height="30" fill="#0a0e27" opacity="0.95"/>
+  <text x="125" y="20" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    MG 动画制作
+  </text>
+</svg>

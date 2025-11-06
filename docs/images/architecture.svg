@@ -1,0 +1,139 @@
+<svg width="900" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ed8936;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dd6b20;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9f7aea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#805ad5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    ClipEngine 系统架构
+  </text>
+
+  <!-- Application Layer -->
+  <g transform="translate(50, 60)">
+    <rect width="800" height="80" rx="8" fill="url(#grad1)" opacity="0.9"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      应用层 Application Layer
+    </text>
+
+    <rect x="50" y="35" width="200" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="150" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">用户界面 UI</text>
+
+    <rect x="300" y="35" width="200" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="400" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">时间线 Timeline</text>
+
+    <rect x="550" y="35" width="200" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="650" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">预览窗口 Preview</text>
+  </g>
+
+  <!-- Project Management Layer -->
+  <g transform="translate(50, 170)">
+    <rect width="800" height="80" rx="8" fill="url(#grad2)" opacity="0.9"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      项目管理层 Project Management
+    </text>
+
+    <rect x="100" y="35" width="180" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="190" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">项目 Project</text>
+
+    <rect x="310" y="35" width="180" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="400" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">合成 Composition</text>
+
+    <rect x="520" y="35" width="180" height="35" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="610" y="58" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">资源管理 Assets</text>
+  </g>
+
+  <!-- Layer & Effect Systems -->
+  <g transform="translate(50, 280)">
+    <rect width="385" height="100" rx="8" fill="url(#grad3)" opacity="0.9"/>
+    <text x="192" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      图层系统 Layer System
+    </text>
+    <rect x="30" y="35" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="105" y="54" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">图层树 Layers</text>
+    <rect x="30" y="67" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="105" y="86" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">变换 Transform</text>
+
+    <rect x="205" y="35" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="280" y="54" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">蒙版 Masks</text>
+    <rect x="205" y="67" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="280" y="86" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">混合 Blend</text>
+  </g>
+
+  <g transform="translate(465, 280)">
+    <rect width="385" height="100" rx="8" fill="url(#grad4)" opacity="0.9"/>
+    <text x="192" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      效果系统 Effect System
+    </text>
+    <rect x="30" y="35" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="105" y="54" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">效果链 Effects</text>
+    <rect x="30" y="67" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="105" y="86" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">色彩校正 Color</text>
+
+    <rect x="205" y="35" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="280" y="54" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">滤镜 Filters</text>
+    <rect x="205" y="67" width="150" height="28" rx="4" fill="#ffffff" opacity="0.2"/>
+    <text x="280" y="86" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">关键帧 Keyframes</text>
+  </g>
+
+  <!-- Render Engine -->
+  <g transform="translate(50, 410)">
+    <rect width="800" height="100" rx="8" fill="#2d3748" opacity="0.9"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      渲染引擎 Render Engine
+    </text>
+
+    <rect x="50" y="40" width="160" height="50" rx="4" fill="#4a5568"/>
+    <text x="130" y="60" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">渲染图</text>
+    <text x="130" y="78" font-family="Arial, sans-serif" font-size="11" fill="#a0aec0" text-anchor="middle">Render Graph</text>
+
+    <rect x="240" y="40" width="160" height="50" rx="4" fill="#4a5568"/>
+    <text x="320" y="60" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">GPU 加速</text>
+    <text x="320" y="78" font-family="Arial, sans-serif" font-size="11" fill="#a0aec0" text-anchor="middle">GPU Compute</text>
+
+    <rect x="430" y="40" width="160" height="50" rx="4" fill="#4a5568"/>
+    <text x="510" y="60" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">缓存系统</text>
+    <text x="510" y="78" font-family="Arial, sans-serif" font-size="11" fill="#a0aec0" text-anchor="middle">Cache System</text>
+
+    <rect x="620" y="40" width="160" height="50" rx="4" fill="#4a5568"/>
+    <text x="700" y="60" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">色彩管理</text>
+    <text x="700" y="78" font-family="Arial, sans-serif" font-size="11" fill="#a0aec0" text-anchor="middle">Color Mgmt</text>
+  </g>
+
+  <!-- Output System -->
+  <g transform="translate(50, 540)">
+    <rect width="800" height="50" rx="8" fill="#718096" opacity="0.9"/>
+    <text x="400" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      输出系统 Output System
+    </text>
+    <text x="400" y="38" font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0" text-anchor="middle">
+      编码器 Encoder • 导出 Export • 渲染农场 Render Farm
+    </text>
+  </g>
+
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#718096" />
+    </marker>
+  </defs>
+
+  <line x1="450" y1="140" x2="450" y2="170" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="250" x2="450" y2="280" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="380" x2="450" y2="410" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="510" x2="450" y2="540" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+</svg>

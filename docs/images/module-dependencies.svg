@@ -1,0 +1,206 @@
+<svg width="900" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="modGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="modGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#48bb78;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38a169;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="modGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrowMod" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#718096" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="30" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    模块依赖关系 Module Dependencies
+  </text>
+
+  <!-- Core Engine (bottom center) -->
+  <g transform="translate(350, 500)">
+    <rect width="200" height="80" rx="8" fill="url(#modGrad1)" opacity="0.9"/>
+    <text x="100" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Core Engine
+    </text>
+    <text x="100" y="48" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">
+      核心引擎
+    </text>
+    <text x="100" y="63" font-family="Arial, sans-serif" font-size="9" fill="#cbd5e0" text-anchor="middle">
+      内存 • 线程 • 数学库
+    </text>
+  </g>
+
+  <!-- Layer 2: Basic Systems -->
+  <g transform="translate(50, 380)">
+    <rect width="140" height="60" rx="6" fill="url(#modGrad2)" opacity="0.9"/>
+    <text x="70" y="30" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Project
+    </text>
+    <text x="70" y="45" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+      项目管理
+    </text>
+  </g>
+  <line x1="120" y1="440" x2="400" y2="500" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <g transform="translate(230, 380)">
+    <rect width="140" height="60" rx="6" fill="url(#modGrad2)" opacity="0.9"/>
+    <text x="70" y="30" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Layer System
+    </text>
+    <text x="70" y="45" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+      图层系统
+    </text>
+  </g>
+  <line x1="300" y1="440" x2="430" y2="500" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <g transform="translate(410, 380)">
+    <rect width="140" height="60" rx="6" fill="url(#modGrad2)" opacity="0.9"/>
+    <text x="70" y="30" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Effect System
+    </text>
+    <text x="70" y="45" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+      效果系统
+    </text>
+  </g>
+  <line x1="480" y1="440" x2="470" y2="500" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <g transform="translate(590, 380)">
+    <rect width="140" height="60" rx="6" fill="url(#modGrad2)" opacity="0.9"/>
+    <text x="70" y="30" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      Render Engine
+    </text>
+    <text x="70" y="45" font-family="Arial, sans-serif" font-size="9" fill="#c6f6d5" text-anchor="middle">
+      渲染引擎
+    </text>
+  </g>
+  <line x1="660" y1="440" x2="520" y2="500" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <!-- Layer 3: Subsystems -->
+  <g transform="translate(230, 260)">
+    <rect width="120" height="50" rx="6" fill="url(#modGrad3)" opacity="0.9"/>
+    <text x="60" y="28" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">
+      GPU Abstraction
+    </text>
+  </g>
+  <line x1="290" y1="310" x2="630" y2="380" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <g transform="translate(390, 260)">
+    <rect width="120" height="50" rx="6" fill="url(#modGrad3)" opacity="0.9"/>
+    <text x="60" y="28" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">
+      Color Mgmt
+    </text>
+  </g>
+  <line x1="450" y1="310" x2="640" y2="380" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <g transform="translate(550, 260)">
+    <rect width="120" height="50" rx="6" fill="url(#modGrad3)" opacity="0.9"/>
+    <text x="60" y="28" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">
+      Cache System
+    </text>
+  </g>
+  <line x1="610" y1="310" x2="650" y2="380" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <!-- Layer dependencies between systems -->
+  <line x1="300" y1="400" x2="410" y2="400" stroke="#718096" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowMod)"/>
+  <line x1="480" y1="400" x2="590" y2="400" stroke="#718096" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowMod)"/>
+
+  <!-- GPU Backends (bottom) -->
+  <g transform="translate(100, 140)">
+    <rect width="600" height="80" rx="6" fill="#f7fafc" stroke="#cbd5e0" stroke-width="2"/>
+    <text x="300" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">
+      GPU 后端 GPU Backends
+    </text>
+
+    <rect x="30" y="35" width="110" height="35" rx="4" fill="#ed8936" opacity="0.8"/>
+    <text x="85" y="56" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">WebGPU</text>
+
+    <rect x="160" y="35" width="110" height="35" rx="4" fill="#ed8936" opacity="0.8"/>
+    <text x="215" y="56" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">DirectX 12</text>
+
+    <rect x="290" y="35" width="110" height="35" rx="4" fill="#ed8936" opacity="0.8"/>
+    <text x="345" y="56" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Metal</text>
+
+    <rect x="420" y="35" width="110" height="35" rx="4" fill="#ed8936" opacity="0.8"/>
+    <text x="475" y="56" font-family="Arial, sans-serif" font-size="11" fill="#ffffff" text-anchor="middle">Vulkan</text>
+  </g>
+
+  <line x1="290" y1="220" x2="320" y2="180" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+  <line x1="290" y1="220" x2="400" y2="180" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <!-- Export System -->
+  <g transform="translate(710, 260)">
+    <rect width="140" height="100" rx="6" fill="#9f7aea" opacity="0.2" stroke="#9f7aea" stroke-width="2"/>
+    <text x="70" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6b46c1" text-anchor="middle">
+      Export System
+    </text>
+    <text x="70" y="42" font-family="Arial, sans-serif" font-size="10" fill="#805ad5" text-anchor="middle">
+      导出系统
+    </text>
+
+    <rect x="20" y="50" width="100" height="20" rx="3" fill="#9f7aea" opacity="0.6"/>
+    <text x="70" y="64" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">Encoder</text>
+
+    <rect x="20" y="75" width="100" height="20" rx="3" fill="#9f7aea" opacity="0.6"/>
+    <text x="70" y="89" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="middle">Codec</text>
+  </g>
+
+  <line x1="690" y1="410" x2="750" y2="360" stroke="#9f7aea" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <!-- UI Layer (top) -->
+  <g transform="translate(50, 60)">
+    <rect width="180" height="60" rx="6" fill="#f6ad55" opacity="0.9"/>
+    <text x="90" y="30" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">
+      User Interface
+    </text>
+    <text x="90" y="45" font-family="Arial, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">
+      用户界面
+    </text>
+  </g>
+  <line x1="140" y1="120" x2="100" y2="380" stroke="#f6ad55" stroke-width="2" marker-end="url(#arrowMod)"/>
+  <line x1="140" y1="120" x2="280" y2="380" stroke="#f6ad55" stroke-width="2" marker-end="url(#arrowMod)"/>
+  <line x1="140" y1="120" x2="460" y2="380" stroke="#f6ad55" stroke-width="2" marker-end="url(#arrowMod)"/>
+
+  <!-- Legend -->
+  <g transform="translate(670, 60)">
+    <rect width="200" height="140" rx="6" fill="#edf2f7"/>
+    <text x="100" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2d3748" text-anchor="middle">
+      依赖关系图例
+    </text>
+
+    <line x1="20" y1="35" x2="70" y2="35" stroke="#718096" stroke-width="2" marker-end="url(#arrowMod)"/>
+    <text x="80" y="39" font-family="Arial, sans-serif" font-size="9" fill="#4a5568">
+      直接依赖
+    </text>
+
+    <line x1="20" y1="55" x2="70" y2="55" stroke="#718096" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowMod)"/>
+    <text x="80" y="59" font-family="Arial, sans-serif" font-size="9" fill="#4a5568">
+      间接依赖
+    </text>
+
+    <rect x="20" y="70" width="50" height="20" rx="4" fill="url(#modGrad1)" opacity="0.9"/>
+    <text x="80" y="83" font-family="Arial, sans-serif" font-size="9" fill="#4a5568">
+      核心模块
+    </text>
+
+    <rect x="20" y="95" width="50" height="20" rx="4" fill="url(#modGrad2)" opacity="0.9"/>
+    <text x="80" y="108" font-family="Arial, sans-serif" font-size="9" fill="#4a5568">
+      业务模块
+    </text>
+
+    <rect x="20" y="120" width="50" height="20" rx="4" fill="url(#modGrad3)" opacity="0.9"/>
+    <text x="80" y="133" font-family="Arial, sans-serif" font-size="9" fill="#4a5568">
+      子系统
+    </text>
+  </g>
+
+  <!-- Module count -->
+  <text x="450" y="565" font-family="Arial, sans-serif" font-size="11" fill="#718096" text-anchor="middle">
+    总模块数: 12 • 核心依赖: Core Engine • 跨平台支持: 4 个 GPU 后端
+  </text>
+</svg>

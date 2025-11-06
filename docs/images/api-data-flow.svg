@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #2d3748; }
+      .node-title { font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; fill: white; }
+      .node-subtitle { font-family: Arial, sans-serif; font-size: 10px; fill: rgba(255,255,255,0.8); }
+      .note { font-family: Arial, sans-serif; font-size: 10px; fill: #718096; }
+      .flow-arrow { stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .flow-data { stroke: #4299e1; }
+      .flow-control { stroke: #f6ad55; stroke-dasharray: 5,5; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L10,3 z" fill="#4299e1" />
+    </marker>
+    <marker id="arrow-control" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L10,3 z" fill="#f6ad55" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" class="title" text-anchor="middle">ClipEngine SDK - 数据流图</text>
+  <text x="600" y="50" class="note" text-anchor="middle">Data Flow Diagram - 从输入到输出的完整数据流</text>
+
+  <!-- Input Sources -->
+  <g id="input-sources">
+    <!-- Video File -->
+    <g transform="translate(50, 100)">
+      <rect width="120" height="80" rx="6" fill="#667eea"/>
+      <text x="60" y="30" class="node-title" text-anchor="middle">视频文件</text>
+      <text x="60" y="45" class="node-subtitle" text-anchor="middle">Video Files</text>
+      <text x="60" y="65" class="node-subtitle" text-anchor="middle">.mp4 .mov</text>
+      <text x="60" y="78" class="node-subtitle" text-anchor="middle">.avi .mkv</text>
+    </g>
+
+    <!-- Image Files -->
+    <g transform="translate(50, 200)">
+      <rect width="120" height="80" rx="6" fill="#48bb78"/>
+      <text x="60" y="30" class="node-title" text-anchor="middle">图片文件</text>
+      <text x="60" y="45" class="node-subtitle" text-anchor="middle">Image Files</text>
+      <text x="60" y="65" class="node-subtitle" text-anchor="middle">.png .jpg</text>
+      <text x="60" y="78" class="node-subtitle" text-anchor="middle">.tga .bmp</text>
+    </g>
+
+    <!-- GPU Textures -->
+    <g transform="translate(50, 300)">
+      <rect width="120" height="60" rx="6" fill="#f6ad55"/>
+      <text x="60" y="25" class="node-title" text-anchor="middle">GPU 纹理</text>
+      <text x="60" y="40" class="node-subtitle" text-anchor="middle">GPU Textures</text>
+      <text x="60" y="55" class="node-subtitle" text-anchor="middle">Direct Upload</text>
+    </g>
+  </g>
+
+  <!-- Decoding Layer -->
+  <g id="decode-layer">
+    <!-- FFmpeg Decoder -->
+    <g transform="translate(250, 100)">
+      <rect width="140" height="80" rx="6" fill="#805ad5"/>
+      <text x="70" y="30" class="node-title" text-anchor="middle">FFmpeg 解码</text>
+      <text x="70" y="45" class="node-subtitle" text-anchor="middle">Video Decoder</text>
+      <text x="70" y="65" class="node-subtitle" text-anchor="middle">H.264/H.265</text>
+      <text x="70" y="78" class="node-subtitle" text-anchor="middle">YUV → RGB</text>
+    </g>
+
+    <!-- stb_image -->
+    <g transform="translate(250, 200)">
+      <rect width="140" height="80" rx="6" fill="#38a169"/>
+      <text x="70" y="30" class="node-title" text-anchor="middle">图片加载</text>
+      <text x="70" y="45" class="node-subtitle" text-anchor="middle">Image Loader</text>
+      <text x="70" y="65" class="node-subtitle" text-anchor="middle">stb_image</text>
+      <text x="70" y="78" class="node-subtitle" text-anchor="middle">Decode pixels</text>
+    </g>
+
+    <!-- Arrows: Input -> Decode -->
+    <path d="M 170 140 L 250 140" class="flow-arrow flow-data"/>
+    <path d="M 170 240 L 250 240" class="flow-arrow flow-data"/>
+    <path d="M 170 330 L 440 330 L 440 300" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- GPU Upload -->
+  <g id="gpu-upload">
+    <rect x="440" y="100" width="140" height="200" rx="6" fill="#3182ce"/>
+    <text x="510" y="30" class="node-title" text-anchor="middle">上传到 GPU</text>
+    <text x="510" y="45" class="node-subtitle" text-anchor="middle">Upload to GPU</text>
+
+    <g transform="translate(450, 120)">
+      <rect width="120" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="60" y="20" class="node-subtitle" text-anchor="middle">创建 wgpu::Texture</text>
+    </g>
+
+    <g transform="translate(450, 160)">
+      <rect width="120" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="60" y="20" class="node-subtitle" text-anchor="middle">Queue::writeTexture()</text>
+    </g>
+
+    <g transform="translate(450, 200)">
+      <rect width="120" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="60" y="20" class="node-subtitle" text-anchor="middle">纹理绑定</text>
+    </g>
+
+    <g transform="translate(450, 240)">
+      <rect width="120" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="60" y="20" class="node-subtitle" text-anchor="middle">Sampler 配置</text>
+    </g>
+
+    <!-- Arrows: Decode -> GPU -->
+    <path d="M 390 140 L 440 140" class="flow-arrow flow-data"/>
+    <path d="M 390 240 L 420 240 L 420 180 L 440 180" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Layer System -->
+  <g id="layer-system">
+    <rect x="640" y="100" width="180" height="200" rx="6" fill="#d69e2e"/>
+    <text x="730" y="85" class="node-title" text-anchor="middle">图层系统</text>
+    <text x="730" y="100" class="node-subtitle" text-anchor="middle">Layer System</text>
+
+    <g transform="translate(650, 120)">
+      <rect width="160" height="35" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="15" class="node-subtitle" text-anchor="middle">CompositionLayer</text>
+      <text x="80" y="28" class="node-subtitle" text-anchor="middle">Transform (变换)</text>
+    </g>
+
+    <g transform="translate(650, 165)">
+      <rect width="160" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="17" class="node-subtitle" text-anchor="middle">Masks (蒙版)</text>
+    </g>
+
+    <g transform="translate(650, 200)">
+      <rect width="160" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="17" class="node-subtitle" text-anchor="middle">Blend Mode (混合)</text>
+    </g>
+
+    <g transform="translate(650, 235)">
+      <rect width="160" height="55" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="15" class="node-subtitle" text-anchor="middle">Per-Layer Effects</text>
+      <text x="80" y="30" class="node-subtitle" text-anchor="middle">Color · Blur</text>
+      <text x="80" y="45" class="node-subtitle" text-anchor="middle">Distort · Stylize</text>
+    </g>
+
+    <!-- Arrow: GPU -> Layer -->
+    <path d="M 580 200 L 640 200" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Effect Pipeline -->
+  <g id="effect-pipeline">
+    <rect x="640" y="350" width="180" height="140" rx="6" fill="#ed8936"/>
+    <text x="730" y="335" class="node-title" text-anchor="middle">效果链</text>
+    <text x="730" y="350" class="node-subtitle" text-anchor="middle">Effect Pipeline</text>
+
+    <g transform="translate(650, 370)">
+      <rect width="160" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="17" class="node-subtitle" text-anchor="middle">Filter 1: 色彩校正</text>
+    </g>
+
+    <g transform="translate(650, 405)">
+      <rect width="160" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="17" class="node-subtitle" text-anchor="middle">Filter 2: 高斯模糊</text>
+    </g>
+
+    <g transform="translate(650, 440)">
+      <rect width="160" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="80" y="17" class="node-subtitle" text-anchor="middle">Filter N: 自定义</text>
+    </g>
+
+    <!-- Arrow: Layer -> Effects (vertical) -->
+    <path d="M 730 300 L 730 350" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Composition -->
+  <g id="composition">
+    <rect x="870" y="100" width="150" height="150" rx="6" fill="#38a169"/>
+    <text x="945" y="85" class="node-title" text-anchor="middle">合成器</text>
+    <text x="945" y="100" class="node-subtitle" text-anchor="middle">Compositor</text>
+
+    <g transform="translate(880, 120)">
+      <rect width="130" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="65" y="12" class="node-subtitle" text-anchor="middle">图层 1</text>
+      <text x="65" y="25" class="node-subtitle" text-anchor="middle">(Background)</text>
+    </g>
+
+    <g transform="translate(880, 160)">
+      <rect width="130" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="65" y="12" class="node-subtitle" text-anchor="middle">图层 2</text>
+      <text x="65" y="25" class="node-subtitle" text-anchor="middle">(Overlay)</text>
+    </g>
+
+    <g transform="translate(880, 200)">
+      <rect width="130" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="65" y="12" class="node-subtitle" text-anchor="middle">图层 N</text>
+      <text x="65" y="25" class="node-subtitle" text-anchor="middle">(Foreground)</text>
+    </g>
+
+    <!-- Arrows: Layer + Effects -> Composition -->
+    <path d="M 820 200 L 870 200" class="flow-arrow flow-data"/>
+    <path d="M 820 420 L 850 420 L 850 220 L 870 220" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Post Processing -->
+  <g id="post-processing">
+    <rect x="870" y="290" width="150" height="100" rx="6" fill="#9f7aea"/>
+    <text x="945" y="275" class="node-title" text-anchor="middle">后处理</text>
+    <text x="945" y="290" class="node-subtitle" text-anchor="middle">Post Processing</text>
+
+    <g transform="translate(880, 310)">
+      <rect width="130" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="65" y="17" class="node-subtitle" text-anchor="middle">Global Effects</text>
+    </g>
+
+    <g transform="translate(880, 345)">
+      <rect width="130" height="35" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="65" y="15" class="node-subtitle" text-anchor="middle">Color Management</text>
+      <text x="65" y="28" class="node-subtitle" text-anchor="middle">LUT · OCIO</text>
+    </g>
+
+    <!-- Arrow: Composition -> Post -->
+    <path d="M 945 250 L 945 290" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Output -->
+  <g id="output">
+    <!-- Display -->
+    <g transform="translate(1070, 100)">
+      <rect width="110" height="80" rx="6" fill="#667eea"/>
+      <text x="55" y="30" class="node-title" text-anchor="middle">实时显示</text>
+      <text x="55" y="45" class="node-subtitle" text-anchor="middle">Display</text>
+      <text x="55" y="65" class="node-subtitle" text-anchor="middle">Surface</text>
+      <text x="55" y="78" class="node-subtitle" text-anchor="middle">Present</text>
+    </g>
+
+    <!-- Video Export -->
+    <g transform="translate(1070, 200)">
+      <rect width="110" height="80" rx="6" fill="#e53e3e"/>
+      <text x="55" y="30" class="node-title" text-anchor="middle">视频导出</text>
+      <text x="55" y="45" class="node-subtitle" text-anchor="middle">Export</text>
+      <text x="55" y="65" class="node-subtitle" text-anchor="middle">FFmpeg</text>
+      <text x="55" y="78" class="node-subtitle" text-anchor="middle">H.264/H.265</text>
+    </g>
+
+    <!-- Image Sequence -->
+    <g transform="translate(1070, 300)">
+      <rect width="110" height="80" rx="6" fill="#48bb78"/>
+      <text x="55" y="30" class="node-title" text-anchor="middle">图片序列</text>
+      <text x="55" y="45" class="node-subtitle" text-anchor="middle">Sequence</text>
+      <text x="55" y="65" class="node-subtitle" text-anchor="middle">.png</text>
+      <text x="55" y="78" class="node-subtitle" text-anchor="middle">.jpg .exr</text>
+    </g>
+
+    <!-- Arrows: Post -> Output -->
+    <path d="M 1020 340 L 1045 340 L 1045 140 L 1070 140" class="flow-arrow flow-data"/>
+    <path d="M 1020 340 L 1045 340 L 1045 240 L 1070 240" class="flow-arrow flow-data"/>
+    <path d="M 1020 340 L 1070 340" class="flow-arrow flow-data"/>
+  </g>
+
+  <!-- Cache System (side) -->
+  <g id="cache">
+    <rect x="50" y="420" width="250" height="140" rx="6" fill="#3182ce" opacity="0.9"/>
+    <text x="175" y="405" class="node-title" text-anchor="middle">缓存系统</text>
+    <text x="175" y="420" class="node-subtitle" text-anchor="middle">Cache System</text>
+
+    <g transform="translate(60, 440)">
+      <rect width="70" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="35" y="12" class="node-subtitle" text-anchor="middle">L1: RAM</text>
+      <text x="35" y="25" class="node-subtitle" text-anchor="middle">2 GB</text>
+    </g>
+
+    <g transform="translate(140, 440)">
+      <rect width="70" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="35" y="12" class="node-subtitle" text-anchor="middle">L2: Disk</text>
+      <text x="35" y="25" class="node-subtitle" text-anchor="middle">50 GB</text>
+    </g>
+
+    <g transform="translate(220, 440)">
+      <rect width="70" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="35" y="12" class="node-subtitle" text-anchor="middle">L3: Net</text>
+      <text x="35" y="25" class="node-subtitle" text-anchor="middle">Unlimited</text>
+    </g>
+
+    <text x="175" y="495" class="node-subtitle" text-anchor="middle">缓存渲染结果</text>
+    <text x="175" y="510" class="node-subtitle" text-anchor="middle">加速重复渲染</text>
+    <text x="175" y="525" class="node-subtitle" text-anchor="middle">LRU/LFU 驱逐策略</text>
+    <text x="175" y="540" class="node-subtitle" text-anchor="middle">Hit Rate: ~85% (L1)</text>
+
+    <!-- Cache interaction arrows -->
+    <path d="M 300 490 L 640 420" class="flow-arrow flow-control" stroke="#48bb78" marker-end="url(#arrow-control)"/>
+    <text x="450" y="445" class="note">缓存查询/存储</text>
+  </g>
+
+  <!-- InputSystem (side) -->
+  <g id="input">
+    <rect x="50" y="600" width="250" height="100" rx="6" fill="#ed8936" opacity="0.9"/>
+    <text x="175" y="585" class="node-title" text-anchor="middle">输入系统</text>
+    <text x="175" y="600" class="node-subtitle" text-anchor="middle">Input System</text>
+
+    <g transform="translate(60, 620)">
+      <rect width="110" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="55" y="12" class="node-subtitle" text-anchor="middle">Mouse</text>
+      <text x="55" y="25" class="node-subtitle" text-anchor="middle">Position · Click</text>
+    </g>
+
+    <g transform="translate(180, 620)">
+      <rect width="110" height="30" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="55" y="12" class="node-subtitle" text-anchor="middle">Keyboard</text>
+      <text x="55" y="25" class="node-subtitle" text-anchor="middle">Keys · Modifiers</text>
+    </g>
+
+    <text x="175" y="675" class="node-subtitle" text-anchor="middle">交互式效果支持</text>
+    <text x="175" y="690" class="node-subtitle" text-anchor="middle">(鼠标跟随、键盘控制)</text>
+
+    <!-- Input interaction arrows -->
+    <path d="M 300 650 L 640 460" class="flow-arrow flow-control" stroke="#f6ad55" marker-end="url(#arrow-control)"/>
+    <text x="450" y="540" class="note">输入状态</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(350, 720)">
+    <rect width="500" height="60" rx="4" fill="#f7fafc" stroke="#cbd5e0"/>
+    <text x="250" y="20" class="title" text-anchor="middle" font-size="14">数据流说明</text>
+
+    <line x1="20" y1="35" x2="80" y2="35" class="flow-arrow flow-data"/>
+    <text x="90" y="40" class="note">数据流（实线）</text>
+
+    <line x1="200" y1="35" x2="260" y2="35" class="flow-arrow flow-control" stroke="#f6ad55" marker-end="url(#arrow-control)"/>
+    <text x="270" y="40" class="note">控制流（虚线）</text>
+
+    <text x="20" y="55" class="note">核心流程: 输入文件 → 解码 → GPU 上传 → 图层变换 → 效果处理 → 合成 → 后处理 → 输出</text>
+  </g>
+</svg>

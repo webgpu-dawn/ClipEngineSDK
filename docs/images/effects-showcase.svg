@@ -1,0 +1,161 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="effect1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="effect2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+    <filter id="blur1">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    效果展示 Effects Showcase
+  </text>
+
+  <!-- Grid of effects (4x3) -->
+
+  <!-- Row 1 -->
+  <!-- Effect 1: Original -->
+  <g transform="translate(20, 60)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#effect1)"/>
+    <circle cx="90" cy="55" r="20" fill="#ffffff" opacity="0.7"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">原图 Original</text>
+  </g>
+
+  <!-- Effect 2: Color Correction -->
+  <g transform="translate(220, 60)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#effect2)"/>
+    <circle cx="90" cy="55" r="20" fill="#ffffff" opacity="0.8"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">色彩校正</text>
+  </g>
+
+  <!-- Effect 3: Blur -->
+  <g transform="translate(420, 60)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#effect1)" filter="url(#blur1)"/>
+    <circle cx="90" cy="55" r="20" fill="#ffffff" opacity="0.5" filter="url(#blur1)"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">高斯模糊</text>
+  </g>
+
+  <!-- Effect 4: Sharpen -->
+  <g transform="translate(620, 60)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#effect1)"/>
+    <circle cx="90" cy="55" r="20" fill="#ffffff" opacity="0.9"/>
+    <path d="M 80,55 L 100,55 M 90,45 L 90,65" stroke="#2d3748" stroke-width="2"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">锐化</text>
+  </g>
+
+  <!-- Row 2 -->
+  <!-- Effect 5: Brightness -->
+  <g transform="translate(20, 210)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="#fbbf24"/>
+    <circle cx="90" cy="55" r="20" fill="#ffffff"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">亮度调整</text>
+  </g>
+
+  <!-- Effect 6: Contrast -->
+  <g transform="translate(220, 210)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="80" height="90" rx="4" fill="#1f2937"/>
+    <rect x="90" y="10" width="80" height="90" rx="4" fill="#f9fafb"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">对比度</text>
+  </g>
+
+  <!-- Effect 7: Saturation -->
+  <g transform="translate(420, 210)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="53" height="90" rx="4" fill="#ef4444"/>
+    <rect x="63" y="10" width="53" height="90" rx="4" fill="#10b981"/>
+    <rect x="116" y="10" width="54" height="90" rx="4" fill="#3b82f6"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">饱和度</text>
+  </g>
+
+  <!-- Effect 8: Hue Shift -->
+  <g transform="translate(620, 210)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <circle cx="90" cy="55" r="45" fill="none" stroke-width="10" stroke="url(#effect2)"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">色相偏移</text>
+  </g>
+
+  <!-- Row 3 -->
+  <!-- Effect 9: Vignette -->
+  <g transform="translate(20, 360)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <defs>
+      <radialGradient id="vignette">
+        <stop offset="30%" style="stop-color:#667eea;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+      </radialGradient>
+    </defs>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#vignette)"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">晕影</text>
+  </g>
+
+  <!-- Effect 10: Glow -->
+  <g transform="translate(220, 360)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="#1a202c"/>
+    <circle cx="90" cy="55" r="15" fill="#fbbf24" filter="url(#shadow)"/>
+    <circle cx="90" cy="55" r="25" fill="#fbbf24" opacity="0.3"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">发光</text>
+  </g>
+
+  <!-- Effect 11: Chromatic Aberration -->
+  <g transform="translate(420, 360)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="#1a202c"/>
+    <circle cx="88" cy="55" r="20" fill="#ef4444" opacity="0.6"/>
+    <circle cx="90" cy="55" r="20" fill="#10b981" opacity="0.6"/>
+    <circle cx="92" cy="55" r="20" fill="#3b82f6" opacity="0.6"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">色差</text>
+  </g>
+
+  <!-- Effect 12: Film Grain -->
+  <g transform="translate(620, 360)">
+    <rect width="180" height="130" rx="8" fill="#e2e8f0" stroke="#cbd5e0" stroke-width="2"/>
+    <rect x="10" y="10" width="160" height="90" rx="4" fill="url(#effect1)"/>
+    <!-- Simulated grain -->
+    <circle cx="30" cy="30" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="50" cy="25" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="70" cy="35" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="90" cy="28" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="110" cy="32" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="130" cy="26" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="40" cy="50" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="60" cy="55" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="80" cy="48" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="100" cy="52" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="120" cy="50" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="45" cy="70" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="65" cy="75" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="85" cy="72" r="1" fill="#ffffff" opacity="0.3"/>
+    <circle cx="105" cy="68" r="1" fill="#000000" opacity="0.3"/>
+    <circle cx="125" cy="73" r="1" fill="#ffffff" opacity="0.3"/>
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2d3748" text-anchor="middle">胶片颗粒</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="50" y="515" width="700" height="70" rx="8" fill="#f7fafc" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="400" y="540" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2d3748" text-anchor="middle">
+    30+ 专业效果 • GPU 加速 • 实时预览
+  </text>
+  <text x="400" y="560" font-family="Arial, sans-serif" font-size="11" fill="#718096" text-anchor="middle">
+    所有效果支持参数动画和关键帧 • 可叠加多个效果形成效果链
+  </text>
+  <text x="400" y="575" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0" text-anchor="middle">
+    色彩校正 • 模糊 • 锐化 • 扭曲 • 生成 • 风格化 • 抠像 • 时间效果
+  </text>
+</svg>
