@@ -54,14 +54,10 @@ private:
 
     CompositionEngine engine_;
 
-    // 新架构 - Layer + Effect API
-    std::shared_ptr<clipengine::VideoLayer> videoLayer_;
-    std::shared_ptr<clipengine::ImageLayer> imageLayer_;
-    std::shared_ptr<clipengine::ColorAdjustEffect> colorEffect_;
-
-    // 旧架构 - 临时保留的渲染器指针（用于实际渲染）
-    VideoRenderer* videoRenderer_ = nullptr;
-    TextureRenderer* imageRenderer_ = nullptr;
+    // Layer + Effect API (using old implementation with new interface names)
+    VideoRenderer* videoLayer_ = nullptr;      // Main video layer
+    TextureRenderer* imageLayer_ = nullptr;    // Image overlay layer
+    ShaderEffect* colorEffect_ = nullptr;      // Color adjustment effect
 
 #ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
     DebugWindow debugWindow_;
