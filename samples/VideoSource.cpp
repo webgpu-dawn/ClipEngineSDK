@@ -101,6 +101,12 @@ void VideoSource::beginExportMode() {
     allowPlaybackDecoderUpdates_ = false;
     waitForFrames(100);
 
+    // Clear stale frame data from playback decoder to prevent crashes
+    {
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        frameData_ = VideoFrame{};
+    }
+
     // Setup and start export decoder
     allowExportDecoderUpdates_ = true;
     setupExportDecoder();

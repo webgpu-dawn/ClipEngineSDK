@@ -67,8 +67,8 @@ add_executable(
     main.cpp
     Decoder.cpp
     VideoSource.cpp
+    PanoramaController.cpp
     Application.cpp
-    ImageLoader.cpp
 )
 
 # Link against ClipEngine SDK and other dependencies

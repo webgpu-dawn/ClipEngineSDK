@@ -5,12 +5,10 @@
 #include <clipengine/layers/VideoLayer.h>
 #include <clipengine/layers/ImageLayer.h>
 #include <clipengine/effects/ColorAdjustEffect.h>
+#include <clipengine/effects/ShaderEffect.h>
 // 旧架构 - 临时保留用于渲染
 #include <clipengine/layers/VideoRenderer.h>
 #include <clipengine/layers/TextureRenderer.h>
-#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
-#include <clipengine/debug/DebugWindow.h>
-#endif
 #include <clipengine/export/VideoExporter.h>
 #include <clipengine/input/InputSystem.h>
 #include <clipengine/input/InputSystemGLFWAdapter.h>
@@ -20,7 +18,7 @@
 #include <memory>
 
 #include "VideoSource.h"
-#include "ImageLoader.h"
+#include "PanoramaController.h"
 
 class Application
 {
@@ -31,20 +29,18 @@ public:
 
     bool isInitialized() const { return initialized_; }
 
+    // Test helper: trigger export programmatically
+    void testExport() { exportVideo(); }
+
 private:
     void setupScene();
     void setupInputCallbacks();
     void setupInputEventListeners();
     void exportVideo();
-    void switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom);
     void updateVideoFrame();
     void loadImageTexture(const std::string& imagePath);
 
     // Input event handlers (InputSystem)
-    void handlePointerDown(const clipengine::InputEvent& event);
-    void handlePointerMove(const clipengine::InputEvent& event);
-    void handlePointerUp(const clipengine::InputEvent& event);
-    void handleScroll(const clipengine::InputEvent& event);
     void handleKeyDown(const clipengine::InputEvent& event);
 
     GLFWwindow* window_ = nullptr;
@@ -59,10 +55,6 @@ private:
     TextureRenderer* imageLayer_ = nullptr;    // Image overlay layer
     ShaderEffect* colorEffect_ = nullptr;      // Color adjustment effect
 
-#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
-    DebugWindow debugWindow_;
-#endif
-
     // InputSystem for event-driven input handling
     clipengine::InputSystem inputSystem_;
     std::unique_ptr<clipengine::InputSystemGLFWAdapter> inputAdapter_;
@@ -70,20 +62,12 @@ private:
     // Video source management (encapsulates decoder and frame handling)
     std::unique_ptr<VideoSource> videoSource_;
 
-    // Interaction state
-    bool dragging_ = false;
-    double lastMouseX_ = 0.0, lastMouseY_ = 0.0;
-    float yaw_ = 0.0f, pitch_ = 0.0f, zoom_ = 1.0f;
+    // Panorama interaction controller
+    PanoramaController panoramaController_;
 
     // Export state
     bool isExporting_ = false;
-
-    // 颜色调整参数 (新 API: 1.0 = 正常)
-    float brightness_ = 1.0f;  // 新 API: 0.0 - 2.0, 1.0 = 正常
-    float contrast_ = 1.0f;
-    float saturation_ = 1.0f;
-    float exposure_ = 0.0f;
-    float gain_ = 1.0f;
+    bool shouldExport_ = false;  // Flag to trigger export outside main loop
 
     // Initialization state
     bool initialized_ = false;

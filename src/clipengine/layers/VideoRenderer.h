@@ -87,6 +87,17 @@ public:
     bool updateFrame(ID3D11Texture2D* texture, int arrayIndex = 0);
 
     /**
+     * @brief Load an image from file and update the frame
+     *
+     * Supports multiple image formats: JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC, PNM
+     * Images are automatically converted to RGBA format for GPU upload.
+     *
+     * @param filename Path to the image file
+     * @return true if successful, false otherwise
+     */
+    bool loadFromFile(const std::string& filename);
+
+    /**
      * @brief Set the video format (will recreate shader pipeline)
      * @param format Video format to use
      */

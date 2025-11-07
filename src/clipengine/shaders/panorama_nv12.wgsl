@@ -30,8 +30,10 @@ fn toSpherical(uv: vec2f, yaw: f32, pitch: f32, zoom: f32, aspect: f32) -> vec2f
     let sy = sin(yaw);
     let cx = cos(pitch);
     let sx = sin(pitch);
-    var rx = vec3f(dir.x, dir.y * cx - dir.z * sx, dir.y * sx + dir.z * cx);
-    var r = vec3f(rx.x * cy + rx.z * sy, rx.y, -rx.x * sy + rx.z * cy);
+    // Apply yaw first (horizontal), then pitch (vertical)
+    // This gives more intuitive control without gimbal lock issues
+    var ry = vec3f(dir.x * cy - dir.z * sy, dir.y, dir.x * sy + dir.z * cy);
+    var r = vec3f(ry.x, ry.y * cx + ry.z * sx, -ry.y * sx + ry.z * cx);
     let lon = atan2(r.x, -r.z);
     let lat = asin(clamp(r.y, -1.0, 1.0));
     var uout = lon / (2.0 * 3.14159265) + 0.5;

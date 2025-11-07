@@ -1,8 +1,9 @@
 #include "Application.h"
 #include "VideoSource.h"
-#include "ImageLoader.h"
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -41,17 +42,6 @@ void Application::initialize()
 
     setupScene();
     setupInputCallbacks();
-
-#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
-    // Initialize Debug Window (standalone window)
-    if (!debugWindow_.initialize(&engine_, "ClipEngine Debug")) {
-        std::cerr << "Failed to initialize Debug Window" << std::endl;
-        return;
-    }
-
-    // Attach debug window to engine for automatic updates
-    engine_.setDebugWindow(&debugWindow_);
-#endif
 
     // Create color adjustment effect (using new API naming)
     auto colorAdjust = ShaderEffect::createColorAdjust();
@@ -99,6 +89,7 @@ void Application::setupScene()
         std::cout << "[VideoLayer] Initialized" << std::endl;
     }
 
+    
     // Create image overlay layer
     auto imageLayer = std::make_unique<VideoRenderer>(VideoFormat::RGBA);
     imageLayer->setTransform(0.0f, 0.0f, 0.2f, 0.2f);  // Full screen
@@ -139,35 +130,13 @@ void Application::setupInputEventListeners()
 {
     using namespace clipengine;
 
-    // Pointer Down - start dragging or handle clicks
-    inputSystem_.addEventListener(InputEventType::PointerDown,
-        [this](const InputEvent& event) {
-            handlePointerDown(event);
-        }
-    );
+    // Initialize PanoramaController
+    panoramaController_.initialize(videoLayer_, colorEffect_);
 
-    // Pointer Move - handle drag rotation
-    inputSystem_.addEventListener(InputEventType::PointerMove,
-        [this](const InputEvent& event) {
-            handlePointerMove(event);
-        }
-    );
+    // Register all panorama interaction event listeners
+    panoramaController_.registerInputListeners(inputSystem_);
 
-    // Pointer Up - end dragging
-    inputSystem_.addEventListener(InputEventType::PointerUp,
-        [this](const InputEvent& event) {
-            handlePointerUp(event);
-        }
-    );
-
-    // Scroll - handle zoom
-    inputSystem_.addEventListener(InputEventType::Scroll,
-        [this](const InputEvent& event) {
-            handleScroll(event);
-        }
-    );
-
-    // Key Down - handle keyboard controls
+    // Register Application-specific events (mode switching, export, exit, image loading)
     inputSystem_.addEventListener(InputEventType::KeyDown,
         [this](const InputEvent& event) {
             handleKeyDown(event);
@@ -192,103 +161,71 @@ void Application::run()
         return;
     }
 
+    // Main application loop - supports export without exiting
     while(!glfwWindowShouldClose(window_)) {
-        updateVideoFrame();
-        glfwPollEvents();
+        // Regular rendering loop
+        while(!glfwWindowShouldClose(window_) && !shouldExport_) {
+            // Skip normal rendering when exporting to avoid conflicts
+            if (!isExporting_) {
+                updateVideoFrame();
+            }
 
-        // Update InputSystem (processes events and dispatches to listeners)
-        // All input handling is now done via event listeners - no direct GLFW calls needed!
-        inputSystem_.update(0.016); // ~60fps, can be replaced with actual deltaTime
+            glfwPollEvents();
 
-        // Render frame (all-in-one: updates, renders, presents)
-        engine_.render();
+            // Update InputSystem (processes events and dispatches to listeners)
+            // All input handling is now done via event listeners - no direct GLFW calls needed!
+            inputSystem_.update(0.016); // ~60fps, can be replaced with actual deltaTime
+
+            // Skip rendering when exporting (exporter handles its own rendering)
+            if (!isExporting_) {
+                // Render frame (all-in-one: updates, renders, presents)
+                engine_.render();
+            }
+        }
+
+        // If export was requested, exit main loop and perform export
+        if (shouldExport_) {
+            std::cout << "\n=== Exiting main loop to perform export ===\n" << std::endl;
+            exportVideo();
+            std::cout << "\n=== Export completed, resuming application ===\n" << std::endl;
+
+            // Reset export flag to continue running
+            shouldExport_ = false;
+
+            // Wait a bit for the video source to stabilize after export
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+
+        // If window was closed, exit the outer loop
+        if (glfwWindowShouldClose(window_)) {
+            break;
+        }
     }
 
     glfwTerminate();
 }
 
 // ============================================================================
-// InputSystem Event Handlers (replaces GLFW callbacks)
+// InputSystem Event Handlers (Application-specific only)
 // ============================================================================
-
-void Application::handlePointerDown(const clipengine::InputEvent& event)
-{
-    using namespace clipengine;
-
-    // Left mouse button starts dragging for panorama rotation
-    if (event.button == MouseButton::Left && videoLayer_) {
-        dragging_ = true;
-        lastMouseX_ = event.mouseX;
-        lastMouseY_ = event.mouseY;
-    }
-
-    // Sync with engine's input state (for backward compatibility)
-    engine_.setMouseButton(static_cast<int>(event.button), true);
-}
-
-void Application::handlePointerMove(const clipengine::InputEvent& event)
-{
-    // Sync mouse position with engine (for backward compatibility)
-    engine_.setMousePosition(event.mouseX, event.mouseY);
-
-    // Handle panorama drag rotation
-    if (dragging_ && videoLayer_) {
-        float dx = event.mouseX - lastMouseX_;
-        float dy = event.mouseY - lastMouseY_;
-
-        yaw_ += dx * 0.005f;
-        pitch_ += dy * 0.005f;
-
-        // Clamp pitch to prevent flipping
-        if (pitch_ > 1.5f) pitch_ = 1.5f;
-        if (pitch_ < -1.5f) pitch_ = -1.5f;
-
-        // TEMPORARY: Use old VideoRenderer
-        videoLayer_->setRotation(yaw_, pitch_);
-
-        // TODO: Implement VideoLayer::setRotation()
-        // videoLayer_->setRotation(yaw_, pitch_);
-
-        lastMouseX_ = event.mouseX;
-        lastMouseY_ = event.mouseY;
-    }
-}
-
-void Application::handlePointerUp(const clipengine::InputEvent& event)
-{
-    using namespace clipengine;
-
-    // End dragging
-    if (event.button == MouseButton::Left) {
-        dragging_ = false;
-    }
-
-    // Sync with engine's input state (for backward compatibility)
-    engine_.setMouseButton(static_cast<int>(event.button), false);
-}
-
-void Application::handleScroll(const clipengine::InputEvent& event)
-{
-    // Sync with engine (for backward compatibility)
-    engine_.setMouseWheel(event.deltaY);
-
-    // Handle zoom for panorama mode
-    if (videoLayer_) {
-        zoom_ += event.deltaY * 0.1f;
-        if (zoom_ < 0.1f) zoom_ = 0.1f;
-        if (zoom_ > 5.0f) zoom_ = 5.0f;
-
-        // TEMPORARY: Use old VideoRenderer
-        videoLayer_->setZoom(zoom_);
-
-        // TODO: Implement VideoLayer::setZoom()
-        // videoLayer_->setZoom(zoom_);
-    }
-}
 
 void Application::exportVideo()
 {
     if (isExporting_) return;
+
+    // Ensure playback decoder is running and has frames before starting export
+    std::cout << "Preparing for export, waiting for playback to stabilize..." << std::endl;
+    int waitCount = 0;
+    while (!videoSource_->hasNewFrame() && waitCount < 50) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        waitCount++;
+    }
+
+    if (!videoSource_->hasNewFrame()) {
+        std::cerr << "Playback decoder not ready, cannot start export" << std::endl;
+        return;
+    }
+
     isExporting_ = true;
 
     // Get actual video duration and frame rate
@@ -343,21 +280,52 @@ void Application::exportVideo()
     // Switch video source to export mode
     videoSource_->beginExportMode();
 
+    // Wait for export decoder to produce first frame before starting export
+    std::cout << "Waiting for first frame from export decoder..." << std::endl;
+    int exportWaitCount = 0;
+    while (!videoSource_->hasNewFrame() && exportWaitCount < 100) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        exportWaitCount++;
+    }
+
+    if (!videoSource_->hasNewFrame()) {
+        std::cerr << "Export decoder failed to produce frames" << std::endl;
+        videoSource_->endExportMode();
+        isExporting_ = false;
+        return;
+    }
+
+    // Load the first frame
+    updateVideoFrame();
+    std::cout << "First frame ready, starting export..." << std::endl;
+
+    // Perform a dummy render to ensure all GPU states are synchronized
+    // This helps transition from window rendering to offscreen rendering
+    std::cout << "Synchronizing render state..." << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     auto startTime = std::chrono::steady_clock::now();
 
+    // Export loop - process window events but don't update input system
     while (!exporter.isFinished() && !exporter.isCancelled()) {
+        // Update video frame from export decoder
         updateVideoFrame();
 
+        // Export the frame
         if (!exporter.exportFrame()) {
             std::cerr << "Export frame failed at " << exporter.getCurrentFrame() << std::endl;
             break;
         }
 
+        // Only process window events, no input system updates during export
         glfwPollEvents();
         if (glfwWindowShouldClose(window_)) {
             exporter.cancel();
             break;
         }
+
+        // Small delay to prevent overwhelming the system
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     // Switch back to playback mode
@@ -380,130 +348,41 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
     // Sync with engine's input state (for backward compatibility)
     engine_.setKeyState(event.keyCode, true);
 
-    // Handle key press actions
+    // Handle Application-specific key press actions
     switch (event.keyCode) {
         case GLFW_KEY_ESCAPE:
             glfwSetWindowShouldClose(window_, GLFW_TRUE);
             break;
 
         case GLFW_KEY_E:
-            if (!isExporting_) {
-                std::cout << "Starting video export..." << std::endl;
-                exportVideo();
+            if (!isExporting_ && !shouldExport_) {
+                std::cout << "Export requested, will start after current frame..." << std::endl;
+                shouldExport_ = true;
             }
             break;
 
         case GLFW_KEY_1:
-            switchRenderMode(VideoRenderer::RenderMode::Planar, 0.0f, 0.0f, 1.0f);
+            // Switch to Planar mode
+            videoLayer_->setRenderMode(VideoRenderer::RenderMode::Planar);
             std::cout << "Switched to Planar mode" << std::endl;
             break;
 
         case GLFW_KEY_2:
-            switchRenderMode(VideoRenderer::RenderMode::Panorama, 0.0f, 0.0f, 1.0f);
+            // Switch to Panorama mode
+            videoLayer_->setRenderMode(VideoRenderer::RenderMode::Panorama);
             std::cout << "Switched to Equirectangular (360°) mode" << std::endl;
             break;
 
         case GLFW_KEY_3:
-            switchRenderMode(VideoRenderer::RenderMode::LittlePlanet, 0.0f, -1.57f, 0.8f);
+            // Switch to Little Planet mode
+            videoLayer_->setRenderMode(VideoRenderer::RenderMode::LittlePlanet);
             std::cout << "Switched to Little Planet mode" << std::endl;
             break;
 
         case GLFW_KEY_4:
-            switchRenderMode(VideoRenderer::RenderMode::CrystalBall, 0.0f, 1.57f, 0.8f);
+            // Switch to Crystal Ball mode
+            videoLayer_->setRenderMode(VideoRenderer::RenderMode::CrystalBall);
             std::cout << "Switched to Crystal Ball mode" << std::endl;
-            break;
-
-        // Brightness control (0.0 - 2.0, 1.0 = normal)
-        case GLFW_KEY_Q:
-            brightness_ += 0.1f;
-            if (brightness_ > 2.0f) brightness_ = 2.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("brightness", (brightness_ - 1.0f));  // Convert to -1.0~1.0
-            }
-            std::cout << "Brightness: " << brightness_ << std::endl;
-            break;
-
-        case GLFW_KEY_W:
-            brightness_ -= 0.1f;
-            if (brightness_ < 0.0f) brightness_ = 0.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("brightness", (brightness_ - 1.0f));
-            }
-            std::cout << "Brightness: " << brightness_ << std::endl;
-            break;
-
-        // Contrast control
-        case GLFW_KEY_A:
-            contrast_ += 0.1f;
-            if (contrast_ > 2.0f) contrast_ = 2.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("contrast", contrast_);
-            }
-            std::cout << "Contrast: " << contrast_ << std::endl;
-            break;
-
-        case GLFW_KEY_S:
-            contrast_ -= 0.1f;
-            if (contrast_ < 0.0f) contrast_ = 0.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("contrast", contrast_);
-            }
-            std::cout << "Contrast: " << contrast_ << std::endl;
-            break;
-
-        // Exposure control
-        case GLFW_KEY_Z:
-            exposure_ += 0.2f;
-            if (exposure_ > 3.0f) exposure_ = 3.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("exposure", exposure_);
-            }
-            std::cout << "Exposure: " << exposure_ << " stops" << std::endl;
-            break;
-
-        case GLFW_KEY_X:
-            exposure_ -= 0.2f;
-            if (exposure_ < -3.0f) exposure_ = -3.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("exposure", exposure_);
-            }
-            std::cout << "Exposure: " << exposure_ << " stops" << std::endl;
-            break;
-
-        // Gain control
-        case GLFW_KEY_C:
-            gain_ += 0.1f;
-            if (gain_ > 4.0f) gain_ = 4.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("gain", gain_);
-            }
-            std::cout << "Gain: " << gain_ << "x" << std::endl;
-            break;
-
-        case GLFW_KEY_V:
-            gain_ -= 0.1f;
-            if (gain_ < 0.0f) gain_ = 0.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("gain", gain_);
-            }
-            std::cout << "Gain: " << gain_ << "x" << std::endl;
-            break;
-
-        // Reset all color adjustments
-        case GLFW_KEY_R:
-            brightness_ = 1.0f;
-            contrast_ = 1.0f;
-            saturation_ = 1.0f;
-            exposure_ = 0.0f;
-            gain_ = 1.0f;
-            if (colorEffect_) {
-                colorEffect_->setParam("brightness", 0.0f);   // 1.0 -> 0.0 (normalized)
-                colorEffect_->setParam("contrast", 1.0f);
-                colorEffect_->setParam("saturation", 1.0f);
-                colorEffect_->setParam("exposure", 0.0f);
-                colorEffect_->setParam("gain", 1.0f);
-            }
-            std::cout << "Reset all color adjustments" << std::endl;
             break;
 
         // Load image overlay
@@ -523,18 +402,6 @@ void Application::handleKeyDown(const clipengine::InputEvent& event)
     }
 }
 
-void Application::switchRenderMode(VideoRenderer::RenderMode mode, float yaw, float pitch, float zoom)
-{
-    if (!videoLayer_) return;
-
-    videoLayer_->setRenderMode(mode);
-    yaw_ = yaw;
-    pitch_ = pitch;
-    zoom_ = zoom;
-    videoLayer_->setRotation(yaw_, pitch_);
-    videoLayer_->setZoom(zoom_);
-}
-
 void Application::loadImageTexture(const std::string& imagePath)
 {
     std::cout << "\n[ImageLayer] Loading image: " << imagePath << std::endl;
@@ -544,22 +411,14 @@ void Application::loadImageTexture(const std::string& imagePath)
         return;
     }
 
-    // Load image using ImageLoader
-    ComPtr<ID3D11Texture2D> texture;
-    uint32_t width, height;
-    if (!ImageLoader::loadImage(imagePath, texture, width, height)) {
-        std::cerr << "[ImageLayer] Failed to load image from: " << imagePath << std::endl;
-        return;
-    }
-
-    // Update texture in the image layer
+    // Load image using SDK's built-in loadFromFile method
     auto* videoRenderer = static_cast<VideoRenderer*>(imageLayer_);
-    if (videoRenderer) {
-        videoRenderer->updateFrame(texture.Get(), 0);
+    if (videoRenderer && videoRenderer->loadFromFile(imagePath)) {
         imageLayer_->setEnabled(true);
-        std::cout << "[ImageLayer] Loaded successfully: " << width << "x" << height << std::endl;
+        std::cout << "[ImageLayer] Image loaded successfully" << std::endl;
         std::cout << "[ImageLayer] Press 'I' to toggle visibility" << std::endl;
     } else {
-        std::cerr << "[ImageLayer] Failed to update texture" << std::endl;
+        std::cerr << "[ImageLayer] Failed to load image from: " << imagePath << std::endl;
     }
 }
+

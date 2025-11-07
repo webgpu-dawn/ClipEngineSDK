@@ -8,6 +8,10 @@
 #endif
 #include <iostream>
 
+// stb_image for loading images in loadFromFile
+#define STB_IMAGE_IMPLEMENTATION
+#include "../utils/stb_image.h"
+
 VideoRenderer::VideoRenderer()
     : TextureRenderer(ShaderPresets::createNV12VideoShader())
     , videoFormat_(VideoFormat::NV12) {
@@ -256,6 +260,87 @@ bool VideoRenderer::updateFrame(ID3D11Texture2D* texture, int arrayIndex) {
     return true;
 }
 
+bool VideoRenderer::loadFromFile(const std::string& filename) {
+    // Load image using stb_image
+    int width, height, channels;
+    unsigned char* imageData = stbi_load(filename.c_str(), &width, &height, &channels, 4);  // Force RGBA
+
+    if (!imageData) {
+        std::cerr << "[VideoRenderer] Failed to load image: " << filename << std::endl;
+        std::cerr << "[VideoRenderer] Reason: " << stbi_failure_reason() << std::endl;
+        return false;
+    }
+
+    std::cout << "[VideoRenderer] Loaded image: " << filename << std::endl;
+    std::cout << "[VideoRenderer]   Size: " << width << "x" << height << std::endl;
+    std::cout << "[VideoRenderer]   Channels: " << channels << " (converted to RGBA)" << std::endl;
+
+    // Create D3D11 device for texture creation
+    ComPtr<ID3D11Device> d3d11Device;
+    ComPtr<ID3D11DeviceContext> d3d11Context;
+
+    D3D_FEATURE_LEVEL featureLevels[] = {
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0
+    };
+
+    HRESULT hr = D3D11CreateDevice(
+        nullptr,                    // Use default adapter
+        D3D_DRIVER_TYPE_HARDWARE,   // Hardware device
+        nullptr,                    // No software rasterizer
+        0,                          // No special flags
+        featureLevels,
+        _countof(featureLevels),
+        D3D11_SDK_VERSION,
+        d3d11Device.GetAddressOf(),
+        nullptr,
+        d3d11Context.GetAddressOf()
+    );
+
+    if (FAILED(hr)) {
+        std::cerr << "[VideoRenderer] Failed to create D3D11 device for image loading, HRESULT: 0x"
+                  << std::hex << hr << std::dec << std::endl;
+        stbi_image_free(imageData);
+        return false;
+    }
+
+    // Create D3D11 texture
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = width;
+    texDesc.Height = height;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.SampleDesc.Quality = 0;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = imageData;
+    initData.SysMemPitch = width * 4;  // RGBA = 4 bytes per pixel
+    initData.SysMemSlicePitch = 0;
+
+    ComPtr<ID3D11Texture2D> texture;
+    hr = d3d11Device->CreateTexture2D(&texDesc, &initData, texture.GetAddressOf());
+
+    // Free image data
+    stbi_image_free(imageData);
+
+    if (FAILED(hr)) {
+        std::cerr << "[VideoRenderer] Failed to create D3D11 texture, HRESULT: 0x"
+                  << std::hex << hr << std::dec << std::endl;
+        return false;
+    }
+
+    std::cout << "[VideoRenderer] Image texture created successfully" << std::endl;
+
+    // Use updateFrame to upload the texture
+    return updateFrame(texture.Get(), 0);
+}
+
 // ============================================================================
 // Panorama Mode Support
 // ============================================================================
@@ -355,6 +440,7 @@ void VideoRenderer::updatePanoramaUniforms() {
     if (!panoramaUniformsDirty_) return;
 
     // Pack panorama parameters into uniform buffer
+    // Order must match shader uniform: yaw, pitch, zoom, aspect
     float uniforms[4] = {
         panoramaParams_.yaw,
         panoramaParams_.pitch,
@@ -385,6 +471,7 @@ void VideoRenderer::update(float deltaTime) {
             renderMode_ == RenderMode::LittlePlanet ||
             renderMode_ == RenderMode::CrystalBall) {
             // Prepare uniform data
+            // Order must match shader uniform: yaw, pitch, zoom, aspect
             float uniforms[4] = {
                 panoramaParams_.yaw,
                 panoramaParams_.pitch,

@@ -1,7 +1,13 @@
 #include "CompositionEngine.h"
 #include "../layers/TextureRenderer.h"
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
 #include "../debug/DebugWindow.h"
+#endif
 #include <iostream>
+
+// Explicit constructor/destructor definition (needed for unique_ptr with incomplete type)
+CompositionEngine::CompositionEngine() = default;
+CompositionEngine::~CompositionEngine() = default;
 
 bool CompositionEngine::initialize(wgpu::Device device, wgpu::TextureFormat format, uint32_t width, uint32_t height) {
     device_ = device;
@@ -17,6 +23,14 @@ bool CompositionEngine::initialize(wgpu::Device device, wgpu::TextureFormat form
     globalFilterChain_.initialize(device_, format_, width_, height_);
 
     createIntermediateTextures();
+
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
+    // Automatically create debug window if enabled
+    debugWindow_ = std::make_unique<DebugWindow>();
+    if (debugWindow_->initialize()) {
+        std::cout << "DebugWindow initialized successfully" << std::endl;
+    }
+#endif
 
     return true;
 }
@@ -266,11 +280,13 @@ void CompositionEngine::render() {
     // Render all layers to the surface
     render(outputView);
 
-    // Update debug window if attached
+    // Present the frame
+    surface.Present();
+
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
+    // Update debug window if enabled
     if (debugWindow_) {
         debugWindow_->update();
     }
-
-    // Present the frame
-    surface.Present();
+#endif
 }
