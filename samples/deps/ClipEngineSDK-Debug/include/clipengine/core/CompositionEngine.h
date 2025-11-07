@@ -77,8 +77,8 @@ class DebugWindow;
  */
 class CompositionEngine {
 public:
-    CompositionEngine() = default;
-    ~CompositionEngine() = default;
+    CompositionEngine(); // Defined in .cpp for unique_ptr<DebugWindow>
+    ~CompositionEngine(); // Defined in .cpp for unique_ptr<DebugWindow>
 
     /**
      * @brief Initialize the composition engine with external WebGPU context
@@ -258,23 +258,16 @@ public:
     wgpu::TextureFormat getFormat() const { return format_; }
 
     /**
-     * @brief Attach a debug window to the engine
-     *
-     * When attached, the debug window will be automatically updated
-     * during render() calls. This is optional - if no debug window
-     * is attached, rendering continues normally.
-     *
-     * @param debugWindow Pointer to DebugWindow, or nullptr to detach
+     * @brief Check if debug window is enabled
+     * @return true if debug window is enabled and initialized
      */
-    void setDebugWindow(DebugWindow* debugWindow) {
-        debugWindow_ = debugWindow;
+    bool isDebugWindowEnabled() const {
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
+        return debugWindow_ != nullptr;
+#else
+        return false;
+#endif
     }
-
-    /**
-     * @brief Get the attached debug window
-     * @return Pointer to DebugWindow, or nullptr if none attached
-     */
-    DebugWindow* getDebugWindow() const { return debugWindow_; }
 
 private:
     struct LayerEntry {
@@ -314,8 +307,10 @@ private:
     // Input state for interactive effects
     InputState inputState_;
 
-    // Optional debug window (not owned)
-    DebugWindow* debugWindow_ = nullptr;
+    // Optional debug window (owned by engine, only when CLIPENGINE_DEBUG_WINDOW_ENABLED)
+#ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
+    std::unique_ptr<DebugWindow> debugWindow_;
+#endif
 
     // Time tracking for automatic deltaTime calculation
     std::chrono::high_resolution_clock::time_point lastFrameTime_;

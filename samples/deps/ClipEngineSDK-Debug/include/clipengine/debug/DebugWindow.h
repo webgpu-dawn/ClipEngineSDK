@@ -3,7 +3,7 @@
 #include <clipengine/utils/Common.h>
 #include <clipengine/core/CompositionEngine.h>
 #include <clipengine/effects/ShaderEffect.h>
-#include <clipengine/layers/VideoRenderer.h>
+#include <clipengine/layers/VideoLayer.h>
 
 struct GLFWwindow;
 struct ImGuiContext;
@@ -110,7 +110,7 @@ private:
 
     void setupStyle();
     const char* getLayerTypeName(LayerType type);
-    const char* getRenderModeName(VideoRenderer::RenderMode mode);
+    const char* getRenderModeName(VideoLayer::RenderMode mode);
 
     GLFWwindow* window_ = nullptr;
     ImGuiContext* context_ = nullptr;

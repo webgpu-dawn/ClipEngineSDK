@@ -171,6 +171,14 @@ elseif(ClipEngine_SHADER_DIR AND EXISTS "${ClipEngine_SHADER_DIR}")
     )
 endif()
 
+# Copy assets directory to output directory
+add_custom_command(TARGET ${DEMO_TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:${DEMO_TARGET_NAME}>/assets"
+    COMMENT "Copying sample assets"
+)
+
 # Set output directory and Visual Studio working directory
 if(BUILD_AS_SUBDIRECTORY)
     set_target_properties(${DEMO_TARGET_NAME} PROPERTIES

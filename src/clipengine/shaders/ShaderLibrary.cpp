@@ -122,13 +122,9 @@ namespace {
 std::string ShaderLibrary::loadShaderFile(const std::string& filename) {
     // Try multiple search paths
     std::vector<std::string> searchPaths = {
-        "shaders/" + filename,                                    // When run from executable directory
-        "../share/clipengine/shaders/" + filename,                // SDK install path (one level up)
-        "../../share/clipengine/shaders/" + filename,             // SDK install path (two levels up)
-        "build/Debug/samples/shaders/" + filename,                // Command-line from project root (Debug)
-        "build/Release/samples/shaders/" + filename,              // Command-line from project root (Release)
-        "build/Debug/tests/shaders/" + filename,                  // Command-line from project root (Debug tests)
-        "build/Release/tests/shaders/" + filename                 // Command-line from project root (Release tests)
+        "shaders/" + filename,
+        "../share/clipengine/shaders/" + filename,
+        "../../share/clipengine/shaders/" + filename
     };
 
     for (const auto& path : searchPaths) {

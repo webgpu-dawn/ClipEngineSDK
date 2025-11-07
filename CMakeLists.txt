@@ -91,10 +91,6 @@ add_library(clipengine STATIC
     src/clipengine/layers/VideoLayer.cpp
     src/clipengine/layers/ImageLayer.cpp
 
-    # Layers (Old - kept for backward compatibility)
-    src/clipengine/layers/TextureRenderer.cpp
-    src/clipengine/layers/VideoRenderer.cpp
-
     # Effects (New Architecture)
     src/clipengine/effects/ColorAdjustEffect.cpp
 
@@ -138,15 +134,11 @@ set(CLIPENGINE_PUBLIC_HEADERS
     # Transform (New Architecture)
     src/clipengine/transform/Transform2D.h
 
-    # Layers (New Architecture)
+    # Layers
     src/clipengine/layers/Layer.h
     src/clipengine/layers/VideoLayer.h
     src/clipengine/layers/ImageLayer.h
     src/clipengine/layers/SolidLayer.h
-
-    # Layers (Old - backward compatibility)
-    src/clipengine/layers/TextureRenderer.h
-    src/clipengine/layers/VideoRenderer.h
 
     # Effects (New Architecture)
     src/clipengine/effects/Effect.h

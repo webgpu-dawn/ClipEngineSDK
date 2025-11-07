@@ -1,14 +1,11 @@
 #pragma once
 
 #include <clipengine/core/CompositionEngine.h>
-// 新架构 - Layer + Effect API
+// Layer + Effect API
 #include <clipengine/layers/VideoLayer.h>
 #include <clipengine/layers/ImageLayer.h>
 #include <clipengine/effects/ColorAdjustEffect.h>
 #include <clipengine/effects/ShaderEffect.h>
-// 旧架构 - 临时保留用于渲染
-#include <clipengine/layers/VideoRenderer.h>
-#include <clipengine/layers/TextureRenderer.h>
 #include <clipengine/export/VideoExporter.h>
 #include <clipengine/input/InputSystem.h>
 #include <clipengine/input/InputSystemGLFWAdapter.h>
@@ -50,10 +47,10 @@ private:
 
     CompositionEngine engine_;
 
-    // Layer + Effect API (using old implementation with new interface names)
-    VideoRenderer* videoLayer_ = nullptr;      // Main video layer
-    TextureRenderer* imageLayer_ = nullptr;    // Image overlay layer
-    ShaderEffect* colorEffect_ = nullptr;      // Color adjustment effect
+    // Layer + Effect API
+    VideoLayer* videoLayer_ = nullptr;      // Main video layer
+    ImageLayer* imageLayer_ = nullptr;      // Image overlay layer
+    ShaderEffect* colorEffect_ = nullptr;   // Color adjustment effect
 
     // InputSystem for event-driven input handling
     clipengine::InputSystem inputSystem_;

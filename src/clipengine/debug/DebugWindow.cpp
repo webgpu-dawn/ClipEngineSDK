@@ -14,7 +14,7 @@
 #include <dawn/native/DawnNative.h>
 
 #include "../effects/ShaderEffect.h"
-#include "../layers/VideoRenderer.h"
+#include "../layers/VideoLayer.h"
 
 #include <iostream>
 
@@ -382,7 +382,7 @@ void DebugWindow::renderLayersTree()
             ImGui::Unindent();
 
             if (layer->getType() == LayerType::Video) {
-                VideoRenderer* video = static_cast<VideoRenderer*>(layer);
+                VideoLayer* video = static_cast<VideoLayer*>(layer);
                 ImGui::Text("Render Mode: %s", getRenderModeName(video->getRenderMode()));
             }
 
@@ -626,11 +626,11 @@ const char* DebugWindow::getLayerTypeName(LayerType type)
     }
 }
 
-const char* DebugWindow::getRenderModeName(VideoRenderer::RenderMode mode)
+const char* DebugWindow::getRenderModeName(VideoLayer::RenderMode mode)
 {
     switch (mode) {
-        case VideoRenderer::RenderMode::Planar: return "Planar";
-        case VideoRenderer::RenderMode::Panorama: return "Panorama";
+        case VideoLayer::RenderMode::Planar: return "Planar";
+        case VideoLayer::RenderMode::Panorama: return "Panorama";
         default: return "Unknown";
     }
 }

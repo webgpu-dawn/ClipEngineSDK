@@ -2,6 +2,7 @@
 #include "EffectLoader.h"
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 
 ShaderEffect::ShaderEffect(const std::string& name,
                            const ShaderConfig& config,
@@ -18,6 +19,7 @@ ShaderEffect::ShaderEffect(const std::string& name,
 bool ShaderEffect::setParam(const std::string& name, const ShaderParamValue& value) {
     auto it = paramDescriptors_.find(name);
     if (it == paramDescriptors_.end()) {
+        std::cerr << "[ShaderEffect] Parameter '" << name << "' not found in effect" << std::endl;
         return false; // Parameter not found
     }
 

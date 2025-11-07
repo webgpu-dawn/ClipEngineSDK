@@ -7,7 +7,7 @@ PanoramaController::PanoramaController()
 {
 }
 
-void PanoramaController::initialize(VideoRenderer* videoRenderer, ShaderEffect* colorEffect)
+void PanoramaController::initialize(VideoLayer* videoRenderer, ShaderEffect* colorEffect)
 {
     videoRenderer_ = videoRenderer;
     colorEffect_ = colorEffect;

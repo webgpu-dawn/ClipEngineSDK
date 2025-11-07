@@ -158,6 +158,55 @@ public:
      */
     bool isCancelled() const { return cancelled_; }
 
+    /**
+     * @brief Simplified export method that handles all the details
+     *
+     * This method encapsulates the entire export workflow:
+     * - Initializes exporter with config
+     * - Begins export
+     * - Runs the export loop with frame updates
+     * - Handles window events
+     * - Finalizes export
+     *
+     * @param engine CompositionEngine to render from
+     * @param config Export configuration (with duration and fps)
+     * @param updateFrameCallback Callback to update video frame before each export
+     * @param shouldContinueCallback Callback to check if should continue (e.g. window events)
+     * @return true if export completed successfully, false if failed or cancelled
+     *
+     * Example usage:
+     * @code
+     * VideoExporter exporter;
+     * VideoExportConfig config = {
+     *     .outputPath = "output.mp4",
+     *     .width = 1920,
+     *     .height = 1080,
+     *     .fps = 30,
+     *     .bitrate = 20000000
+     * };
+     *
+     * exporter.setProgressCallback([](float p) {
+     *     std::cout << "Progress: " << (int)(p * 100) << "%" << std::endl;
+     * });
+     *
+     * float duration = 10.0f;  // Export 10 seconds
+     * bool success = exporter.exportVideoSimple(
+     *     &engine,
+     *     config,
+     *     duration,
+     *     [&]() { updateVideoFrame(); },      // Update frame callback
+     *     [&]() { return !windowClosed; }     // Should continue callback
+     * );
+     * @endcode
+     */
+    bool exportVideoSimple(
+        CompositionEngine* engine,
+        const VideoExportConfig& config,
+        float duration,
+        std::function<void()> updateFrameCallback = nullptr,
+        std::function<bool()> shouldContinueCallback = nullptr
+    );
+
 private:
     // FFmpeg context
     AVFormatContext* formatContext_ = nullptr;

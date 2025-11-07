@@ -1,6 +1,6 @@
 #pragma once
 
-#include <clipengine/layers/VideoRenderer.h>
+#include <clipengine/layers/VideoLayer.h>
 #include <clipengine/effects/ShaderEffect.h>
 #include <clipengine/input/InputSystem.h>
 
@@ -23,7 +23,7 @@ public:
      * @param videoRenderer The video renderer to control
      * @param colorEffect The color effect for adjustments (optional)
      */
-    void initialize(VideoRenderer* videoRenderer, ShaderEffect* colorEffect = nullptr);
+    void initialize(VideoLayer* videoRenderer, ShaderEffect* colorEffect = nullptr);
 
     /**
      * @brief Register input event listeners
@@ -47,7 +47,7 @@ private:
     void resetColorAdjustments();
 
     // Controlled objects
-    VideoRenderer* videoRenderer_ = nullptr;
+    VideoLayer* videoRenderer_ = nullptr;
     ShaderEffect* colorEffect_ = nullptr;
 
     // Interaction state

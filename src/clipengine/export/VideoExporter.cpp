@@ -1,6 +1,8 @@
 #include "VideoExporter.h"
 #include "../utils/CeLogger.h"
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 VideoExporter::~VideoExporter() {
     cleanup();
@@ -484,4 +486,85 @@ const char* VideoExporter::getPresetName(VideoQualityPreset preset) {
         case VideoQualityPreset::VerySlow: return "veryslow";
         default: return "medium";
     }
+}
+
+// ============================================================================
+// Simplified Export API
+// ============================================================================
+
+bool VideoExporter::exportVideoSimple(
+    CompositionEngine* engine,
+    const VideoExportConfig& config,
+    float duration,
+    std::function<void()> updateFrameCallback,
+    std::function<bool()> shouldContinueCallback)
+{
+    if (!engine) {
+        std::cerr << "[VideoExporter] Engine is null" << std::endl;
+        return false;
+    }
+
+    if (duration <= 0.0f) {
+        std::cerr << "[VideoExporter] Invalid duration: " << duration << std::endl;
+        return false;
+    }
+
+    std::cout << "[VideoExporter] Starting simplified export..." << std::endl;
+    std::cout << "[VideoExporter]   Output: " << config.outputPath << std::endl;
+    std::cout << "[VideoExporter]   Resolution: " << config.width << "x" << config.height << std::endl;
+    std::cout << "[VideoExporter]   FPS: " << config.fps << std::endl;
+    std::cout << "[VideoExporter]   Duration: " << duration << "s" << std::endl;
+
+    // Initialize exporter
+    if (!initialize(config, engine->getDevice())) {
+        std::cerr << "[VideoExporter] Failed to initialize" << std::endl;
+        return false;
+    }
+
+    // Begin export from 0 to duration
+    if (!beginExport(engine, 0.0f, duration)) {
+        std::cerr << "[VideoExporter] Failed to begin export" << std::endl;
+        return false;
+    }
+
+    std::cout << "[VideoExporter] Export initialized, starting frame loop..." << std::endl;
+
+    // Export loop
+    auto startTime = std::chrono::steady_clock::now();
+
+    while (!isFinished() && !isCancelled()) {
+        // Update video frame if callback provided
+        if (updateFrameCallback) {
+            updateFrameCallback();
+        }
+
+        // Export the frame
+        if (!exportFrame()) {
+            std::cerr << "[VideoExporter] Frame export failed at frame " << getCurrentFrame() << std::endl;
+            break;
+        }
+
+        // Check if should continue (window events, etc.)
+        if (shouldContinueCallback && !shouldContinueCallback()) {
+            std::cout << "[VideoExporter] Export cancelled by user callback" << std::endl;
+            cancel();
+            break;
+        }
+    }
+
+    // Finalize export
+    bool success = false;
+    if (!isCancelled() && finalize()) {
+        auto duration_sec = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - startTime).count();
+
+        std::cout << "[VideoExporter] Export completed successfully" << std::endl;
+        std::cout << "[VideoExporter]   Frames: " << getCurrentFrame() << std::endl;
+        std::cout << "[VideoExporter]   Time: " << duration_sec << "s" << std::endl;
+        success = true;
+    } else if (!isCancelled()) {
+        std::cerr << "[VideoExporter] Export finalization failed" << std::endl;
+    }
+
+    return success;
 }

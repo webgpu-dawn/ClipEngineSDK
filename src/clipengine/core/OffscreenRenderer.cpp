@@ -195,13 +195,24 @@ void OffscreenRenderer::waitForCompletion() {
         LOG_WARN("waitForCompletion() not supported in Emscripten, use async readPixels()");
     #else
         // Poll device until buffer is mapped
-        int maxIterations = 1000;  // Timeout after ~1 second
+        // Use aggressive polling for better performance during video export
+        int maxIterations = 10000;  // Increased timeout
+        int spinCount = 0;
+
         while (pendingCallback_ && maxIterations-- > 0) {
             device_.Tick();
+
+            // Spin without sleeping for first few iterations for lower latency
+            if (spinCount++ < 100) {
+                // Just continue polling without sleep
+                continue;
+            }
+
+            // After spinning, use minimal sleep to reduce CPU usage
             #ifdef _WIN32
-                Sleep(1);  // 1ms sleep
+                Sleep(0);  // Yield timeslice but don't force delay
             #else
-                usleep(1000);  // 1ms sleep
+                usleep(10);  // Very short sleep (10 microseconds)
             #endif
         }
 

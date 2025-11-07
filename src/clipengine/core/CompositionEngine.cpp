@@ -1,5 +1,5 @@
 #include "CompositionEngine.h"
-#include "../layers/TextureRenderer.h"
+#include "../layers/ImageLayer.h"
 #ifdef CLIPENGINE_DEBUG_WINDOW_ENABLED
 #include "../debug/DebugWindow.h"
 #endif

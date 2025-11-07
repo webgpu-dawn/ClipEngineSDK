@@ -1,96 +1,88 @@
 #pragma once
 
-#include "Layer.h"
+#include "../core/CompositionLayer.h"
+#include "../shaders/ShaderConfig.h"
+#include "../effects/FilterChain.h"
 
-namespace clipengine {
+#include <memory>
+#include <vector>
 
 /**
- * @brief Image layer for rendering static images
+ * @brief Generic image layer that can use any shader configuration
  *
- * ImageLayer loads and renders static image content:
- * - PNG, JPEG, BMP, TGA, etc. (via stb_image)
- * - GPU textures
- * - Memory buffers
+ * This layer accepts a ShaderConfig and creates a rendering pipeline
+ * based on that configuration. It's flexible enough to handle various
+ * texture formats and shader types.
  *
- * Example usage:
- * @code
- * auto imageLayer = std::make_shared<ImageLayer>();
- * imageLayer->loadImage("photo.png");
- * imageLayer->transform.position = {100.0f, 200.0f};
- * imageLayer->transform.scale = {0.5f, 0.5f};
- * @endcode
+ * Now supports filter chains for applying post-processing effects.
  */
-class ImageLayer : public Layer {
+class ImageLayer : public CompositionLayer {
 public:
-    ImageLayer();
+    /**
+     * @brief Construct a new Image Layer object
+     * @param config Shader configuration to use
+     */
+    explicit ImageLayer(const ShaderConfig& config);
     ~ImageLayer() override;
 
-    // ========================================================================
-    // Layer Interface Implementation
-    // ========================================================================
-
     bool initialize(wgpu::Device device, wgpu::TextureFormat format) override;
-    wgpu::TextureView render(float time) override;
+    void render(wgpu::RenderPassEncoder& pass) override;
     void update(float deltaTime) override;
-    LayerType getType() const override { return LayerType::Image; }
-    glm::vec2 getSize() const override;
-
-    // ========================================================================
-    // Image Loading
-    // ========================================================================
+    LayerType getType() const override { return LayerType::Video; }
+    void setTransform(float x, float y, float width, float height) override;
 
     /**
-     * @brief Load image from file path
-     * @param path Path to image file (PNG, JPEG, BMP, etc.)
-     * @return true if successful
+     * @brief Update texture bindings for rendering
+     * @param textureViews List of texture views to bind (must match shader config)
      */
-    bool loadImage(const std::string& path);
+    void updateTextures(const std::vector<wgpu::TextureView>& textureViews);
 
     /**
-     * @brief Load image from memory buffer
-     * @param data RGBA pixel data
-     * @param width Image width
-     * @param height Image height
-     * @return true if successful
+     * @brief Get current texture views used by this renderer
      */
-    bool loadImage(const void* data, uint32_t width, uint32_t height);
+    const std::vector<wgpu::TextureView>& getTextureViews() const { return textureViews_; }
 
     /**
-     * @brief Load image from existing texture
-     * @param texture WebGPU texture
-     * @param width Image width
-     * @param height Image height
-     * @return true if successful
+     * @brief Get the shader configuration used by this renderer
      */
-    bool loadTexture(wgpu::Texture texture, uint32_t width, uint32_t height);
-
-    // ========================================================================
-    // Image Properties
-    // ========================================================================
+    const ShaderConfig& getShaderConfig() const { return shaderConfig_; }
 
     /**
-     * @brief Get current image resolution
+     * @brief Get the filter chain for adding/managing filters
      */
-    uint32_t getWidth() const { return width_; }
-    uint32_t getHeight() const { return height_; }
+    FilterChain& getFilterChain() { return filterChain_; }
+    const FilterChain& getFilterChain() const { return filterChain_; }
 
-private:
-    void createPipeline();
-    void createBindGroup();
+protected:
+    void initializeBuffers();
+    void initializeSampler();
+    void initializeShader();
+    void initializePipeline();
+    void updateBindGroup();
+    void updateVertexBuffer();
 
-    uint32_t width_ = 0;
-    uint32_t height_ = 0;
+    ShaderConfig shaderConfig_;
 
-    // GPU resources
-    wgpu::Texture texture_;
-    wgpu::TextureView textureView_;
-    wgpu::Sampler sampler_;
     wgpu::Buffer vertexBuffer_;
-    wgpu::Buffer uniformBuffer_;
-    wgpu::BindGroup bindGroup_;
+    wgpu::Sampler sampler_;
+    wgpu::ShaderModule vertexShaderModule_;
+    wgpu::ShaderModule fragmentShaderModule_;
     wgpu::RenderPipeline pipeline_;
-    wgpu::Texture renderTarget_;
-    wgpu::TextureView renderTargetView_;
-};
+    wgpu::BindGroup bindGroup_;
+    wgpu::BindGroupLayout bindGroupLayout_;
 
-} // namespace clipengine
+    std::vector<wgpu::TextureView> textureViews_;
+    // Optional uniform buffer (used by shaders that declare a uniform / storage buffer)
+    wgpu::Buffer uniformBuffer_;
+    uint64_t uniformBufferSize_ = 0;
+
+    /**
+     * @brief Update uniform buffer contents
+     * @param data Pointer to data to upload
+     * @param size Size in bytes (must be <= uniform buffer size)
+     */
+    void updateUniformData(const void* data, size_t size);
+
+    // Filter chain support
+    FilterChain filterChain_;
+};
