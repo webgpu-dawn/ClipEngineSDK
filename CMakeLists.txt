@@ -295,13 +295,14 @@ install(TARGETS clipengine clipengine_debug imgui_core imgui_backends glfw
 )
 
 # Install headers with directory structure
-# Exclude CeLogger.h to avoid exposing spdlog dependency
+# Exclude internal headers to avoid exposing implementation details
 install(DIRECTORY src/clipengine/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/clipengine
     FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"
         PATTERN "CeLogger.h" EXCLUDE
+        PATTERN "Transform2DInternal.h" EXCLUDE
 )
 
 # Install Dawn headers (required dependency)
@@ -317,6 +318,9 @@ if(EXISTS "${GLFW_SOURCE_DIR}/include")
         FILES_MATCHING PATTERN "*.h"
     )
 endif()
+
+# Note: GLM is no longer exposed in public API
+# GLM is used internally only and is not required by SDK users
 
 # Install shaders
 install(DIRECTORY src/clipengine/shaders/

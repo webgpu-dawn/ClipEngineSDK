@@ -7,6 +7,7 @@
 #include "layers/SolidLayer.h"
 #include "core/RenderDevice.h"
 #include "utils/Common.h"
+#include "utils/Vec4.h"
 #include <memory>
 #include <string>
 
@@ -87,7 +88,7 @@ public:
      * @brief Create a solid color layer
      */
     std::shared_ptr<SolidLayer> createSolidLayer(
-        const glm::vec4& color,
+        const Vec4& color,
         const std::string& name = ""
     );
 
@@ -127,7 +128,7 @@ public:
     void setResolution(uint32_t width, uint32_t height);
     uint32_t getWidth() const { return width_; }
     uint32_t getHeight() const { return height_; }
-    void setBackgroundColor(const glm::vec4& color);
+    void setBackgroundColor(const Vec4& color);
 
     // ========================================================================
     // Advanced Access

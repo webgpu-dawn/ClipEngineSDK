@@ -102,7 +102,7 @@ public:
      * @brief Get the layer's native size in pixels
      * @return Size of the layer content (before transform)
      */
-    virtual glm::vec2 getSize() const = 0;
+    virtual Vec2 getSize() const = 0;
 
     // ========================================================================
     // Layer Properties
@@ -124,7 +124,7 @@ public:
      * @brief Set layer opacity (0.0 = transparent, 1.0 = opaque)
      */
     void setOpacity(float opacity) {
-        transform.opacity = glm::clamp(opacity, 0.0f, 1.0f);
+        transform.opacity = (opacity < 0.0f) ? 0.0f : (opacity > 1.0f) ? 1.0f : opacity;
     }
     float getOpacity() const { return transform.opacity; }
 

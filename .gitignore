@@ -48,3 +48,5 @@ build_example/
 
 # debug information files
 *.dwo
+
+ClipEngineSDK-Package/

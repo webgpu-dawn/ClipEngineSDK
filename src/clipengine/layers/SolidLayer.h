@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Layer.h"
-#include <glm/glm.hpp>
+#include "../utils/Vec4.h"
 
 namespace clipengine {
 
@@ -34,7 +34,7 @@ public:
      * @brief Construct with specific color
      * @param color RGBA color (0.0-1.0 range)
      */
-    explicit SolidLayer(const glm::vec4& color);
+    explicit SolidLayer(const Vec4& color);
 
     /**
      * @brief Construct with specific color and size
@@ -42,7 +42,7 @@ public:
      * @param width Layer width in pixels
      * @param height Layer height in pixels
      */
-    SolidLayer(const glm::vec4& color, uint32_t width, uint32_t height);
+    SolidLayer(const Vec4& color, uint32_t width, uint32_t height);
 
     ~SolidLayer() override;
 
@@ -54,7 +54,7 @@ public:
     wgpu::TextureView render(float time) override;
     void update(float deltaTime) override;
     LayerType getType() const override { return LayerType::Solid; }
-    glm::vec2 getSize() const override;
+    Vec2 getSize() const override;
 
     // ========================================================================
     // Solid Layer Properties
@@ -64,7 +64,7 @@ public:
      * @brief Set solid color
      * @param color RGBA color (0.0-1.0 range)
      */
-    void setColor(const glm::vec4& color);
+    void setColor(const Vec4& color);
 
     /**
      * @brief Set solid color with RGB values
@@ -78,7 +78,7 @@ public:
     /**
      * @brief Get current color
      */
-    const glm::vec4& getColor() const { return color_; }
+    const Vec4& getColor() const { return color_; }
 
     /**
      * @brief Set layer size
@@ -95,7 +95,7 @@ private:
     void createTexture();
     void updateTexture();
 
-    glm::vec4 color_ = {0.0f, 0.0f, 0.0f, 1.0f};  // Default black
+    Vec4 color_ = {0.0f, 0.0f, 0.0f, 1.0f};  // Default black
     uint32_t width_ = 1920;
     uint32_t height_ = 1080;
     bool colorDirty_ = true;

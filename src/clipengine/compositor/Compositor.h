@@ -2,6 +2,7 @@
 
 #include "../layers/Layer.h"
 #include "../utils/Common.h"
+#include "../utils/Vec4.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -130,7 +131,7 @@ private:
  * Example usage:
  * @code
  * // Create layers
- * auto background = std::make_shared<SolidLayer>(glm::vec4(0, 0, 0, 1));
+ * auto background = std::make_shared<SolidLayer>(Vec4{0, 0, 0, 1});
  * auto video = std::make_shared<VideoLayer>();
  * auto overlay = std::make_shared<ImageLayer>();
  *
@@ -201,11 +202,11 @@ public:
     /**
      * @brief Set background color
      */
-    void setBackgroundColor(const glm::vec4& color) {
+    void setBackgroundColor(const Vec4& color) {
         backgroundColor_ = color;
     }
 
-    const glm::vec4& getBackgroundColor() const {
+    const Vec4& getBackgroundColor() const {
         return backgroundColor_;
     }
 
@@ -225,7 +226,7 @@ private:
     wgpu::TextureView compositeTextureView_;
 
     // Background color
-    glm::vec4 backgroundColor_ = {0.0f, 0.0f, 0.0f, 1.0f};
+    Vec4 backgroundColor_ = {0.0f, 0.0f, 0.0f, 1.0f};
 
     // GPU resources for compositing
     wgpu::Buffer vertexBuffer_;

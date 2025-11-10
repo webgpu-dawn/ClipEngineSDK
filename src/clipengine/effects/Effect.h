@@ -1,7 +1,9 @@
 #pragma once
 
 #include "../utils/Common.h"
-#include <glm/glm.hpp>
+#include "../utils/Vec2.h"
+#include "../utils/Vec3.h"
+#include "../utils/Vec4.h"
 #include <string>
 #include <map>
 #include <variant>
@@ -13,7 +15,7 @@ namespace clipengine {
  * @brief Parameter value type
  * Supports float, int, bool, vec2, vec3, vec4
  */
-using EffectParameterValue = std::variant<float, int, bool, glm::vec2, glm::vec3, glm::vec4>;
+using EffectParameterValue = std::variant<float, int, bool, Vec2, Vec3, Vec4>;
 
 /**
  * @brief Effect parameter descriptor
@@ -115,7 +117,7 @@ public:
     /**
      * @brief Set parameter value (vec2)
      */
-    void setParameter(const std::string& name, const glm::vec2& value) {
+    void setParameter(const std::string& name, const Vec2& value) {
         if (parameters_.count(name)) {
             parameters_[name].value = value;
             parametersDirty_ = true;
@@ -125,7 +127,7 @@ public:
     /**
      * @brief Set parameter value (vec3)
      */
-    void setParameter(const std::string& name, const glm::vec3& value) {
+    void setParameter(const std::string& name, const Vec3& value) {
         if (parameters_.count(name)) {
             parameters_[name].value = value;
             parametersDirty_ = true;
@@ -135,7 +137,7 @@ public:
     /**
      * @brief Set parameter value (vec4)
      */
-    void setParameter(const std::string& name, const glm::vec4& value) {
+    void setParameter(const std::string& name, const Vec4& value) {
         if (parameters_.count(name)) {
             parameters_[name].value = value;
             parametersDirty_ = true;
